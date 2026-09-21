@@ -1,6 +1,6 @@
 import React from 'react';
 import type { TaskRecommendation } from '../../types';
-import { Sparkles, ArrowRight, HelpCircle, CheckCircle } from 'lucide-react';
+import { ArrowRight, HelpCircle, CheckCircle } from 'lucide-react';
 
 interface ExplainableNextStepCardProps {
   recommendation: TaskRecommendation;
@@ -13,11 +13,10 @@ export const ExplainableNextStepCard: React.FC<ExplainableNextStepCardProps> = (
 }) => {
   return (
     <div className="bg-white rounded-lg border border-slate-200 p-5 space-y-4">
-      {/* Top Badge */}
+      {/* Context */}
       <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 pb-3">
-        <div className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded bg-primary-50 text-primary-700 text-xs font-medium border border-primary-200">
-          <Sparkles className="w-3.5 h-3.5" />
-          Đề xuất nhiệm vụ tiếp theo
+        <div className="inline-flex items-center gap-1.5 text-xs font-semibold text-primary-800">
+          Nhiệm vụ tiếp theo
         </div>
         <span className="text-xs text-slate-500 font-medium">
           Trọng tâm cải thiện: <strong className="text-slate-800">{recommendation.targetAxisTitle}</strong>

@@ -55,7 +55,7 @@ export const SnapshotModal: React.FC<SnapshotModalProps> = ({
 
           <div>
             <label className="block text-xs font-semibold text-slate-700 mb-1">
-              Ký hiệu phiên bản (Version tag)
+              Ký hiệu phiên bản
             </label>
             <input
               type="text"

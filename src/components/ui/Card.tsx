@@ -18,9 +18,9 @@ export const Card: React.FC<CardProps> = ({
   ...props
 }) => {
   const variants = {
-    default: "bg-white border-slate-200 shadow-[0_1px_2px_rgba(15,23,42,0.025)]",
+    default: "bg-white border-slate-200",
     subtle: "bg-slate-50/80 border-slate-200",
-    elevated: "bg-white border-slate-200 shadow-[0_10px_30px_rgba(15,23,42,0.06)]",
+    elevated: "bg-white border-slate-300",
     bordered: "bg-white border-slate-300",
   };
 
@@ -34,7 +34,7 @@ export const Card: React.FC<CardProps> = ({
   return (
     <div
       className={cn(
-        "min-w-0 overflow-hidden rounded-xl border transition-[border-color,box-shadow,transform] duration-200 ease-out",
+        "min-w-0 overflow-hidden rounded-lg border",
         variants[variant],
         className
       )}

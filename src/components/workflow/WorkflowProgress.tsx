@@ -12,15 +12,15 @@ export const WorkflowProgress: React.FC<{ state: StudentWorkflowState; compact?:
         <div className="v3-progress-fill" style={{ width: `${state.progress}%` }} />
       </div>
       {!compact && (
-        <div className="grid grid-cols-3 gap-1.5 sm:flex sm:flex-wrap">
+        <div className="flex flex-wrap gap-x-4 gap-y-2 border-t border-slate-200 pt-2.5">
           {state.steps.map(step => {
             const cls = step.done
-              ? 'border-emerald-200 bg-emerald-50 text-emerald-800'
+              ? 'text-emerald-700'
               : step.active
-                ? 'border-primary-300 bg-primary-50 text-primary-900 shadow-sm'
-                : 'border-slate-200 bg-slate-50 text-slate-400';
+                ? 'font-bold text-primary-900'
+                : 'text-slate-400';
             return (
-              <div key={step.id} className={`rounded-lg border px-2 py-1.5 text-center text-xs font-semibold ${cls}`} title={step.label}>
+              <div key={step.id} className={`text-xs font-medium ${cls}`} title={step.label}>
                 <span aria-hidden="true">{step.done ? '✓' : step.active ? '●' : '○'}</span> {step.shortLabel}
               </div>
             );

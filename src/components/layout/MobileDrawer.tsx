@@ -154,14 +154,14 @@ export const MobileDrawer: React.FC<MobileDrawerProps> = ({ isOpen, onClose, cur
                   <div className="mt-0.5 text-xs text-slate-500">{ROLE_NAMES[user.role] || user.role}{user.className ? ` · ${user.className}` : ''}</div>
                 </div>
               </div>
-              <button type="button" onClick={onClose} className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl text-slate-500 hover:bg-slate-100 hover:text-slate-900" aria-label="Đóng menu">
+              <button type="button" onClick={onClose} className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg text-slate-500 hover:bg-slate-100 hover:text-slate-900" aria-label="Đóng menu">
                 <XMarkIcon className="h-5 w-5" />
               </button>
             </div>
             <nav className="space-y-4" aria-label="Điều hướng di động">
               {sections.map(section => (
                 <section key={section.label}>
-                  <div className="mb-1.5 px-3 text-xs font-bold uppercase tracking-wide text-slate-400">{section.label}</div>
+                  <div className="mb-1.5 px-3 text-xs font-bold text-slate-400">{section.label}</div>
                   <div className="space-y-1">
                     {section.items.map(item => {
                       const Icon = item.icon;
@@ -173,7 +173,7 @@ export const MobileDrawer: React.FC<MobileDrawerProps> = ({ isOpen, onClose, cur
                           onClick={() => go(item)}
                           aria-current={active ? 'page' : undefined}
                           className={cn(
-                            'flex min-h-11 w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-sm',
+                            'flex min-h-11 w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left text-sm',
                             active ? 'bg-primary-50 font-semibold text-primary-900' : 'font-medium text-slate-700 hover:bg-slate-100 hover:text-slate-950'
                           )}
                         >
@@ -188,7 +188,7 @@ export const MobileDrawer: React.FC<MobileDrawerProps> = ({ isOpen, onClose, cur
             </nav>
           </div>
           {onLogout && (
-            <button type="button" onClick={() => { onClose(); onLogout(); }} className="mt-6 flex min-h-11 items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-semibold text-rose-600 hover:bg-rose-50">
+            <button type="button" onClick={() => { onClose(); onLogout(); }} className="mt-6 flex min-h-11 items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-semibold text-rose-600 hover:bg-rose-50">
               <ArrowRightOnRectangleIcon className="h-5 w-5" />Đăng xuất
             </button>
           )}

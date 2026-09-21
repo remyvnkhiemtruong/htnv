@@ -61,7 +61,7 @@ export const Popover: React.FC<PopoverProps> = ({
           id={contentId}
           role="dialog"
           className={cn(
-            "absolute z-50 mt-2 rounded-xl bg-white border border-slate-200 shadow-elevated p-4 animate-fade-in",
+            "absolute z-50 mt-2 rounded-lg bg-white border border-slate-200 shadow-elevated p-4 animate-fade-in",
             align === 'right' ? 'right-0' : 'left-0',
             className
           )}

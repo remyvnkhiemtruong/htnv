@@ -1,11 +1,6 @@
 import React from 'react';
 import {
-  AcademicCapIcon,
   ArrowRightIcon,
-  CheckCircleIcon,
-  ChatBubbleLeftRightIcon,
-  ClipboardDocumentCheckIcon,
-  PencilSquareIcon
 } from '@heroicons/react/24/outline';
 import { Badge, Button, PageHeader } from '../components/ui';
 import { usePortfolio } from '../contexts/PortfolioContext';
@@ -17,27 +12,25 @@ type MetricTileProps = {
   label: string;
   value: number;
   note: string;
-  icon: React.ReactNode;
   tone?: 'default' | 'success' | 'warning' | 'info';
   onClick: () => void;
 };
 
-const MetricTile: React.FC<MetricTileProps> = ({ label, value, note, icon, tone = 'default', onClick }) => {
+const MetricTile: React.FC<MetricTileProps> = ({ label, value, note, tone = 'default', onClick }) => {
   const toneClass = tone === 'success'
-    ? 'border-emerald-200 bg-emerald-50/50'
+    ? 'border-emerald-600'
     : tone === 'warning'
-      ? 'border-amber-200 bg-amber-50/50'
+      ? 'border-amber-600'
       : tone === 'info'
-        ? 'border-sky-200 bg-sky-50/50'
-        : 'border-slate-200 bg-white';
+        ? 'border-sky-600'
+        : 'border-slate-300';
   return (
-    <button type="button" onClick={onClick} className={`v3-panel v3-panel-interactive flex w-full items-start justify-between gap-3 p-4 text-left ${toneClass}`}>
+    <button type="button" onClick={onClick} className={`w-full border-l-2 py-1 pl-4 text-left hover:bg-slate-50 ${toneClass}`}>
       <div className="min-w-0">
-        <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">{label}</div>
+        <div className="text-xs font-medium text-slate-500">{label}</div>
         <div className="mt-1 text-2xl font-bold tracking-tight text-slate-950">{value}</div>
         <div className="mt-1 truncate text-xs text-slate-500">{note}</div>
       </div>
-      <div className="rounded-lg border border-white/80 bg-white p-2 text-slate-600 shadow-sm">{icon}</div>
     </button>
   );
 };
@@ -79,11 +72,11 @@ export const TeacherDashboardView: React.FC<Props> = ({ onNavigate }) => {
       />
 
       <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
-        <MetricTile label="Cần xem" value={teacherPending} note="Góp ý đang chờ" tone={teacherPending ? 'warning' : 'success'} icon={<ClipboardDocumentCheckIcon className="h-5 w-5" />} onClick={() => onNavigate('teacher-review')} />
-        <MetricTile label="Phản hồi AI" value={aiPending} note="Phản hồi đã có" tone={aiPending ? 'info' : 'default'} icon={<ChatBubbleLeftRightIcon className="h-5 w-5" />} onClick={() => onNavigate('ai-workspace')} />
-        <MetricTile label="Chờ Rubric" value={rubricPending} note="Cần chấm" tone={rubricPending ? 'warning' : 'default'} icon={<AcademicCapIcon className="h-5 w-5" />} onClick={() => onNavigate('rubric-management')} />
-        <MetricTile label="Đang sửa bài" value={revising} note="Sau góp ý" icon={<PencilSquareIcon className="h-5 w-5" />} onClick={() => onNavigate('portfolio-list')} />
-        <MetricTile label="Hoàn thành" value={done} note="Đã hoàn thành" tone="success" icon={<CheckCircleIcon className="h-5 w-5" />} onClick={() => onNavigate('portfolio-list')} />
+        <MetricTile label="Cần xem" value={teacherPending} note="Góp ý đang chờ" tone={teacherPending ? 'warning' : 'success'} onClick={() => onNavigate('teacher-review')} />
+        <MetricTile label="Phản hồi AI" value={aiPending} note="Phản hồi đã có" tone={aiPending ? 'info' : 'default'} onClick={() => onNavigate('ai-workspace')} />
+        <MetricTile label="Chờ rubric" value={rubricPending} note="Cần chấm" tone={rubricPending ? 'warning' : 'default'} onClick={() => onNavigate('rubric-management')} />
+        <MetricTile label="Đang sửa bài" value={revising} note="Sau góp ý" onClick={() => onNavigate('portfolio-list')} />
+        <MetricTile label="Hoàn thành" value={done} note="Đã hoàn thành" tone="success" onClick={() => onNavigate('portfolio-list')} />
       </div>
 
       <section className="v3-panel overflow-hidden">
@@ -97,7 +90,7 @@ export const TeacherDashboardView: React.FC<Props> = ({ onNavigate }) => {
 
         <div className="hidden overflow-x-auto md:block">
           <table className="w-full min-w-[760px] border-collapse text-left">
-            <thead className="bg-slate-50 text-xs font-bold uppercase tracking-wide text-slate-500">
+            <thead className="bg-slate-50 text-xs font-bold text-slate-500">
               <tr>
                 <th className="px-5 py-3">Học sinh</th>
                 <th className="px-4 py-3">Lớp</th>

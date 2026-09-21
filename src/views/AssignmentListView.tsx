@@ -41,7 +41,7 @@ export const AssignmentListView: React.FC<AssignmentListViewProps> = ({ onNaviga
         </div>
 
         {assignments.length === 0 ? (
-          <div className="rounded-xl border border-slate-200 bg-white p-8 text-center text-sm text-slate-500">
+          <div className="rounded-lg border border-slate-200 bg-white p-8 text-center text-sm text-slate-500">
             Chưa có nhiệm vụ trong phạm vi của bạn.
           </div>
         ) : (
@@ -52,7 +52,7 @@ export const AssignmentListView: React.FC<AssignmentListViewProps> = ({ onNaviga
               const text = literatureTexts.find(item => item.id === assignment.textId);
               const canOpenReview = user.role === 'teacher' || user.role === 'peer' || user.role === 'admin';
               return (
-                <article key={assignment.id} className="rounded-xl border border-slate-200 bg-white p-4">
+                <article key={assignment.id} className="rounded-lg border border-slate-200 bg-white p-4">
                   <div className="flex items-start justify-between gap-3">
                     <div className="min-w-0">
                       <h2 className="font-semibold text-slate-900">{assignment.title}</h2>
@@ -110,7 +110,7 @@ export const AssignmentListView: React.FC<AssignmentListViewProps> = ({ onNaviga
           });
           const text = literatureTexts.find(t => t.id === assignment.textId);
           return (
-            <article key={assignment.id} className="rounded-xl border border-slate-200 bg-white p-4">
+            <article key={assignment.id} className="rounded-lg border border-slate-200 bg-white p-4">
               <div className="flex items-start justify-between gap-2">
                 <div>
                   <h2 className="font-semibold text-slate-900">{assignment.title}</h2>
@@ -132,3 +132,4 @@ export const AssignmentListView: React.FC<AssignmentListViewProps> = ({ onNaviga
     </div>
   );
 };
+

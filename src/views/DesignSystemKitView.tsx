@@ -159,8 +159,8 @@ export const DesignSystemKitView: React.FC = () => {
               </div>
 
               {/* Literary Reading Content Block */}
-              <div className="pt-4 bg-slate-50 p-5 rounded-xl border border-slate-200">
-                <span className="text-caption font-bold text-slate-500 uppercase tracking-wider block mb-2">
+              <div className="pt-4 bg-slate-50 p-5 rounded-lg border border-slate-200">
+                <span className="text-caption font-bold text-slate-500 block mb-2">
                   Chuyên mục Đọc Văn Bản Nghệ Thuật (Be Vietnam Pro / Inter Sans-serif • Line-height 1.75 • Max-width 68ch)
                 </span>
                 <div className="lit-reader-content">
@@ -183,7 +183,7 @@ export const DesignSystemKitView: React.FC = () => {
 
             <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
               {/* Primary */}
-              <div className="p-4 rounded-xl bg-primary-50/50 border border-primary-100 space-y-2">
+              <div className="p-4 rounded-lg bg-primary-50/50 border border-primary-100 space-y-2">
                 <div className="w-full h-12 rounded-lg bg-primary-600 flex items-center justify-center text-white font-bold text-xs">
                   Primary #4F46E5
                 </div>
@@ -192,7 +192,7 @@ export const DesignSystemKitView: React.FC = () => {
               </div>
 
               {/* Success */}
-              <div className="p-4 rounded-xl bg-emerald-50/50 border border-emerald-100 space-y-2">
+              <div className="p-4 rounded-lg bg-emerald-50/50 border border-emerald-100 space-y-2">
                 <div className="w-full h-12 rounded-lg bg-emerald-600 flex items-center justify-center text-white font-bold text-xs">
                   Success #10B981
                 </div>
@@ -201,7 +201,7 @@ export const DesignSystemKitView: React.FC = () => {
               </div>
 
               {/* Warning */}
-              <div className="p-4 rounded-xl bg-amber-50/50 border border-amber-100 space-y-2">
+              <div className="p-4 rounded-lg bg-amber-50/50 border border-amber-100 space-y-2">
                 <div className="w-full h-12 rounded-lg bg-amber-500 flex items-center justify-center text-white font-bold text-xs">
                   Warning #F59E0B
                 </div>
@@ -210,7 +210,7 @@ export const DesignSystemKitView: React.FC = () => {
               </div>
 
               {/* Danger */}
-              <div className="p-4 rounded-xl bg-rose-50/50 border border-rose-100 space-y-2">
+              <div className="p-4 rounded-lg bg-rose-50/50 border border-rose-100 space-y-2">
                 <div className="w-full h-12 rounded-lg bg-rose-600 flex items-center justify-center text-white font-bold text-xs">
                   Danger #EF4444
                 </div>
@@ -219,7 +219,7 @@ export const DesignSystemKitView: React.FC = () => {
               </div>
 
               {/* Neutral */}
-              <div className="p-4 rounded-xl bg-slate-100/70 border border-slate-200 space-y-2">
+              <div className="p-4 rounded-lg bg-slate-100/70 border border-slate-200 space-y-2">
                 <div className="w-full h-12 rounded-lg bg-slate-800 flex items-center justify-center text-white font-bold text-xs">
                   Neutral #1E293B
                 </div>
@@ -436,7 +436,7 @@ export const DesignSystemKitView: React.FC = () => {
 
               {/* Skeleton & Empty state demo */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-4">
-                <div className="p-4 border border-slate-200 rounded-xl bg-slate-50/50 space-y-2">
+                <div className="p-4 border border-slate-200 rounded-lg bg-slate-50/50 space-y-2">
                   <span className="text-caption font-bold text-slate-500 uppercase">Skeleton Loader State</span>
                   <Skeleton className="h-4 w-3/4" />
                   <Skeleton className="h-4 w-1/2" />
@@ -446,7 +446,7 @@ export const DesignSystemKitView: React.FC = () => {
                 <EmptyState
                   title="Chưa có dữ liệu phiên bản"
                   description="Bắt đầu viết nháp để tạo mốc snapshot đầu tiên."
-                  className="border border-slate-200 rounded-xl bg-white p-4"
+                  className="border border-slate-200 rounded-lg bg-white p-4"
                 />
               </div>
 
@@ -499,7 +499,7 @@ export const DesignSystemKitView: React.FC = () => {
             </header>
 
             <div className="space-y-4">
-              <div className="p-5 rounded-xl bg-slate-50 border border-slate-200 space-y-3">
+              <div className="p-5 rounded-lg bg-slate-50 border border-slate-200 space-y-3">
                 <span className="text-caption font-bold text-slate-600 uppercase">Minh họa trực tiếp đoạn so sánh Diff:</span>
                 <div className="lit-content text-slate-800 leading-relaxed text-sm bg-white p-4 rounded-lg border border-slate-200">
                   Tác giả Kim Lân đã xây dựng tình huống truyện{' '}
@@ -511,7 +511,7 @@ export const DesignSystemKitView: React.FC = () => {
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div className="p-4 rounded-xl bg-emerald-50/70 border border-emerald-200">
+                <div className="p-4 rounded-lg bg-emerald-50/70 border border-emerald-200">
                   <div className="flex items-center gap-2 text-xs font-bold text-emerald-900">
                     <span className="diff-tag-added text-xs">Từ ngữ thêm mới</span>
                   </div>
@@ -520,7 +520,7 @@ export const DesignSystemKitView: React.FC = () => {
                   </p>
                 </div>
 
-                <div className="p-4 rounded-xl bg-rose-50/70 border border-rose-200">
+                <div className="p-4 rounded-lg bg-rose-50/70 border border-rose-200">
                   <div className="flex items-center gap-2 text-xs font-bold text-rose-900">
                     <span className="diff-tag-removed text-xs">Từ ngữ cắt bỏ</span>
                   </div>
@@ -529,7 +529,7 @@ export const DesignSystemKitView: React.FC = () => {
                   </p>
                 </div>
 
-                <div className="p-4 rounded-xl bg-amber-50/70 border border-amber-200">
+                <div className="p-4 rounded-lg bg-amber-50/70 border border-amber-200">
                   <div className="flex items-center gap-2 text-xs font-bold text-amber-900">
                     <span className="diff-tag-changed text-xs">Từ ngữ chỉnh sửa</span>
                   </div>
@@ -550,7 +550,7 @@ export const DesignSystemKitView: React.FC = () => {
             </header>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-              <div className="p-4 rounded-xl border border-rose-200 bg-rose-50/50 space-y-2">
+              <div className="p-4 rounded-lg border border-rose-200 bg-rose-50/50 space-y-2">
                 <div className="flex items-center justify-between text-xs font-bold text-rose-900">
                   <span>Mức 1: Chưa Đạt</span>
                   <span>1.0 đ</span>
@@ -560,7 +560,7 @@ export const DesignSystemKitView: React.FC = () => {
                 </p>
               </div>
 
-              <div className="p-4 rounded-xl border border-amber-200 bg-amber-50/50 space-y-2">
+              <div className="p-4 rounded-lg border border-amber-200 bg-amber-50/50 space-y-2">
                 <div className="flex items-center justify-between text-xs font-bold text-amber-900">
                   <span>Mức 2: Đạt</span>
                   <span>2.0 đ</span>
@@ -570,7 +570,7 @@ export const DesignSystemKitView: React.FC = () => {
                 </p>
               </div>
 
-              <div className="p-4 rounded-xl border border-sky-200 bg-sky-50/50 space-y-2">
+              <div className="p-4 rounded-lg border border-sky-200 bg-sky-50/50 space-y-2">
                 <div className="flex items-center justify-between text-xs font-bold text-sky-900">
                   <span>Mức 3: Khá</span>
                   <span>3.0 đ</span>
@@ -580,7 +580,7 @@ export const DesignSystemKitView: React.FC = () => {
                 </p>
               </div>
 
-              <div className="p-4 rounded-xl border border-emerald-200 bg-emerald-50/50 space-y-2">
+              <div className="p-4 rounded-lg border border-emerald-200 bg-emerald-50/50 space-y-2">
                 <div className="flex items-center justify-between text-xs font-bold text-emerald-900">
                   <span>Mức 4: Xuất Sắc</span>
                   <span>4.0 đ</span>
@@ -701,7 +701,7 @@ export const DesignSystemKitView: React.FC = () => {
             Các nhận xét này được neo chính xác vào đoạn trích dẫn của tác phẩm <em>Vợ nhặt</em>.
           </Alert>
 
-          <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200 space-y-2">
+          <div className="p-3.5 rounded-lg bg-slate-50 border border-slate-200 space-y-2">
             <div className="flex items-center justify-between text-xs">
               <span className="font-bold text-slate-800">Cô Nguyễn Thị Mai (Giáo viên)</span>
               <span className="text-caption text-slate-400">18/08/2026</span>
@@ -715,3 +715,4 @@ export const DesignSystemKitView: React.FC = () => {
     </div>
   );
 };
+

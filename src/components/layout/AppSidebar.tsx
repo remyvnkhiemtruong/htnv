@@ -163,7 +163,7 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
         <nav className="space-y-4" aria-label="Điều hướng chính">
           {sections.map(section => (
             <section key={section.label}>
-              {!isCollapsed && <div className="mb-1.5 px-2.5 text-xs font-bold uppercase tracking-wider text-slate-400">{section.label}</div>}
+              {!isCollapsed && <div className="mb-1.5 px-2.5 text-xs font-bold text-slate-400">{section.label}</div>}
               <div className="space-y-0.5">
                 {section.items.map(item => {
                   const active = currentView === item.id;
@@ -195,3 +195,4 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
     </aside>
   );
 };
+

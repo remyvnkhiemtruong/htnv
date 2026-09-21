@@ -163,7 +163,7 @@ export const CompetencyRadarChart: React.FC<CompetencyAnalyticsProps> = ({
           const diff = s2 - s1;
 
           return (
-            <div key={axis.id} className="p-2.5 rounded-xl bg-slate-50 border border-slate-200 text-center">
+            <div key={axis.id} className="p-2.5 rounded-lg bg-slate-50 border border-slate-200 text-center">
               <div className="text-xs font-bold text-slate-800 truncate" title={axis.title}>
                 {axis.shortName}
               </div>

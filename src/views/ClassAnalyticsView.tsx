@@ -157,7 +157,7 @@ export const ClassAnalyticsView: React.FC<ClassAnalyticsViewProps> = ({ onNaviga
 
       {/* Summary KPI Strip */}
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-        <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-xs">
+        <div className="rounded-lg border border-slate-200 bg-white p-4">
           <div className="flex items-center justify-between text-xs text-slate-500">
             <span>Học sinh</span>
             <UserGroupIcon className="h-4 w-4 text-slate-400" />
@@ -166,7 +166,7 @@ export const ClassAnalyticsView: React.FC<ClassAnalyticsViewProps> = ({ onNaviga
           <div className="mt-1 text-xs text-slate-500">học sinh trong bộ lọc</div>
         </div>
 
-        <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-xs">
+        <div className="rounded-lg border border-slate-200 bg-white p-4">
           <div className="flex items-center justify-between text-xs text-slate-500">
             <span>Tiến độ nộp bài</span>
             <AcademicCapIcon className="h-4 w-4 text-primary-600" />
@@ -175,7 +175,7 @@ export const ClassAnalyticsView: React.FC<ClassAnalyticsViewProps> = ({ onNaviga
           <div className="mt-1 text-xs text-slate-500">học sinh đã nộp V1+</div>
         </div>
 
-        <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-xs">
+        <div className="rounded-lg border border-slate-200 bg-white p-4">
           <div className="flex items-center justify-between text-xs text-slate-500">
             <span>Điểm trung bình lớp</span>
             <ArrowTrendingUpIcon className="h-4 w-4 text-emerald-600" />
@@ -186,7 +186,7 @@ export const ClassAnalyticsView: React.FC<ClassAnalyticsViewProps> = ({ onNaviga
           <div className="mt-1 text-xs text-slate-500">{perStudentOverall.length} học sinh đã có điểm</div>
         </div>
 
-        <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-xs">
+        <div className="rounded-lg border border-slate-200 bg-white p-4">
           <div className="flex items-center justify-between text-xs text-slate-500">
             <span>Trục thi pháp yếu nhất</span>
             <ExclamationTriangleIcon className="h-4 w-4 text-amber-500" />
@@ -203,7 +203,7 @@ export const ClassAnalyticsView: React.FC<ClassAnalyticsViewProps> = ({ onNaviga
       </div>
 
       {/* Axis Performance Visualization Bars */}
-      <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-xs space-y-4">
+      <div className="rounded-lg border border-slate-200 bg-white p-5 space-y-4">
         <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 pb-3">
           <div>
             <h2 className="text-sm font-bold text-slate-900">Kết quả theo 6 trục</h2>
@@ -233,7 +233,7 @@ export const ClassAnalyticsView: React.FC<ClassAnalyticsViewProps> = ({ onNaviga
                 onClick={() => setSelectedAxisFilter(isSelected ? null : axis)}
                 className={`flex flex-col justify-between rounded-lg border p-3.5 text-left transition ${
                   isSelected
-                    ? 'border-primary-600 bg-primary-50/60 shadow-xs ring-1 ring-primary-600'
+                    ? 'border-primary-600 bg-primary-50/60 ring-1 ring-primary-600'
                     : 'border-slate-200 bg-slate-50/50 hover:border-slate-300 hover:bg-white'
                 }`}
               >
@@ -268,7 +268,7 @@ export const ClassAnalyticsView: React.FC<ClassAnalyticsViewProps> = ({ onNaviga
       </div>
 
       {/* Criteria Breakdown Table */}
-      <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-xs">
+      <div className="overflow-hidden rounded-lg border border-slate-200 bg-white">
         <div className="flex flex-wrap items-center justify-between border-b border-slate-200 bg-slate-50/70 p-4">
           <div>
             <h2 className="text-sm font-bold text-slate-900">Điểm từng học sinh</h2>

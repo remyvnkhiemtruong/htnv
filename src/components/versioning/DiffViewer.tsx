@@ -117,21 +117,21 @@ export const DiffViewer: React.FC<DiffViewerProps> = ({ v1, v2, studentName }) =
             type="button"
             onClick={() => setViewMode('side-by-side')}
             className={`inline-flex items-center gap-1 px-2.5 py-1 rounded text-xs font-semibold transition-colors ${
-              viewMode === 'side-by-side' ? 'bg-white text-slate-900 shadow-xs' : 'text-slate-600 hover:text-slate-900'
+              viewMode === 'side-by-side' ? 'bg-white text-slate-900' : 'text-slate-600 hover:text-slate-900'
             }`}
           >
             <Split className="w-3.5 h-3.5" />
-            Song song (Side-by-Side)
+            Song song
           </button>
           <button
             type="button"
             onClick={() => setViewMode('unified')}
             className={`inline-flex items-center gap-1 px-2.5 py-1 rounded text-xs font-semibold transition-colors ${
-              viewMode === 'unified' ? 'bg-white text-slate-900 shadow-xs' : 'text-slate-600 hover:text-slate-900'
+              viewMode === 'unified' ? 'bg-white text-slate-900' : 'text-slate-600 hover:text-slate-900'
             }`}
           >
             <AlignLeft className="w-3.5 h-3.5" />
-            Hợp nhất (Unified Diff)
+            Gộp thay đổi
           </button>
         </div>
       </div>
@@ -167,7 +167,7 @@ export const DiffViewer: React.FC<DiffViewerProps> = ({ v1, v2, studentName }) =
                 {viewMode === 'side-by-side' ? (
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     {/* Left: Old Version */}
-                    <div className="border border-slate-200 rounded-xl p-4 bg-slate-50/50">
+                    <div className="border border-slate-200 rounded-lg p-4 bg-slate-50/50">
                       <div className="flex items-center justify-between pb-2 mb-3 border-b border-slate-200 text-xs font-bold text-slate-600">
                         <span>Bản gốc: {v1.versionNumber}</span>
                         <span className="text-slate-400 font-normal">{new Date(v1.createdAt).toLocaleDateString('vi-VN')}</span>
@@ -178,7 +178,7 @@ export const DiffViewer: React.FC<DiffViewerProps> = ({ v1, v2, studentName }) =
                     </div>
 
                     {/* Right: New Version */}
-                    <div className="border border-emerald-200 rounded-xl p-4 bg-emerald-50/20">
+                    <div className="border border-emerald-200 rounded-lg p-4 bg-emerald-50/20">
                       <div className="flex items-center justify-between pb-2 mb-3 border-b border-emerald-200 text-xs font-bold text-emerald-800">
                         <span>Bản mới: {v2.versionNumber}</span>
                         <span className="text-emerald-600 font-normal">{new Date(v2.createdAt).toLocaleDateString('vi-VN')}</span>
@@ -198,7 +198,7 @@ export const DiffViewer: React.FC<DiffViewerProps> = ({ v1, v2, studentName }) =
                   </div>
                 ) : (
                   /* Unified Inline Diff */
-                  <div className="border border-slate-200 rounded-xl p-5 bg-slate-50/30">
+                  <div className="border border-slate-200 rounded-lg p-5 bg-slate-50/30">
                     <div className="lit-content text-slate-800 text-sm whitespace-pre-wrap leading-relaxed">
                       {diff.diffSegments.map((seg, idx) => {
                         if (seg.type === 'added') {

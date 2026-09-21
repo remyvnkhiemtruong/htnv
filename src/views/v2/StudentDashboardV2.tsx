@@ -1,8 +1,6 @@
 import React from 'react';
 import {
   ArrowRightIcon,
-  BookOpenIcon,
-  ChatBubbleLeftRightIcon,
   CheckCircleIcon,
   ClockIcon
 } from '@heroicons/react/24/outline';
@@ -16,26 +14,24 @@ type MetricTileProps = {
   label: string;
   value: string | number;
   note: string;
-  icon: React.ReactNode;
   tone?: 'default' | 'success' | 'warning' | 'accent';
 };
 
-const MetricTile: React.FC<MetricTileProps> = ({ label, value, note, icon, tone = 'default' }) => {
+const MetricTile: React.FC<MetricTileProps> = ({ label, value, note, tone = 'default' }) => {
   const toneClass = tone === 'success'
-    ? 'border-emerald-200 bg-emerald-50/50'
+    ? 'border-emerald-600'
     : tone === 'warning'
-      ? 'border-amber-200 bg-amber-50/50'
+      ? 'border-amber-600'
       : tone === 'accent'
-        ? 'border-primary-200 bg-primary-50/50'
-        : 'border-slate-200 bg-white';
+        ? 'border-primary-700'
+        : 'border-slate-300';
   return (
-    <div className={`v3-panel academic-card-hover flex items-start justify-between gap-3 p-4 ${toneClass}`}>
+    <div className={`border-l-2 py-1 pl-4 ${toneClass}`}>
       <div className="min-w-0">
-        <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">{label}</div>
+        <div className="text-xs font-medium text-slate-500">{label}</div>
         <div className="mt-1 text-2xl font-bold tracking-tight text-slate-950">{value}</div>
         <div className="mt-1 truncate text-xs text-slate-500">{note}</div>
       </div>
-      <div className="rounded-lg border border-white/80 bg-white p-2 text-slate-600 shadow-xs">{icon}</div>
     </div>
   );
 };
@@ -90,9 +86,9 @@ export const StudentDashboardView: React.FC<{ onNavigate: (view: string, params?
       />
 
       <div className="grid gap-3 sm:grid-cols-3">
-        <MetricTile label="Tiến độ chung" value={`${averageProgress}%`} note={`${completed}/${items.length} nhiệm vụ hoàn tất`} tone="accent" icon={<CheckCircleIcon className="h-5 w-5" />} />
-        <MetricTile label="Phản hồi cần xem" value={unresolvedFeedbacks.length} note="AI / giáo viên / phản biện" tone={unresolvedFeedbacks.length ? 'warning' : 'success'} icon={<ChatBubbleLeftRightIcon className="h-5 w-5" />} />
-        <MetricTile label="Nhiệm vụ đang học" value={Math.max(0, items.length - completed)} note="V0 · V1 · chỉnh sửa · REF1" icon={<BookOpenIcon className="h-5 w-5" />} />
+        <MetricTile label="Tiến độ chung" value={`${averageProgress}%`} note={`${completed}/${items.length} nhiệm vụ hoàn tất`} tone="accent" />
+        <MetricTile label="Phản hồi cần xem" value={unresolvedFeedbacks.length} note="AI · giáo viên · phản biện" tone={unresolvedFeedbacks.length ? 'warning' : 'success'} />
+        <MetricTile label="Nhiệm vụ đang học" value={Math.max(0, items.length - completed)} note="V0 · V1 · chỉnh sửa · REF1" />
       </div>
 
       {next ? (

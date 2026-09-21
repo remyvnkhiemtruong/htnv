@@ -25,7 +25,7 @@ export const NotFoundView: React.FC<NotFoundViewProps> = ({ onNavigate }) => {
       </div>
 
       <div className="space-y-2">
-        <span className="text-caption font-bold text-slate-500 uppercase tracking-wider bg-slate-200/70 px-2.5 py-1 rounded-md">
+        <span className="text-caption font-bold text-slate-500 bg-slate-200/70 px-2.5 py-1 rounded-md">
           404 • Không tìm thấy trang
         </span>
         <h1 className="text-h2 font-bold text-slate-900">
@@ -48,3 +48,4 @@ export const NotFoundView: React.FC<NotFoundViewProps> = ({ onNavigate }) => {
     </div>
   );
 };
+

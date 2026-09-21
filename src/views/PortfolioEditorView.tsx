@@ -398,7 +398,7 @@ export const PortfolioEditorView: React.FC<PortfolioEditorViewProps> = ({ assign
           <aside className={`border-b border-slate-200 bg-slate-50/60 p-3 lg:border-b-0 lg:border-r ${mobileTab !== 'write' ? 'hidden lg:block' : ''}`}>
             <div className="mb-2.5 flex items-center justify-between px-1">
               {!isLeftCollapsed && (
-                <span className="text-xs font-bold uppercase tracking-wide text-slate-500">Trục phân tích</span>
+                <span className="text-xs font-bold text-slate-500">Trục phân tích</span>
               )}
               <button
                 type="button"
@@ -426,7 +426,7 @@ export const PortfolioEditorView: React.FC<PortfolioEditorViewProps> = ({ assign
                     aria-current={active ? 'step' : undefined}
                     className={`flex shrink-0 items-center justify-between gap-2 rounded-lg border px-3 py-2 text-left text-sm transition-colors lg:w-full ${
                       active
-                        ? 'border-primary-300 bg-primary-50 font-semibold text-primary-950 shadow-xs'
+                        ? 'border-primary-300 bg-primary-50 font-semibold text-primary-950'
                         : 'border-transparent text-slate-600 hover:border-slate-200 hover:bg-white hover:text-slate-900'
                     } ${isLeftCollapsed ? 'justify-center px-2' : ''}`}
                   >
@@ -479,7 +479,7 @@ export const PortfolioEditorView: React.FC<PortfolioEditorViewProps> = ({ assign
           )}
 
           {predictionAvailable && (
-            <section className="rounded-xl border border-sky-200 bg-sky-50 p-4 text-sm leading-6 text-sky-950 sm:p-5">
+            <section className="rounded-lg border border-sky-200 bg-sky-50 p-4 text-sm leading-6 text-sky-950 sm:p-5">
               <div className="font-bold">Bước đầu tiên: V0 – Dự đoán trước đọc</div>
               <p className="mt-1 text-xs leading-5 text-sky-800">
                 {predictionPrompt || 'Trả lời các câu hỏi dưới đây, nêu căn cứ và mức tự tin trước khi nộp V1. V0 sẽ được khóa sau khi nộp.'}
@@ -502,7 +502,7 @@ export const PortfolioEditorView: React.FC<PortfolioEditorViewProps> = ({ assign
             {/* Axis Header & Typography Controls */}
             <div className="flex flex-wrap items-end justify-between gap-3 border-b border-slate-200 pb-3">
               <div className="min-w-0">
-                <span className="text-xs font-bold uppercase tracking-wider text-primary-700">Đang viết trục</span>
+                <span className="text-xs font-bold text-primary-700">Đang viết trục</span>
                 <h1 className="mt-1 text-xl font-bold tracking-tight text-slate-950 sm:text-2xl">{currentAxisMeta.title}</h1>
                 <p className="mt-1 text-xs leading-5 text-slate-500">{currentAxisMeta.description}</p>
               </div>
@@ -539,7 +539,7 @@ export const PortfolioEditorView: React.FC<PortfolioEditorViewProps> = ({ assign
                   onChange={e => updateAnalysis(e.target.value)}
                   rows={isFocusMode ? 22 : 16}
                   placeholder="Viết luận điểm, phân tích chi tiết nghệ thuật, lí giải ý nghĩa..."
-                  className={`w-full resize-y rounded-lg border border-slate-300 bg-white p-4 font-sans text-slate-900 shadow-xs outline-none transition-colors focus:border-primary-600 focus:ring-2 focus:ring-primary-600/10 ${editorFontSizeClass}`}
+                  className={`w-full resize-y rounded-lg border border-slate-300 bg-white p-4 font-sans text-slate-900 outline-none transition-colors focus:border-primary-600 focus:ring-2 focus:ring-primary-600/10 ${editorFontSizeClass}`}
                 />
               </div>
 
@@ -605,7 +605,7 @@ export const PortfolioEditorView: React.FC<PortfolioEditorViewProps> = ({ assign
           {latestRevision && !isFocusMode && (
             <section className="workspace-prose mx-auto space-y-3 rounded-lg border border-slate-200 bg-slate-50/60 p-4 sm:p-5">
               <div>
-                <span className="text-xs font-bold uppercase tracking-wider text-primary-700">Tự phản tư</span>
+                <span className="text-xs font-bold text-primary-700">Tự phản tư</span>
                 <h2 className="mt-1 text-base font-bold text-slate-900">REF1 – Sau {latestRevision.versionNumber}</h2>
                 <p className="mt-1 text-xs leading-5 text-slate-500">Ghi lại điều em đã thay đổi sau khi sửa bài.</p>
               </div>
@@ -660,7 +660,7 @@ export const PortfolioEditorView: React.FC<PortfolioEditorViewProps> = ({ assign
                 aria-selected={inspectorTab === 'prompt'}
                 onClick={() => setInspectorTab('prompt')}
                 className={`rounded-md px-2.5 py-1.5 transition-colors ${
-                  inspectorTab === 'prompt' ? 'bg-white font-semibold text-slate-900 shadow-xs border border-slate-200' : 'text-slate-500 hover:text-slate-900'
+                  inspectorTab === 'prompt' ? 'bg-white font-semibold text-slate-900 border border-slate-200' : 'text-slate-500 hover:text-slate-900'
                 }`}
               >
                 Yêu cầu
@@ -671,7 +671,7 @@ export const PortfolioEditorView: React.FC<PortfolioEditorViewProps> = ({ assign
                 aria-selected={inspectorTab === 'text'}
                 onClick={() => setInspectorTab('text')}
                 className={`rounded-md px-2.5 py-1.5 transition-colors ${
-                  inspectorTab === 'text' ? 'bg-white font-semibold text-slate-900 shadow-xs border border-slate-200' : 'text-slate-500 hover:text-slate-900'
+                  inspectorTab === 'text' ? 'bg-white font-semibold text-slate-900 border border-slate-200' : 'text-slate-500 hover:text-slate-900'
                 }`}
               >
                 Ngữ liệu
@@ -682,7 +682,7 @@ export const PortfolioEditorView: React.FC<PortfolioEditorViewProps> = ({ assign
                 aria-selected={inspectorTab === 'evidence'}
                 onClick={() => setInspectorTab('evidence')}
                 className={`rounded-md px-2.5 py-1.5 transition-colors ${
-                  inspectorTab === 'evidence' ? 'bg-white font-semibold text-slate-900 shadow-xs border border-slate-200' : 'text-slate-500 hover:text-slate-900'
+                  inspectorTab === 'evidence' ? 'bg-white font-semibold text-slate-900 border border-slate-200' : 'text-slate-500 hover:text-slate-900'
                 }`}
               >
                 Dẫn chứng
@@ -693,7 +693,7 @@ export const PortfolioEditorView: React.FC<PortfolioEditorViewProps> = ({ assign
                 aria-selected={inspectorTab === 'feedback'}
                 onClick={() => setInspectorTab('feedback')}
                 className={`rounded-md px-2.5 py-1.5 transition-colors ${
-                  inspectorTab === 'feedback' ? 'bg-white font-semibold text-slate-900 shadow-xs border border-slate-200' : 'text-slate-500 hover:text-slate-900'
+                  inspectorTab === 'feedback' ? 'bg-white font-semibold text-slate-900 border border-slate-200' : 'text-slate-500 hover:text-slate-900'
                 }`}
               >
                 Phản hồi {axisFeedbacks.length > 0 && `(${axisFeedbacks.length})`}
@@ -704,7 +704,7 @@ export const PortfolioEditorView: React.FC<PortfolioEditorViewProps> = ({ assign
                 aria-selected={inspectorTab === 'history'}
                 onClick={() => setInspectorTab('history')}
                 className={`rounded-md px-2.5 py-1.5 transition-colors ${
-                  inspectorTab === 'history' ? 'bg-white font-semibold text-slate-900 shadow-xs border border-slate-200' : 'text-slate-500 hover:text-slate-900'
+                  inspectorTab === 'history' ? 'bg-white font-semibold text-slate-900 border border-slate-200' : 'text-slate-500 hover:text-slate-900'
                 }`}
               >
                 Phiên bản
@@ -715,7 +715,7 @@ export const PortfolioEditorView: React.FC<PortfolioEditorViewProps> = ({ assign
             {inspectorTab === 'prompt' && (
               <div className="mt-4 space-y-4">
                 <div className="flex items-center justify-between gap-2">
-                  <h3 className="text-xs font-bold uppercase tracking-wide text-slate-600">Đề bài</h3>
+                  <h3 className="text-xs font-bold text-slate-600">Đề bài</h3>
                   <Badge size="sm" variant="outline">{assignment.difficulty}</Badge>
                 </div>
                 <div className="rounded-lg border border-slate-200 bg-white p-3.5 text-xs leading-relaxed text-slate-700">
@@ -747,7 +747,7 @@ export const PortfolioEditorView: React.FC<PortfolioEditorViewProps> = ({ assign
             {inspectorTab === 'text' && (
               <div className="mt-4 space-y-3">
                 <div>
-                  <h3 className="text-xs font-bold uppercase tracking-wide text-slate-600">Ngữ liệu</h3>
+                  <h3 className="text-xs font-bold text-slate-600">Ngữ liệu</h3>
                   <p className="mt-1 text-xs text-slate-500">
                     {literatureText ? `${literatureText.title} — ${literatureText.author}` : 'Chưa có ngữ liệu.'}
                   </p>
@@ -768,7 +768,7 @@ export const PortfolioEditorView: React.FC<PortfolioEditorViewProps> = ({ assign
             {inspectorTab === 'evidence' && (
               <div className="mt-4 space-y-3">
                 <div className="flex items-center justify-between">
-                  <h3 className="text-xs font-bold uppercase tracking-wide text-slate-600">Dẫn chứng ({currentAxisMeta.shortName})</h3>
+                  <h3 className="text-xs font-bold text-slate-600">Dẫn chứng ({currentAxisMeta.shortName})</h3>
                   <span className="text-xs text-slate-400">{(currentAxis?.evidenceQuotes || []).length} câu</span>
                 </div>
                 <textarea
@@ -788,7 +788,7 @@ export const PortfolioEditorView: React.FC<PortfolioEditorViewProps> = ({ assign
             {inspectorTab === 'feedback' && (
               <div className="mt-4 space-y-3">
                 <div className="flex items-center justify-between">
-                  <h3 className="text-xs font-bold uppercase tracking-wide text-slate-600">Phản hồi theo trục</h3>
+                  <h3 className="text-xs font-bold text-slate-600">Phản hồi theo trục</h3>
                   {axisFeedbacks.length > 0 && <Badge size="sm" variant="amber">{axisFeedbacks.length}</Badge>}
                 </div>
 
@@ -820,7 +820,7 @@ export const PortfolioEditorView: React.FC<PortfolioEditorViewProps> = ({ assign
             {/* Tab 4: Versions & History */}
             {inspectorTab === 'history' && (
               <div className="mt-4 space-y-3">
-                <h3 className="text-xs font-bold uppercase tracking-wide text-slate-600">Lịch sử bài nộp</h3>
+                <h3 className="text-xs font-bold text-slate-600">Lịch sử bài nộp</h3>
                 {versions.length === 0 ? (
                   <p className="py-6 text-center text-xs text-slate-500">Chưa có phiên bản nào được nộp.</p>
                 ) : (

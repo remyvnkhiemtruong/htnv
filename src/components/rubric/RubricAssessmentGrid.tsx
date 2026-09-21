@@ -199,7 +199,7 @@ export const RubricAssessmentGrid: React.FC<RubricAssessmentGridProps> = ({
                       onClick={() => handleSelectLevel(crit.id, lvl.level, lvl.score)}
                       disabled={isReadOnly}
                       aria-pressed={isChosen}
-                      className={`p-3.5 rounded-xl border text-left transition-all flex flex-col justify-between disabled:cursor-default ${levelColors[lvl.level] || 'bg-white border-slate-200'}`}
+                      className={`p-3.5 rounded-lg border text-left transition-all flex flex-col justify-between disabled:cursor-default ${levelColors[lvl.level] || 'bg-white border-slate-200'}`}
                     >
                       <div>
                         <div className="flex items-center justify-between pb-2 mb-2 border-b border-slate-200/60">
@@ -283,7 +283,7 @@ export const RubricAssessmentGrid: React.FC<RubricAssessmentGridProps> = ({
 
               <button
                 type="submit"
-                className="inline-flex items-center gap-2 px-6 py-2.5 bg-sky-600 hover:bg-sky-700 text-white rounded-xl text-xs font-bold shadow-md hover:shadow-lg transition-all"
+                className="inline-flex items-center gap-2 px-6 py-2.5 bg-sky-600 hover:bg-sky-700 text-white rounded-lg text-xs font-bold shadow-md hover:shadow-lg transition-all"
               >
                 <Award className="w-4 h-4" />
                 Lưu & Đăng Bảng Đánh Giá Rubric ({currentUser.role === 'teacher' ? 'Giáo viên' : currentUser.role === 'peer' ? 'Bạn học' : 'Tự đánh giá'})

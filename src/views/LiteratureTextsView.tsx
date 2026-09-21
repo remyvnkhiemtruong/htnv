@@ -144,7 +144,7 @@ export const LiteratureTextsView: React.FC<LiteratureTextsViewProps> = ({ onNavi
       />
 
       {/* Texts List */}
-      <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-xs">
+      <div className="overflow-hidden rounded-lg border border-slate-200 bg-white">
         <div className="overflow-x-auto">
           <table className="w-full text-left text-xs">
             <thead className="border-b border-slate-200 bg-slate-50/80 text-slate-600 font-semibold">
@@ -335,3 +335,4 @@ export const LiteratureTextsView: React.FC<LiteratureTextsViewProps> = ({ onNavi
     </div>
   );
 };
+

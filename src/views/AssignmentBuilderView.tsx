@@ -227,7 +227,7 @@ export const AssignmentBuilderView: React.FC<Props> = ({ onNavigate }) => {
               }}
               className={`flex flex-col rounded-lg border p-3 text-left transition ${
                 isCurrent
-                  ? 'border-slate-900 bg-slate-900 text-white shadow-xs'
+                  ? 'border-slate-900 bg-slate-900 text-white'
                   : isPassed
                   ? 'border-emerald-200 bg-emerald-50/70 text-slate-900'
                   : 'border-slate-200 bg-white text-slate-500 hover:border-slate-300'
@@ -251,7 +251,7 @@ export const AssignmentBuilderView: React.FC<Props> = ({ onNavigate }) => {
       </nav>
 
       {/* Step Contents */}
-      <div className="rounded-xl border border-slate-200 bg-white p-5 sm:p-7 shadow-xs">
+      <div className="rounded-lg border border-slate-200 bg-white p-5 sm:p-7">
         {/* Step 1: Class & Literature Text */}
         {step === 1 && (
           <div className="space-y-5">
@@ -482,7 +482,7 @@ export const AssignmentBuilderView: React.FC<Props> = ({ onNavigate }) => {
             <div className="space-y-4 rounded-lg border border-slate-200 bg-slate-50/60 p-4 text-xs">
               <div className="flex items-start justify-between gap-3 border-b border-slate-200 pb-3">
                 <div>
-                  <div className="text-xs font-bold uppercase tracking-wider text-slate-400">Tên nhiệm vụ</div>
+                  <div className="text-xs font-bold text-slate-400">Tên nhiệm vụ</div>
                   <div className="mt-1 text-base font-bold text-slate-900">{form.title || 'Chưa đặt tên'}</div>
                 </div>
                 <Badge variant="primary">{form.difficulty}</Badge>
@@ -639,3 +639,4 @@ const Select = ({
     </select>
   </div>
 );
+

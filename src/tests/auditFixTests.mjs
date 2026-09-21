@@ -100,15 +100,37 @@ await test('AF08: React failures have a user recovery screen and routes update p
 
 await test('AF09: shared overlays and formerly pointer-only controls support keyboard access', () => {
   const drawer = read('src/components/ui/Drawer.tsx');
-  const landing = read('src/views/LandingView.tsx');
   const rubric = read('src/components/rubric/RubricAssessmentGrid.tsx');
   const analytics = read('src/views/ClassAnalyticsView.tsx');
   const snapshot = read('src/components/versioning/SnapshotModal.tsx');
   assert(drawer.includes("event.key === 'Escape'") && drawer.includes('role="dialog"') && drawer.includes('previousFocusRef.current?.focus()'));
-  assert(landing.includes('aria-pressed={isActive}'), 'Workflow cards must be semantic buttons');
   assert(rubric.includes('aria-pressed={isChosen}'), 'Rubric choices must be semantic buttons');
   assert(analytics.includes('aria-sort={selectedAxisFilter === axis'), 'Sortable headers must expose sort state');
   assert(snapshot.includes('setVersionNumber(nextSuggestedVersion)'), 'Snapshot modal must refresh its suggested version when reopened');
+});
+
+await test('AF10: production UI avoids template-like AI decoration and promotional filler', () => {
+  const productionFiles = [
+    'src/views/LandingView.tsx',
+    'src/views/LoginView.tsx',
+    'src/views/v2/StudentDashboardV2.tsx',
+    'src/views/TeacherDashboardView.tsx',
+    'src/views/PortfolioEditorView.tsx',
+    'src/views/TeacherReviewView.tsx',
+    'src/views/AiWorkspaceView.tsx',
+    'src/views/StudentAnalyticsView.tsx',
+    'src/views/ClassAnalyticsView.tsx'
+  ];
+  const source = productionFiles.map(read).join('\n');
+  const landing = read('src/views/LandingView.tsx');
+  const login = read('src/views/LoginView.tsx');
+  const visualSystem = read('src/frontend-v3.css');
+  assert(landing.split('\n').length < 260, 'Landing page should stay concise and factual');
+  for (const token of ['rounded-xl', 'shadow-xs', 'uppercase tracking-wide', 'uppercase tracking-wider', 'animate-hero', 'academic-card-hover']) {
+    assert(!source.includes(token), `Template-like decoration returned: ${token}`);
+  }
+  assert(!login.includes('lg:grid-cols-[1.05fr_0.95fr]'), 'Login must not include a promotional split-screen panel');
+  assert(visualSystem.includes('border-radius: 8px') && !visualSystem.includes('transform: translateY(-1px)'), 'Shared panels must remain flat and restrained');
 });
 
 const failed = results.filter(result => !result.ok);

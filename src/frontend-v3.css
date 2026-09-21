@@ -1,4 +1,4 @@
-/* Frontend V3 — Modern Academic Workspace */
+/* Shared application layout */
 :root {
   --v3-header-height: 64px;
   --v3-sidebar-width: 240px;
@@ -15,19 +15,18 @@
 .v3-page { width: 100%; max-width: var(--v3-page-max); margin-inline: auto; }
 .v3-readable { width: 100%; max-width: var(--v3-reading-max); margin-inline: auto; }
 .v3-editor-readable { width: 100%; max-width: var(--v3-editor-max); margin-inline: auto; }
-.v3-kicker { color: #15803d; font-size: 0.75rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; }
+.v3-kicker { color: #166534; font-size: 0.8125rem; font-weight: 600; }
 .v3-page-title { color: #0f172a; font-size: clamp(1.5rem, 2.2vw, 2rem); line-height: 1.2; font-weight: 750; letter-spacing: -0.025em; }
 .v3-page-description { color: #64748b; font-size: 0.875rem; line-height: 1.55; }
 
 .v3-panel {
   min-width: 0;
   border: 1px solid #e2e8f0;
-  border-radius: 16px;
-  background: rgba(255,255,255,.99);
-  box-shadow: 0 1px 2px rgba(15,23,42,.025);
+  border-radius: 8px;
+  background: #fff;
 }
-.v3-panel-interactive { transition: border-color var(--v3-base) var(--v3-ease), box-shadow var(--v3-base) var(--v3-ease), transform var(--v3-base) var(--v3-ease); }
-.v3-panel-interactive:hover { border-color: #cbd5e1; box-shadow: 0 10px 30px rgba(15,23,42,.06); transform: translateY(-1px); }
+.v3-panel-interactive { transition: border-color var(--v3-fast) ease, background-color var(--v3-fast) ease; }
+.v3-panel-interactive:hover { border-color: #94a3b8; background: #f8fafc; }
 
 .v3-brand-button {
   background: #15803d;
@@ -36,7 +35,7 @@
   transition: background-color var(--v3-fast) var(--v3-ease), border-color var(--v3-fast) var(--v3-ease), transform var(--v3-fast) var(--v3-ease);
 }
 .v3-brand-button:hover { background: #166534; border-color: #166534; }
-.v3-brand-button:active { transform: translateY(1px); }
+.v3-brand-button:active { background: #14532d; }
 
 .v3-nav-active { position: relative; background: #f0fdf4; color: #14532d; }
 .v3-nav-active::before { content: ''; position: absolute; left: 0; top: 8px; bottom: 8px; width: 3px; border-radius: 999px; background: #16a34a; }
@@ -57,7 +56,7 @@
 @media (max-width: 767px) {
   .v3-mobile-cards > table { display: none; }
   .v3-page-title { font-size: 1.55rem; }
-  .v3-panel { border-radius: 14px; }
+  .v3-panel { border-radius: 8px; }
 }
 
 @media (prefers-reduced-motion: reduce) {

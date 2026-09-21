@@ -54,7 +54,7 @@ export const Input = React.forwardRef<HTMLInputElement, InputProps>(({
           autoCapitalize={disableAutofill ? "off" : undefined}
           spellCheck={disableAutofill ? false : undefined}
           className={cn(
-            "min-h-11 w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-[16px] text-slate-900 shadow-[0_1px_1px_rgba(15,23,42,0.02)] placeholder:text-slate-400 focus:border-primary-600 focus:outline-none focus:ring-3 focus:ring-primary-600/10 disabled:bg-slate-50 disabled:text-slate-400 sm:min-h-10 sm:text-sm",
+            "min-h-11 w-full rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-[16px] text-slate-900 shadow-[0_1px_1px_rgba(15,23,42,0.02)] placeholder:text-slate-400 focus:border-primary-600 focus:outline-none focus:ring-3 focus:ring-primary-600/10 disabled:bg-slate-50 disabled:text-slate-400 sm:min-h-10 sm:text-sm",
             leftIcon && "pl-9",
             rightIcon && "pr-9",
             error && "border-rose-500 focus:border-rose-500 focus:ring-rose-500/10",
@@ -70,3 +70,4 @@ export const Input = React.forwardRef<HTMLInputElement, InputProps>(({
 });
 
 Input.displayName = 'Input';
+

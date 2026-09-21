@@ -187,7 +187,7 @@ export const VersionDiffView: React.FC<VersionDiffViewProps> = ({
         <div className="flex flex-wrap items-center justify-between gap-4 rounded-lg border border-slate-200 bg-white p-4">
           <div className="flex flex-wrap items-center gap-3 text-sm text-slate-700">
             <label className="flex items-center gap-2">
-              <span className="text-xs font-semibold uppercase tracking-wider text-slate-500">Bản trước:</span>
+              <span className="text-xs font-semibold text-slate-500">Bản trước:</span>
               <select
                 value={selectedV1}
                 onChange={e => setSelectedV1(e.target.value)}
@@ -200,7 +200,7 @@ export const VersionDiffView: React.FC<VersionDiffViewProps> = ({
             </label>
             <span className="text-slate-400 font-bold">→</span>
             <label className="flex items-center gap-2">
-              <span className="text-xs font-semibold uppercase tracking-wider text-slate-500">Bản sau:</span>
+              <span className="text-xs font-semibold text-slate-500">Bản sau:</span>
               <select
                 value={selectedV2}
                 onChange={e => setSelectedV2(e.target.value)}
@@ -219,7 +219,7 @@ export const VersionDiffView: React.FC<VersionDiffViewProps> = ({
               type="button"
               onClick={() => setDiffMode('split')}
               className={`rounded px-2.5 py-1 font-medium transition-colors ${
-                diffMode === 'split' ? 'bg-white text-slate-900 shadow-xs' : 'text-slate-600 hover:text-slate-900'
+                diffMode === 'split' ? 'bg-white text-slate-900' : 'text-slate-600 hover:text-slate-900'
               }`}
             >
               Song song
@@ -228,7 +228,7 @@ export const VersionDiffView: React.FC<VersionDiffViewProps> = ({
               type="button"
               onClick={() => setDiffMode('unified')}
               className={`rounded px-2.5 py-1 font-medium transition-colors ${
-                diffMode === 'unified' ? 'bg-white text-slate-900 shadow-xs' : 'text-slate-600 hover:text-slate-900'
+                diffMode === 'unified' ? 'bg-white text-slate-900' : 'text-slate-600 hover:text-slate-900'
               }`}
             >
               Dòng chảy
@@ -245,19 +245,19 @@ export const VersionDiffView: React.FC<VersionDiffViewProps> = ({
         {/* Diff Metrics Grid */}
         <div className="grid gap-3 sm:grid-cols-4">
           <div className="rounded-lg border border-emerald-200 bg-emerald-50/50 p-3.5">
-            <div className="text-xs font-semibold text-emerald-800 uppercase tracking-wide">+ Thêm mới</div>
+            <div className="text-xs font-semibold text-emerald-800">+ Thêm mới</div>
             <div className="mt-1 text-xl font-bold text-emerald-950">+{aggregateMetrics.totalAdded} từ</div>
           </div>
           <div className="rounded-lg border border-rose-200 bg-rose-50/50 p-3.5">
-            <div className="text-xs font-semibold text-rose-800 uppercase tracking-wide">− Lược bớt</div>
+            <div className="text-xs font-semibold text-rose-800">− Lược bớt</div>
             <div className="mt-1 text-xl font-bold text-rose-950">−{aggregateMetrics.totalRemoved} từ</div>
           </div>
           <div className="rounded-lg border border-amber-200 bg-amber-50/50 p-3.5">
-            <div className="text-xs font-semibold text-amber-800 uppercase tracking-wide">✎ Trục thay đổi</div>
+            <div className="text-xs font-semibold text-amber-800">✎ Trục thay đổi</div>
             <div className="mt-1 text-xl font-bold text-amber-950">{aggregateMetrics.changedAxesCount}/6 trục</div>
           </div>
           <div className="rounded-lg border border-slate-200 bg-slate-50 p-3.5">
-            <div className="text-xs font-semibold text-slate-600 uppercase tracking-wide">Tự tin bản sau</div>
+            <div className="text-xs font-semibold text-slate-600">Tự tin bản sau</div>
             <div className="mt-1 text-xl font-bold text-slate-900">
               {after.confidence ? `${after.confidence}/5` : 'Không đánh giá'}
             </div>
@@ -277,7 +277,7 @@ export const VersionDiffView: React.FC<VersionDiffViewProps> = ({
         {/* Sticky Axis Navigator */}
         <aside className="hidden lg:block">
           <div className="sticky top-20 space-y-2 rounded-lg border border-slate-200 bg-white p-3">
-            <span className="text-xs font-bold uppercase tracking-wider text-slate-500 px-2">Điều hướng trục</span>
+            <span className="text-xs font-bold text-slate-500 px-2">Điều hướng trục</span>
             <nav className="space-y-1">
               {POETIC_AXES.map(axis => {
                 const diff = diffByAxis[axis.id];
@@ -341,7 +341,7 @@ export const VersionDiffView: React.FC<VersionDiffViewProps> = ({
                   /* Side-by-Side Mode */
                   <div className="grid divide-y divide-slate-200 lg:grid-cols-2 lg:divide-x lg:divide-y-0">
                     <div className="p-4">
-                      <div className="mb-2 text-xs font-semibold uppercase tracking-wider text-slate-500">
+                      <div className="mb-2 text-xs font-semibold text-slate-500">
                         {before.versionNumber} (Bản trước)
                       </div>
                       <div className="min-h-16 whitespace-pre-wrap font-sans text-sm leading-relaxed text-slate-700">
@@ -349,7 +349,7 @@ export const VersionDiffView: React.FC<VersionDiffViewProps> = ({
                       </div>
                     </div>
                     <div className="bg-slate-50/30 p-4">
-                      <div className="mb-2 text-xs font-semibold uppercase tracking-wider text-slate-700">
+                      <div className="mb-2 text-xs font-semibold text-slate-700">
                         {after.versionNumber} (Bản sau đối chiếu)
                       </div>
                       <div className="min-h-16 whitespace-pre-wrap font-sans text-sm leading-relaxed text-slate-800">
@@ -372,7 +372,7 @@ export const VersionDiffView: React.FC<VersionDiffViewProps> = ({
                 ) : (
                   /* Unified/Inline Mode */
                   <div className="p-5">
-                    <div className="mb-3 text-xs font-semibold uppercase tracking-wider text-slate-500">
+                    <div className="mb-3 text-xs font-semibold text-slate-500">
                       Dòng chảy chỉnh sửa ({before.versionNumber} → {after.versionNumber})
                     </div>
                     <div className="whitespace-pre-wrap font-sans text-sm leading-7 text-slate-800">
@@ -412,3 +412,4 @@ export const VersionDiffView: React.FC<VersionDiffViewProps> = ({
     </div>
   );
 };
+

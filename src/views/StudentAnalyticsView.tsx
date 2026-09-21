@@ -100,13 +100,13 @@ export const StudentAnalyticsView: React.FC<StudentAnalyticsViewProps> = ({ stud
           <p className="mt-1 text-sm text-slate-500">Chọn một nhiệm vụ để xem điểm, góp ý và lịch sử các bản đã nộp.</p>
         </div>
         {overviewAssignments.length === 0 ? (
-          <div className="rounded-xl border border-slate-200 bg-white p-8 text-center text-sm text-slate-500">
+          <div className="rounded-lg border border-slate-200 bg-white p-8 text-center text-sm text-slate-500">
             Chưa có nhiệm vụ để xem tiến độ.
           </div>
         ) : (
           <div className="grid gap-3 md:grid-cols-2">
             {overviewAssignments.map(({ assignment: item, portfolio: itemPortfolio, versions, latestScore }) => (
-              <article key={item.id} className="rounded-xl border border-slate-200 bg-white p-4">
+              <article key={item.id} className="rounded-lg border border-slate-200 bg-white p-4">
                 <div className="flex items-start justify-between gap-3">
                   <div className="min-w-0">
                     <h2 className="font-semibold text-slate-900">{item.title}</h2>
@@ -204,7 +204,7 @@ export const StudentAnalyticsView: React.FC<StudentAnalyticsViewProps> = ({ stud
 
       {/* Summary KPI Strip */}
       <div className="grid gap-3 sm:grid-cols-3">
-        <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-xs">
+        <div className="rounded-lg border border-slate-200 bg-white p-4">
           <div className="flex items-center justify-between text-xs text-slate-500">
             <span>Phiên bản đã nộp</span>
             <DocumentDuplicateIcon className="h-4 w-4 text-slate-400" />
@@ -213,7 +213,7 @@ export const StudentAnalyticsView: React.FC<StudentAnalyticsViewProps> = ({ stud
           <div className="mt-1 text-xs text-slate-500">phiên bản đã lưu</div>
         </div>
 
-        <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-xs">
+        <div className="rounded-lg border border-slate-200 bg-white p-4">
           <div className="flex items-center justify-between text-xs text-slate-500">
             <span>Góp ý</span>
             <ChatBubbleBottomCenterTextIcon className="h-4 w-4 text-primary-600" />
@@ -222,7 +222,7 @@ export const StudentAnalyticsView: React.FC<StudentAnalyticsViewProps> = ({ stud
           <div className="mt-1 text-xs text-slate-500">{resolved} góp ý đã được xử lý ở bản sửa</div>
         </div>
 
-        <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-xs">
+        <div className="rounded-lg border border-slate-200 bg-white p-4">
           <div className="flex items-center justify-between text-xs text-slate-500">
             <span>Điểm đánh giá gần nhất</span>
             <CheckBadgeIcon className="h-4 w-4 text-emerald-600" />
@@ -237,7 +237,7 @@ export const StudentAnalyticsView: React.FC<StudentAnalyticsViewProps> = ({ stud
       </div>
 
       {/* Criteria Trajectory Table */}
-      <section className="space-y-3 rounded-xl border border-slate-200 bg-white shadow-xs p-5">
+      <section className="space-y-3 rounded-lg border border-slate-200 bg-white p-5">
         <div className="flex items-center justify-between border-b border-slate-100 pb-3">
           <div>
             <h2 className="text-base font-bold text-slate-900">Tiến bộ theo từng trục thi pháp</h2>
@@ -312,7 +312,7 @@ export const StudentAnalyticsView: React.FC<StudentAnalyticsViewProps> = ({ stud
       </section>
 
       {/* Version History */}
-      <section className="space-y-4 rounded-xl border border-slate-200 bg-white shadow-xs p-5">
+      <section className="space-y-4 rounded-lg border border-slate-200 bg-white p-5">
         <div className="border-b border-slate-100 pb-3">
           <h2 className="text-base font-bold text-slate-900">Lịch sử các phiên bản</h2>
           <p className="mt-0.5 text-xs text-slate-500">Xem các phiên bản đã nộp theo thời gian.</p>
@@ -375,3 +375,4 @@ export const StudentAnalyticsView: React.FC<StudentAnalyticsViewProps> = ({ stud
     </div>
   );
 };
+

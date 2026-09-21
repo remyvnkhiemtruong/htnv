@@ -170,7 +170,7 @@ Hãy đưa ra nhận xét sư phạm mang tính gợi mở, phân tích cụ th�
               onClick={() => setFilter(value)}
               className={`rounded-lg border px-3.5 py-2 text-xs font-semibold transition ${
                 filter === value
-                  ? 'border-primary-300 bg-primary-50 text-primary-950 shadow-xs'
+                  ? 'border-primary-300 bg-primary-50 text-primary-950'
                   : 'border-slate-200 bg-white text-slate-600 hover:border-slate-300 hover:bg-slate-50'
               }`}
             >
@@ -189,7 +189,7 @@ Hãy đưa ra nhận xét sư phạm mang tính gợi mở, phân tích cụ th�
 
       <div className="grid gap-5 lg:grid-cols-[290px_minmax(0,1fr)_390px]">
         {/* Left Pane: Request Queue */}
-        <aside className="flex min-h-[620px] flex-col overflow-hidden rounded-xl border border-slate-200 bg-white shadow-xs lg:h-[78vh]">
+        <aside className="flex min-h-[620px] flex-col overflow-hidden rounded-lg border border-slate-200 bg-white lg:h-[78vh]">
           <div className="flex items-center justify-between border-b border-slate-200 bg-slate-50/70 px-4 py-3">
             <div>
               <span className="text-sm font-bold text-slate-800">Hàng đợi AI</span>
@@ -238,7 +238,7 @@ Hãy đưa ra nhận xét sư phạm mang tính gợi mở, phân tích cụ th�
                     aria-current={isSelected ? 'true' : undefined}
                     className={`w-full rounded-lg border p-3 text-left transition-colors ${
                       isSelected
-                        ? 'border-primary-300 bg-primary-50/90 shadow-xs font-semibold'
+                        ? 'border-primary-300 bg-primary-50/90 font-semibold'
                         : 'border-transparent hover:border-slate-200 hover:bg-slate-50'
                     }`}
                   >
@@ -263,7 +263,7 @@ Hãy đưa ra nhận xét sư phạm mang tính gợi mở, phân tích cụ th�
         </aside>
 
         {/* Center Pane: Student Immutable Version */}
-        <main className="min-h-[620px] overflow-y-auto rounded-xl border border-slate-200 bg-white p-5 shadow-xs lg:h-[78vh]">
+        <main className="min-h-[620px] overflow-y-auto rounded-lg border border-slate-200 bg-white p-5 lg:h-[78vh]">
           {!selected ? (
             <div className="flex min-h-[420px] items-center justify-center text-center text-sm text-slate-400">
               Chọn một bài từ hàng đợi bên trái để xem nội dung học sinh đã nộp.
@@ -277,7 +277,7 @@ Hãy đưa ra nhận xét sư phạm mang tính gợi mở, phân tích cụ th�
               <div className="border-b border-slate-200 pb-4">
                 <div className="flex flex-wrap items-center justify-between gap-2">
                   <div>
-                    <div className="text-xs font-bold uppercase tracking-wider text-slate-400">Bản học sinh đã nộp</div>
+                    <div className="text-xs font-bold text-slate-400">Bản học sinh đã nộp</div>
                     <h2 className="mt-1 text-xl font-bold tracking-tight text-slate-950">{selected.student_name}</h2>
                   </div>
                   <div className="flex items-center gap-2">
@@ -353,10 +353,10 @@ Hãy đưa ra nhận xét sư phạm mang tính gợi mở, phân tích cụ th�
         </main>
 
         {/* Right Pane: Paste ChatGPT Composer */}
-        <aside className="flex min-h-[620px] flex-col overflow-y-auto rounded-xl border border-slate-200 bg-white p-4 shadow-xs lg:h-[78vh]">
+        <aside className="flex min-h-[620px] flex-col overflow-y-auto rounded-lg border border-slate-200 bg-white p-4 lg:h-[78vh]">
           <div className="space-y-4">
             <div className="border-b border-slate-200 pb-3">
-              <div className="text-xs font-bold uppercase tracking-wider text-slate-400">Phản hồi</div>
+              <div className="text-xs font-bold text-slate-400">Phản hồi</div>
               <h2 className="mt-1 text-base font-bold text-slate-950">{canPublish ? 'Dán phản hồi ChatGPT' : 'Nội dung phản hồi AI'}</h2>
               <p className="mt-1 text-xs leading-5 text-slate-500">
                 {canPublish ? 'Đối chiếu đúng học sinh, nhiệm vụ và phiên bản trước khi gửi.' : 'Chế độ chỉ xem.'}
@@ -428,7 +428,7 @@ Hãy đưa ra nhận xét sư phạm mang tính gợi mở, phân tích cụ th�
                 onChange={e => setResponse(e.target.value)}
                 disabled={!canPublish}
                 placeholder={canPublish ? 'Dán phản hồi ChatGPT tại đây.' : 'Chưa có phản hồi AI.'}
-                className="w-full resize-y rounded-xl border border-slate-300 p-3 text-xs leading-relaxed text-slate-800 outline-none disabled:bg-slate-50 disabled:text-slate-600 focus:border-primary-600 focus:ring-2 focus:ring-primary-600/10"
+                className="w-full resize-y rounded-lg border border-slate-300 p-3 text-xs leading-relaxed text-slate-800 outline-none disabled:bg-slate-50 disabled:text-slate-600 focus:border-primary-600 focus:ring-2 focus:ring-primary-600/10"
               />
             </div>
           </div>

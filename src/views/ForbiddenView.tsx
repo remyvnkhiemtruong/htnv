@@ -27,7 +27,7 @@ export const ForbiddenView: React.FC<ForbiddenViewProps> = ({ onNavigate }) => {
       </div>
 
       <div className="space-y-2">
-        <span className="text-caption font-bold text-rose-600 uppercase tracking-wider bg-rose-100/70 px-2.5 py-1 rounded-md">
+        <span className="text-caption font-bold text-rose-600 bg-rose-100/70 px-2.5 py-1 rounded-md">
           403 • Không có quyền truy cập
         </span>
         <h1 className="text-h2 font-bold text-slate-900">
@@ -57,3 +57,4 @@ export const ForbiddenView: React.FC<ForbiddenViewProps> = ({ onNavigate }) => {
     </div>
   );
 };
+

@@ -95,54 +95,13 @@ export const LoginView: React.FC<LoginViewProps> = ({
   const passwordReady = newPassword.length >= 10;
 
   return (
-    <div className="safe-top safe-bottom min-h-[100dvh] bg-slate-100 px-3 py-3 sm:px-5 sm:py-6 lg:flex lg:items-center lg:justify-center lg:px-8">
-      <div className="app-view-enter mx-auto grid w-full max-w-6xl overflow-hidden rounded-xl border border-slate-200 bg-white shadow-[0_18px_55px_rgba(15,23,42,0.10)] lg:min-h-[660px] lg:grid-cols-[1.05fr_0.95fr]">
-        <section className="relative hidden overflow-hidden bg-slate-950 p-10 text-white lg:flex lg:flex-col lg:justify-between xl:p-12">
-          <div>
-            <button type="button" onClick={() => onNavigate?.('landing')} className="inline-flex min-h-10 items-center rounded-lg border border-white/15 px-3 text-sm font-medium text-slate-200 hover:bg-white/10 hover:text-white">
-              ← Trang chủ
-            </button>
-          </div>
-
-          <div className="max-w-xl py-12">
-            <div className="mb-7 flex items-center gap-4">
-              <div className="h-16 w-16 overflow-hidden rounded-xl border border-white/15 bg-white p-1 shadow-lg">
-                <img src="/Logo.png" alt="Logo THPT Vị Thanh" className="h-full w-full rounded-xl object-cover" />
-              </div>
-              <div>
-                <p className="text-sm font-semibold text-emerald-300">Trường THPT Vị Thanh</p>
-                <h1 className="mt-1 text-3xl font-bold tracking-tight xl:text-4xl">Học tốt Ngữ Văn</h1>
-              </div>
-            </div>
-            <p className="max-w-lg text-base leading-8 text-slate-300">
-              Lưu từng phiên bản bài làm, nhận góp ý và theo dõi quá trình sửa bài theo 6 trục thi pháp.
-            </p>
-
-            <div className="mt-8 grid gap-3 sm:grid-cols-3 lg:grid-cols-1 xl:grid-cols-3">
-              {[
-                ['01', 'Lưu phiên bản', 'Không ghi đè bài cũ'],
-                ['02', 'Góp ý theo bài', 'AI và giáo viên'],
-                ['03', 'Đa thiết bị', 'Điện thoại · iPad · máy tính']
-              ].map(([index, title, note]) => (
-                <div key={index} className="rounded-xl border border-white/10 bg-white/[0.06] p-4">
-                  <div className="text-xs font-bold text-emerald-300">{index}</div>
-                  <div className="mt-2 text-sm font-semibold text-white">{title}</div>
-                  <div className="mt-1 text-xs leading-5 text-slate-400">{note}</div>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          <p className="text-xs leading-5 text-slate-500">KHKT 2026–2027 · Hệ thống hồ sơ đọc số</p>
-        </section>
-
-        <section className="flex min-w-0 flex-col justify-center p-4 sm:p-8 lg:p-10 xl:p-12">
+    <div className="safe-top safe-bottom flex min-h-[100dvh] items-center justify-center bg-slate-50 px-4 py-8 sm:px-6">
+      <div className="app-view-enter w-full max-w-lg border border-slate-300 bg-white">
+        <section className="p-5 sm:p-8">
           <div className="mx-auto w-full max-w-md">
-            <div className="mb-6 flex items-start justify-between gap-3 lg:hidden">
-              <button type="button" onClick={() => onNavigate?.('landing')} className="inline-flex min-h-10 items-center rounded-lg px-2 text-sm font-medium text-slate-500 hover:bg-slate-100 hover:text-slate-900">← Trang chủ</button>
-              <div className="h-11 w-11 shrink-0 overflow-hidden rounded-xl border border-slate-200 bg-white p-0.5 shadow-sm">
-                <img src="/Logo.png" alt="Logo THPT Vị Thanh" className="h-full w-full rounded-lg object-cover" />
-              </div>
+            <div className="mb-8 flex items-center justify-between gap-3 border-b border-slate-200 pb-5">
+              <button type="button" onClick={() => onNavigate?.('landing')} className="inline-flex min-h-10 items-center text-sm font-medium text-slate-500 hover:text-slate-900">← Trang chủ</button>
+              <img src="/Logo.png" alt="Logo THPT Vị Thanh" className="h-10 w-10 rounded-md border border-slate-200 object-cover" />
             </div>
 
             <div className="mb-7">

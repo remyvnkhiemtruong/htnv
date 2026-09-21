@@ -43,7 +43,7 @@ export const PortfolioListV2: React.FC<{ onNavigate: (view: string, params?: any
         </div>
 
         {allPortfolios.length === 0 ? (
-          <div className="rounded-xl border border-slate-200 bg-white p-8 text-center text-sm text-slate-500">
+          <div className="rounded-lg border border-slate-200 bg-white p-8 text-center text-sm text-slate-500">
             Chưa có hồ sơ trong phạm vi của bạn.
           </div>
         ) : (
@@ -55,7 +55,7 @@ export const PortfolioListV2: React.FC<{ onNavigate: (view: string, params?: any
               const canReview = user.role === 'teacher' || user.role === 'peer' || user.role === 'admin';
               const canOpenAi = user.role === 'ai';
               return (
-                <article key={portfolio.id} className="rounded-xl border border-slate-200 bg-white p-4">
+                <article key={portfolio.id} className="rounded-lg border border-slate-200 bg-white p-4">
                   <div className="flex items-start justify-between gap-3">
                     <div className="min-w-0">
                       <div className="font-semibold text-slate-900">{portfolio.studentName || 'Hồ sơ'}</div>
@@ -110,7 +110,7 @@ export const PortfolioListV2: React.FC<{ onNavigate: (view: string, params?: any
           reflectionVersionIds: reflectionIds
         });
         return (
-          <div key={assignment.id} className="rounded-xl border border-slate-200 bg-white p-4">
+          <div key={assignment.id} className="rounded-lg border border-slate-200 bg-white p-4">
             <div className="flex justify-between gap-3">
               <div>
                 <div className="font-semibold text-slate-900">{assignment.title}</div>
@@ -130,3 +130,4 @@ export const PortfolioListV2: React.FC<{ onNavigate: (view: string, params?: any
     </div>
   );
 };
+

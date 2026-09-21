@@ -70,3 +70,4 @@ export const StatCard: React.FC<StatCardProps> = ({
     </Wrapper>
   );
 };
+

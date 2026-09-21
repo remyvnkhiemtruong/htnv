@@ -111,7 +111,7 @@ export const RubricManagementView: React.FC<RubricManagementViewProps> = ({ onNa
       )}
 
       {/* Meta configuration */}
-      <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-xs space-y-4">
+      <div className="rounded-lg border border-slate-200 bg-white p-5 space-y-4">
         <div className="grid gap-4 md:grid-cols-2">
           <Input
             label="Tên ma trận Rubric"
@@ -133,7 +133,7 @@ export const RubricManagementView: React.FC<RubricManagementViewProps> = ({ onNa
       </div>
 
       {/* Simulator Preview Bar */}
-      <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-slate-200 bg-slate-50/80 px-4 py-3 text-xs">
+      <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-slate-200 bg-slate-50/80 px-4 py-3 text-xs">
         <div className="flex items-center gap-2">
           <BookmarkSquareIcon className="h-4 w-4 text-primary-700" />
           <span className="font-semibold text-slate-800">Xem thử cách tính điểm:</span>
@@ -148,7 +148,7 @@ export const RubricManagementView: React.FC<RubricManagementViewProps> = ({ onNa
       </div>
 
       {/* Matrix Criteria Table */}
-      <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-xs divide-y divide-slate-200">
+      <div className="overflow-hidden rounded-lg border border-slate-200 bg-white divide-y divide-slate-200">
         <div className="flex items-center justify-between bg-slate-50/80 px-5 py-3.5">
           <div>
             <h2 className="text-sm font-bold text-slate-900">Các mức đánh giá</h2>
@@ -194,7 +194,7 @@ export const RubricManagementView: React.FC<RubricManagementViewProps> = ({ onNa
                   <div
                     key={level.level}
                     className={`space-y-1.5 rounded-lg border p-3 transition ${
-                      isTested ? 'border-primary-300 bg-primary-50/40 shadow-xs' : 'border-slate-200 bg-slate-50/40'
+                      isTested ? 'border-primary-300 bg-primary-50/40' : 'border-slate-200 bg-slate-50/40'
                     }`}
                   >
                     <div className="flex items-center justify-between text-xs">
@@ -241,3 +241,4 @@ export const RubricManagementView: React.FC<RubricManagementViewProps> = ({ onNa
     </div>
   );
 };
+
