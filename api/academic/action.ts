@@ -66,6 +66,8 @@ const clientMessage = (code: string) => {
     REFLECTION_REQUIRES_REVISION: "Tự phản tư chỉ được thực hiện sau phiên bản chỉnh sửa V2 trở đi.",
     REFLECTION_REQUIRED_BEFORE_OFFICIAL_RUBRIC: "Học sinh cần hoàn thành tự phản tư sau V2 trước khi giáo viên chấm rubric chính thức.",
     PREDICTION_QUESTIONS_REQUIRED: "Đã bật V0 nhưng nhiệm vụ chưa có câu hỏi dự đoán trước đọc.",
+    PREDICTION_REQUIRED_FIRST: "Em cần hoàn thành và nộp phần dự đoán V0 trước khi gửi bản V1.",
+    RUBRIC_NOT_FOUND: "Nhiệm vụ chưa có rubric hợp lệ. Vui lòng liên hệ giáo viên phụ trách.",
     AI_REVIEW_CLAIMED: "Bài này đang được một tài khoản AI khác xử lý.",
     AI_REVIEW_CLOSED: "Phản hồi AI này đã được xử lý hoặc không còn mở."
   };
@@ -109,7 +111,8 @@ export default async function handler(req: any, res: any) {
     else if (code === "ASSIGNMENT_CLOSED" || code === "AI_REVIEW_CLAIMED" || code === "AI_REVIEW_CLOSED") status = 409;
     else if (code.startsWith("INVALID") || code.includes("REQUIRED") || code === "EMPTY_RESPONSE" || code === "CANNOT_PEER_REVIEW_SELF" || code === "VALIDATION_ERROR" || code === "PREDICTION_ALREADY_SUBMITTED" || code === "PEER_REVIEWER_INVALID" || code === "PEER_STUDENT_INVALID" || code === "CONTENT_TOO_LARGE" || code === "SCHEMA_MIGRATION_REQUIRED") status = 400;
 
-    console.error("[academic/action]", {
+    const log = status >= 500 ? console.error : console.warn;
+    log("[academic/action]", {
       requestId,
       code,
       status,

@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useId, useMemo, useRef, useState } from 'react';
 import {
   MagnifyingGlassIcon,
   BookOpenIcon,
@@ -33,6 +33,9 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({ isOpen, onClose,
   const { assignments, literatureTexts } = usePortfolio();
   const [query, setQuery] = useState('');
   const [selectedIndex, setSelectedIndex] = useState(0);
+  const dialogRef = useRef<HTMLDivElement>(null);
+  const previousFocusRef = useRef<HTMLElement | null>(null);
+  const titleId = useId();
 
   const homeView =
     currentUser.role === 'teacher' ? 'teacher-dashboard' :
@@ -95,6 +98,10 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({ isOpen, onClose,
   }, [filteredCommands.length, selectedIndex]);
 
   useEffect(() => {
+    if (!isOpen) return;
+    previousFocusRef.current = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
     const handleKeyDown = (event: KeyboardEvent) => {
       if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'k') {
         event.preventDefault();
@@ -103,6 +110,15 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({ isOpen, onClose,
       }
       if (!isOpen) return;
       if (event.key === 'Escape') { event.preventDefault(); onClose(); return; }
+      if (event.key === 'Tab' && dialogRef.current) {
+        const focusable = [...dialogRef.current.querySelectorAll<HTMLElement>('input,button:not([disabled]),a[href],[tabindex]:not([tabindex="-1"])')];
+        if (focusable.length) {
+          const first = focusable[0];
+          const last = focusable[focusable.length - 1];
+          if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last.focus(); return; }
+          if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first.focus(); return; }
+        }
+      }
       if (event.key === 'ArrowDown') { event.preventDefault(); setSelectedIndex(index => (filteredCommands.length ? (index + 1) % filteredCommands.length : 0)); return; }
       if (event.key === 'ArrowUp') { event.preventDefault(); setSelectedIndex(index => (filteredCommands.length ? (index - 1 + filteredCommands.length) % filteredCommands.length : 0)); return; }
       if (event.key === 'Enter' && filteredCommands[selectedIndex]) {
@@ -113,7 +129,11 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({ isOpen, onClose,
       }
     };
     window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+      document.body.style.overflow = previousOverflow;
+      previousFocusRef.current?.focus();
+    };
   }, [isOpen, onClose, filteredCommands, selectedIndex]);
 
   const select = (command: CommandItem) => {
@@ -126,8 +146,10 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({ isOpen, onClose,
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-start justify-center bg-slate-900/40 px-4 pt-20">
-      <div className="flex w-full max-w-xl flex-col overflow-hidden rounded-md border border-slate-200 bg-white shadow-modal">
+    <div className="fixed inset-0 z-50 flex items-start justify-center px-4 pt-20">
+      <div className="absolute inset-0 bg-slate-900/40" onClick={onClose} aria-hidden="true" />
+      <div ref={dialogRef} role="dialog" aria-modal="true" aria-labelledby={titleId} className="relative flex w-full max-w-xl flex-col overflow-hidden rounded-md border border-slate-200 bg-white shadow-modal">
+        <h2 id={titleId} className="sr-only">Tìm nhanh trong hệ thống</h2>
         <div className="relative flex items-center border-b border-slate-200 px-4 py-3">
           <MagnifyingGlassIcon className="mr-3 h-5 w-5 shrink-0 text-slate-400" />
           <input autoFocus value={query} onChange={event => { setQuery(event.target.value); setSelectedIndex(0); }} placeholder="Tìm nhiệm vụ, tác phẩm..." autoComplete="off" autoCorrect="off" autoCapitalize="off" spellCheck={false} data-lpignore="true" data-1p-ignore="true" data-form-type="other" className="w-full bg-transparent text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none" />

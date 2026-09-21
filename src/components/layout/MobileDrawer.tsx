@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useRef } from 'react';
 import { useAuthStore } from '../../app/store/useAuthStore';
 import {
   AcademicCapIcon,
@@ -94,6 +94,44 @@ const sectionsForRole = (role: string): Section[] => {
 
 export const MobileDrawer: React.FC<MobileDrawerProps> = ({ isOpen, onClose, currentView, onNavigate, onLogout }) => {
   const user = useAuthStore(s => s.currentUser);
+  const panelRef = useRef<HTMLDivElement>(null);
+  const previousFocusRef = useRef<HTMLElement | null>(null);
+
+  useEffect(() => {
+    if (!isOpen) return;
+    previousFocusRef.current = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    const frame = window.requestAnimationFrame(() => panelRef.current?.querySelector<HTMLElement>('button')?.focus());
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        event.preventDefault();
+        onClose();
+        return;
+      }
+      if (event.key !== 'Tab' || !panelRef.current) return;
+      const focusable = [...panelRef.current.querySelectorAll<HTMLElement>('a[href],button:not([disabled]),[tabindex]:not([tabindex="-1"])')]
+        .filter(element => element.getAttribute('aria-hidden') !== 'true');
+      if (!focusable.length) return;
+      const first = focusable[0];
+      const last = focusable[focusable.length - 1];
+      if (event.shiftKey && document.activeElement === first) {
+        event.preventDefault();
+        last.focus();
+      } else if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault();
+        first.focus();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => {
+      window.cancelAnimationFrame(frame);
+      window.removeEventListener('keydown', handleKeyDown);
+      document.body.style.overflow = previousOverflow;
+      previousFocusRef.current?.focus();
+    };
+  }, [isOpen, onClose]);
+
   if (!isOpen) return null;
   const sections = sectionsForRole(user.role);
 
@@ -103,16 +141,16 @@ export const MobileDrawer: React.FC<MobileDrawerProps> = ({ isOpen, onClose, cur
   };
 
   return (
-    <div className="fixed inset-0 z-50 overflow-hidden md:hidden" role="dialog" aria-modal="true" aria-label="Điều hướng chính">
-      <button type="button" className="absolute inset-0 h-full w-full bg-slate-950/45 backdrop-blur-[1px]" onClick={onClose} aria-label="Đóng menu" />
+    <div className="fixed inset-0 z-50 overflow-hidden md:hidden">
+      <div className="absolute inset-0 bg-slate-950/45 backdrop-blur-[1px]" onClick={onClose} aria-hidden="true" />
       <div className="fixed inset-y-0 left-0 flex max-w-full">
-        <div className="safe-top safe-bottom flex w-[min(88vw,22rem)] flex-col justify-between overflow-y-auto border-r border-slate-200 bg-white px-4 py-4 shadow-2xl">
+        <div ref={panelRef} role="dialog" aria-modal="true" aria-labelledby="mobile-navigation-title" className="safe-top safe-bottom flex w-[min(88vw,22rem)] flex-col justify-between overflow-y-auto border-r border-slate-200 bg-white px-4 py-4 shadow-2xl">
           <div>
             <div className="mb-4 flex items-center justify-between gap-3 border-b border-slate-100 pb-4">
               <div className="flex min-w-0 items-center gap-3">
                 <Avatar name={user.name} size="md" />
                 <div className="min-w-0">
-                  <div className="truncate text-sm font-semibold text-slate-900">{user.name}</div>
+                  <div id="mobile-navigation-title" className="truncate text-sm font-semibold text-slate-900">{user.name}</div>
                   <div className="mt-0.5 text-xs text-slate-500">{ROLE_NAMES[user.role] || user.role}{user.className ? ` · ${user.className}` : ''}</div>
                 </div>
               </div>

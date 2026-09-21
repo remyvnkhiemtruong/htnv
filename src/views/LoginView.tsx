@@ -182,7 +182,7 @@ export const LoginView: React.FC<LoginViewProps> = ({
                 <Button type="submit" variant="primary" size="lg" isLoading={loading} disabled={!passwordReady} className="w-full">Đổi mật khẩu & tiếp tục</Button>
               </form>
             ) : (
-              <form onSubmit={submit} className="space-y-5" autoComplete="off">
+              <form onSubmit={submit} className="space-y-5" autoComplete="on">
                 <input type="text" name="b_trap_username" style={{ display: 'none' }} tabIndex={-1} aria-hidden="true" autoComplete="off" />
                 <input type="password" name="b_trap_password" style={{ display: 'none' }} tabIndex={-1} aria-hidden="true" autoComplete="off" />
                 <Input
@@ -194,8 +194,7 @@ export const LoginView: React.FC<LoginViewProps> = ({
                   onChange={e => setEmail(e.target.value)}
                   placeholder="name@school.edu.vn"
                   name="user_email"
-                  autoComplete="one-time-code"
-                  data-lpignore="true"
+                  autoComplete="username"
                   spellCheck={false}
                 />
                 <div className="space-y-2">
@@ -209,8 +208,7 @@ export const LoginView: React.FC<LoginViewProps> = ({
                     onChange={e => setPassword(e.target.value)}
                     placeholder="Tối thiểu 8 ký tự"
                     name="user_password"
-                    autoComplete="new-password"
-                    data-lpignore="true"
+                    autoComplete="current-password"
                   />
                   <button type="button" onClick={() => setShowPassword(value => !value)} className="inline-flex items-center gap-1.5 text-xs font-medium text-slate-500 hover:text-slate-900">
                     {showPassword ? <EyeSlashIcon className="h-4 w-4" /> : <EyeIcon className="h-4 w-4" />}{showPassword ? 'Ẩn mật khẩu' : 'Hiện mật khẩu'}
