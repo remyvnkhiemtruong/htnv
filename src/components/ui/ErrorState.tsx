@@ -21,7 +21,7 @@ export const ErrorState: React.FC<ErrorStateProps> = ({
       <ExclamationCircleIcon className="w-10 h-10 text-rose-500" />
       <div className="max-w-xs space-y-1">
         <h4 className="text-xs font-bold text-rose-900">{title}</h4>
-        <p className="text-[11px] text-rose-700 leading-relaxed">{message}</p>
+        <p className="text-xs text-rose-700 leading-relaxed">{message}</p>
       </div>
       {onRetry && (
         <Button

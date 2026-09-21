@@ -34,6 +34,7 @@ export const IconButton = React.forwardRef<HTMLButtonElement, IconButtonProps>((
 
   return (
     <button
+      type="button"
       ref={ref}
       aria-label={ariaLabel}
       title={ariaLabel}

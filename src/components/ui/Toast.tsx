@@ -33,7 +33,7 @@ export const ToastItem: React.FC<ToastItemProps> = ({ toast, onDismiss }) => {
         {toast.title && <h4 className="font-bold text-slate-900">{toast.title}</h4>}
         <p className="text-slate-600 mt-0.5 leading-normal">{toast.message}</p>
       </div>
-      <button onClick={() => onDismiss(toast.id)} className="text-slate-400 hover:text-slate-600 p-0.5 rounded" aria-label="Đóng thông báo">
+      <button type="button" onClick={() => onDismiss(toast.id)} className="text-slate-400 hover:text-slate-600 p-0.5 rounded" aria-label="Đóng thông báo">
         <XMarkIcon className="w-4 h-4" />
       </button>
     </div>

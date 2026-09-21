@@ -291,12 +291,18 @@ export const ClassAnalyticsView: React.FC<ClassAnalyticsViewProps> = ({ onNaviga
                 {AXES.map(axis => (
                   <th
                     key={axis}
-                    className={`px-2 py-3 text-center cursor-pointer transition ${
+                    aria-sort={selectedAxisFilter === axis ? 'ascending' : 'none'}
+                    className={`px-2 py-3 text-center transition ${
                       selectedAxisFilter === axis ? 'bg-primary-50 text-primary-900 font-bold' : ''
                     }`}
-                    onClick={() => setSelectedAxisFilter(selectedAxisFilter === axis ? null : axis)}
                   >
-                    {axisLabels[axis]}
+                    <button
+                      type="button"
+                      className="w-full rounded px-1 py-1 font-semibold hover:bg-slate-100 focus:outline-none focus:ring-2 focus:ring-primary-500"
+                      onClick={() => setSelectedAxisFilter(selectedAxisFilter === axis ? null : axis)}
+                    >
+                      {axisLabels[axis]}
+                    </button>
                   </th>
                 ))}
                 <th className="px-3 py-3 text-center font-bold">Điểm TB</th>

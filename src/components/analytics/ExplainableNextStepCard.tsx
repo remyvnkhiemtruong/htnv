@@ -53,6 +53,7 @@ export const ExplainableNextStepCard: React.FC<ExplainableNextStepCardProps> = (
       {/* Action Button */}
       <div className="pt-1 flex items-center justify-end">
         <button
+          type="button"
           onClick={() => onStartAssignment(recommendation.nextAssignmentId)}
           className="inline-flex items-center gap-1.5 px-3.5 py-1.5 bg-primary-600 hover:bg-primary-700 text-white rounded-md text-xs font-medium transition-colors"
         >

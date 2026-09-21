@@ -10,6 +10,7 @@ import { canAccessRoute } from './app/auth/accessControl';
 import { PortfolioProvider } from './contexts/PortfolioContext';
 import { AuthProvider } from './contexts/AuthContext';
 import type { UserRole } from './types';
+import { AppErrorBoundary } from './components/errors/AppErrorBoundary';
 
 const LandingView = lazy(() => import('./views/LandingView').then((module) => ({ default: module.LandingView })));
 const StudentDashboardView = lazy(() => import('./views/StudentDashboardView').then((module) => ({ default: module.StudentDashboardView })));
@@ -121,6 +122,11 @@ const AppContent: React.FC = () => {
     replaceToView(homeViewForRole(currentUser.role));
   }, [currentUser.id, currentUser.role, currentView, isAuthenticated, replaceToView, sessionChecking]);
 
+  useEffect(() => {
+    const routeTitle = APP_ROUTES[currentView]?.title;
+    document.title = routeTitle ? `${routeTitle} · Học tốt Ngữ Văn` : 'Học tốt Ngữ Văn';
+  }, [currentView]);
+
   const handleLoginSuccess = () => replaceToView(homeViewForRole(useAuthStore.getState().currentUser.role));
 
   const handleLogout = async () => {
@@ -181,7 +187,7 @@ const AppContent: React.FC = () => {
 };
 
 export function App() {
-  return <AuthProvider><PortfolioProvider><AppProviders><AppContent /></AppProviders></PortfolioProvider></AuthProvider>;
+  return <AppErrorBoundary><AuthProvider><PortfolioProvider><AppProviders><AppContent /></AppProviders></PortfolioProvider></AuthProvider></AppErrorBoundary>;
 }
 
 export default App;

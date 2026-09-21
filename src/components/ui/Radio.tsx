@@ -47,7 +47,7 @@ export const RadioGroup: React.FC<RadioGroupProps> = ({
               <label htmlFor={id} className="text-xs font-medium text-slate-800 cursor-pointer">
                 {opt.label}
                 {opt.description && (
-                  <p className="text-[11px] text-slate-500 font-normal mt-0.5">{opt.description}</p>
+                  <p className="text-xs text-slate-500 font-normal mt-0.5">{opt.description}</p>
                 )}
               </label>
             </div>

@@ -1,4 +1,6 @@
 import fs from 'node:fs';
+import path from 'node:path';
+import ts from 'typescript';
 
 const read = path => fs.readFileSync(path, 'utf8');
 const results = [];
@@ -61,6 +63,52 @@ await test('AF06: expected academic workflow failures are actionable and do not 
   assert(source.includes('PREDICTION_REQUIRED_FIRST:'));
   assert(source.includes('RUBRIC_NOT_FOUND:'));
   assert(source.includes('const log = status >= 500 ? console.error : console.warn;'));
+});
+
+await test('AF07: every native button declares its form behavior explicitly', () => {
+  const files = [];
+  const walk = directory => fs.readdirSync(directory, { withFileTypes: true }).forEach(entry => {
+    const target = path.join(directory, entry.name);
+    if (entry.isDirectory()) walk(target);
+    else if (entry.name.endsWith('.tsx')) files.push(target);
+  });
+  walk('src');
+  const violations = [];
+  for (const file of files) {
+    const sourceText = read(file);
+    const sourceFile = ts.createSourceFile(file, sourceText, ts.ScriptTarget.Latest, true, ts.ScriptKind.TSX);
+    const visit = node => {
+      if (ts.isJsxOpeningElement(node) && node.tagName.getText(sourceFile) === 'button') {
+        const hasType = node.attributes.properties.some(attribute => ts.isJsxAttribute(attribute) && attribute.name.getText(sourceFile) === 'type');
+        if (!hasType) violations.push(`${file}:${sourceFile.getLineAndCharacterOfPosition(node.getStart()).line + 1}`);
+      }
+      ts.forEachChild(node, visit);
+    };
+    visit(sourceFile);
+  }
+  assert(violations.length === 0, `Buttons missing type: ${violations.join(', ')}`);
+});
+
+await test('AF08: React failures have a user recovery screen and routes update page context', () => {
+  const boundary = read('src/components/errors/AppErrorBoundary.tsx');
+  const app = read('src/App.tsx');
+  const layout = read('src/components/layout/MainLayout.tsx');
+  assert(boundary.includes('getDerivedStateFromError') && boundary.includes('Tải lại trang') && boundary.includes('Về trang chủ'));
+  assert(app.includes('<AppErrorBoundary>') && app.includes('document.title = routeTitle'));
+  assert(layout.includes("document.getElementById('main-content')?.focus()"), 'Route changes must move focus to the main content');
+});
+
+await test('AF09: shared overlays and formerly pointer-only controls support keyboard access', () => {
+  const drawer = read('src/components/ui/Drawer.tsx');
+  const landing = read('src/views/LandingView.tsx');
+  const rubric = read('src/components/rubric/RubricAssessmentGrid.tsx');
+  const analytics = read('src/views/ClassAnalyticsView.tsx');
+  const snapshot = read('src/components/versioning/SnapshotModal.tsx');
+  assert(drawer.includes("event.key === 'Escape'") && drawer.includes('role="dialog"') && drawer.includes('previousFocusRef.current?.focus()'));
+  assert(landing.includes('aria-pressed={isActive}'), 'Workflow cards must be semantic buttons');
+  assert(rubric.includes('aria-pressed={isChosen}'), 'Rubric choices must be semantic buttons');
+  assert(analytics.includes('aria-sort={selectedAxisFilter === axis'), 'Sortable headers must expose sort state');
+  assert(snapshot.includes('setVersionNumber(nextSuggestedVersion)'), 'Snapshot modal must refresh its suggested version when reopened');
 });
 
 const failed = results.filter(result => !result.ok);

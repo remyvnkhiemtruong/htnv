@@ -485,10 +485,12 @@ export const LandingView: React.FC<LandingViewProps> = ({ onNavigate }) => {
                 {WORKFLOW_STEPS.map((step, idx) => {
                   const isActive = activeStoryStep === idx;
                   return (
-                    <div
+                    <button
+                      type="button"
                       key={step.code}
                       onClick={() => setActiveStoryStep(idx)}
-                      className={`cursor-pointer rounded-xl border p-5 sm:p-6 transition-all duration-200 ${
+                      aria-pressed={isActive}
+                      className={`w-full rounded-xl border p-5 text-left sm:p-6 transition-all duration-200 ${
                         isActive
                           ? 'border-primary-400 bg-primary-50/40 shadow-xs ring-1 ring-primary-400'
                           : 'border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50/50'
@@ -513,7 +515,7 @@ export const LandingView: React.FC<LandingViewProps> = ({ onNavigate }) => {
                           </div>
                         </div>
                       </div>
-                    </div>
+                    </button>
                   );
                 })}
               </div>

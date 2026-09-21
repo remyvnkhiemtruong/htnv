@@ -71,8 +71,14 @@ export function DataTable<T>({
             <tr
               key={keyExtractor(row, idx)}
               onClick={() => onRowClick?.(row)}
+              onKeyDown={(event) => {
+                if (!onRowClick || (event.key !== 'Enter' && event.key !== ' ')) return;
+                event.preventDefault();
+                onRowClick(row);
+              }}
+              tabIndex={onRowClick ? 0 : undefined}
               className={cn(
-                "transition-colors",
+                "transition-colors focus:outline-none focus:ring-2 focus:ring-inset focus:ring-primary-500",
                 onRowClick ? "hover:bg-slate-50/70 cursor-pointer" : "hover:bg-slate-50/30"
               )}
             >

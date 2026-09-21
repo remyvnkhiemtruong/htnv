@@ -124,7 +124,7 @@ export const RubricAssessmentGrid: React.FC<RubricAssessmentGridProps> = ({
 
           <div className="flex items-center gap-3">
             <div className="bg-slate-900 text-white rounded-lg px-4 py-2.5 text-center">
-              <div className="text-[11px] text-slate-300 font-medium">Tổng điểm rubric</div>
+              <div className="text-xs text-slate-300 font-medium">Tổng điểm rubric</div>
               <div className="text-xl font-bold text-sky-400">
                 {totalScore} <span className="text-xs font-normal text-slate-400">/ {maxScore}</span>
               </div>
@@ -193,10 +193,13 @@ export const RubricAssessmentGrid: React.FC<RubricAssessmentGridProps> = ({
                   };
 
                   return (
-                    <div
+                    <button
+                      type="button"
                       key={lvl.level}
                       onClick={() => handleSelectLevel(crit.id, lvl.level, lvl.score)}
-                      className={`p-3.5 rounded-xl border transition-all cursor-pointer flex flex-col justify-between ${levelColors[lvl.level] || 'bg-white border-slate-200'}`}
+                      disabled={isReadOnly}
+                      aria-pressed={isChosen}
+                      className={`p-3.5 rounded-xl border text-left transition-all flex flex-col justify-between disabled:cursor-default ${levelColors[lvl.level] || 'bg-white border-slate-200'}`}
                     >
                       <div>
                         <div className="flex items-center justify-between pb-2 mb-2 border-b border-slate-200/60">
@@ -212,9 +215,9 @@ export const RubricAssessmentGrid: React.FC<RubricAssessmentGridProps> = ({
                         </p>
 
                         <div className="mt-2.5 pt-2 border-t border-slate-200/40 space-y-1">
-                          <span className="text-[10px] font-semibold text-slate-600 block">Chỉ báo quan sát:</span>
+                          <span className="text-xs font-semibold text-slate-600 block">Chỉ báo quan sát:</span>
                           {lvl.observableIndicators.map((ind, i) => (
-                            <div key={i} className="text-[11px] text-slate-600 flex items-start gap-1">
+                            <div key={i} className="text-xs text-slate-600 flex items-start gap-1">
                               <span className="text-slate-400">•</span> {ind}
                             </div>
                           ))}
@@ -227,12 +230,12 @@ export const RubricAssessmentGrid: React.FC<RubricAssessmentGridProps> = ({
                             <CheckCircle className="w-3.5 h-3.5" /> Đã chọn
                           </span>
                         ) : (
-                          <span className="text-[11px] text-slate-400 hover:text-slate-700">
+                          <span className="text-xs text-slate-400 hover:text-slate-700">
                             Chọn mức này
                           </span>
                         )}
                       </div>
-                    </div>
+                    </button>
                   );
                 })}
               </div>

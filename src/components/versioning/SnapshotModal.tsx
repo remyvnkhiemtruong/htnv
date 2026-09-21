@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
-import { GitCommit, X, AlertCircle } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
+import { GitCommit, AlertCircle } from 'lucide-react';
+import { Modal } from '../ui/Modal';
 
 interface SnapshotModalProps {
   isOpen: boolean;
@@ -17,6 +18,13 @@ export const SnapshotModal: React.FC<SnapshotModalProps> = ({
   const [versionNumber, setVersionNumber] = useState(nextSuggestedVersion);
   const [changeSummary, setChangeSummary] = useState('');
   const [error, setError] = useState('');
+
+  useEffect(() => {
+    if (!isOpen) return;
+    setVersionNumber(nextSuggestedVersion);
+    setChangeSummary('');
+    setError('');
+  }, [isOpen, nextSuggestedVersion]);
 
   if (!isOpen) return null;
 
@@ -36,19 +44,8 @@ export const SnapshotModal: React.FC<SnapshotModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 animate-fade-in">
-      <div className="bg-white rounded-lg max-w-lg w-full p-5 shadow-modal border border-slate-200">
-        <div className="flex items-center justify-between pb-3 border-b border-slate-100">
-          <div className="flex items-center gap-2 text-slate-900 font-semibold text-sm">
-            <GitCommit className="w-4 h-4 text-sky-600" />
-            <span>Tạo phiên bản mới</span>
-          </div>
-          <button onClick={onClose} className="p-1 rounded text-slate-400 hover:text-slate-600 hover:bg-slate-100">
-            <X className="w-4 h-4" />
-          </button>
-        </div>
-
-        <form onSubmit={handleSubmit} className="mt-4 space-y-3.5">
+    <Modal isOpen={isOpen} onClose={onClose} maxWidth="lg" title={<span className="flex items-center gap-2"><GitCommit className="h-4 w-4 text-sky-600" />Tạo phiên bản mới</span>}>
+        <form onSubmit={handleSubmit} className="space-y-3.5">
           <div className="p-2.5 bg-slate-50 rounded-md border border-slate-200 text-xs text-slate-700 flex items-start gap-2">
             <AlertCircle className="w-4 h-4 text-slate-500 shrink-0 mt-0.5" />
             <div>
@@ -111,7 +108,6 @@ export const SnapshotModal: React.FC<SnapshotModalProps> = ({
             </button>
           </div>
         </form>
-      </div>
-    </div>
+    </Modal>
   );
 };

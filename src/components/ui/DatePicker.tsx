@@ -46,9 +46,9 @@ export const DatePicker = React.forwardRef<HTMLInputElement, DatePickerProps>(({
         />
       </div>
       {error ? (
-        <p className="text-[11px] font-medium text-rose-600">{error}</p>
+        <p className="text-xs font-medium text-rose-600">{error}</p>
       ) : helperText ? (
-        <p className="text-[11px] text-slate-500">{helperText}</p>
+        <p className="text-xs text-slate-500">{helperText}</p>
       ) : null}
     </div>
   );

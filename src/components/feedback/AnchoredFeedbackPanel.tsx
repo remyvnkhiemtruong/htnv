@@ -63,12 +63,13 @@ export const AnchoredFeedbackPanel: React.FC<AnchoredFeedbackPanelProps> = ({
           </div>
           <div>
             <h3 className="font-semibold text-slate-900 text-xs">Phản hồi neo ngữ cảnh</h3>
-            <p className="text-[11px] text-slate-500">Gắn vào văn bản thuộc phiên bản <strong>{versionNumber}</strong></p>
+            <p className="text-xs text-slate-500">Gắn vào văn bản thuộc phiên bản <strong>{versionNumber}</strong></p>
           </div>
         </div>
 
         {canAddFeedback && !isAdding && (
           <button
+            type="button"
             onClick={() => setIsAdding(true)}
             className="inline-flex items-center gap-1 px-2.5 py-1 bg-primary-600 hover:bg-primary-700 text-white rounded-md text-xs font-medium transition-colors"
           >
@@ -88,7 +89,7 @@ export const AnchoredFeedbackPanel: React.FC<AnchoredFeedbackPanelProps> = ({
             </div>
 
             <div>
-              <label className="block text-[11px] font-semibold text-slate-700 mb-1">
+              <label className="block text-xs font-semibold text-slate-700 mb-1">
                 Thuộc trục thi pháp:
               </label>
               <select
@@ -103,7 +104,7 @@ export const AnchoredFeedbackPanel: React.FC<AnchoredFeedbackPanelProps> = ({
             </div>
 
             <div>
-              <label className="block text-[11px] font-semibold text-slate-700 mb-1">
+              <label className="block text-xs font-semibold text-slate-700 mb-1">
                 Đoạn văn bản trích dẫn neo (hoặc để trống nếu nhận xét tổng quát):
               </label>
               <input
@@ -116,7 +117,7 @@ export const AnchoredFeedbackPanel: React.FC<AnchoredFeedbackPanelProps> = ({
             </div>
 
             <div>
-              <label className="block text-[11px] font-semibold text-slate-700 mb-1">
+              <label className="block text-xs font-semibold text-slate-700 mb-1">
                 Nội dung nhận xét & Gợi ý hướng sửa:
               </label>
               <textarea
@@ -172,7 +173,7 @@ export const AnchoredFeedbackPanel: React.FC<AnchoredFeedbackPanelProps> = ({
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-1.5">
                       <span
-                        className={`inline-flex items-center gap-1 text-[10px] font-semibold px-1.5 py-0.5 rounded ${
+                        className={`inline-flex items-center gap-1 text-xs font-semibold px-1.5 py-0.5 rounded ${
                           isTeacher
                             ? 'bg-emerald-50 text-emerald-800 border border-emerald-200'
                             : 'bg-primary-50 text-primary-800 border border-primary-200'
@@ -181,12 +182,12 @@ export const AnchoredFeedbackPanel: React.FC<AnchoredFeedbackPanelProps> = ({
                         {isTeacher ? <User className="w-2.5 h-2.5" /> : <Users className="w-2.5 h-2.5" />}
                         {item.authorName} ({isTeacher ? 'Giáo viên' : 'Bạn học'})
                       </span>
-                      <span className="text-[10px] text-slate-500 bg-white px-1.5 py-0.5 rounded border border-slate-200">
+                      <span className="text-xs text-slate-500 bg-white px-1.5 py-0.5 rounded border border-slate-200">
                         {axisObj?.shortName || item.axisId}
                       </span>
                     </div>
 
-                    <span className="text-[10px] text-slate-400">
+                    <span className="text-xs text-slate-400">
                       {new Date(item.createdAt).toLocaleDateString('vi-VN')}
                     </span>
                   </div>
@@ -194,7 +195,7 @@ export const AnchoredFeedbackPanel: React.FC<AnchoredFeedbackPanelProps> = ({
                   {/* Highlight snippet quote */}
                   {item.selectedSnippet && (
                     <div className="mt-2 text-xs bg-white p-2 rounded-md border-l-2 border-amber-400 text-slate-700 italic">
-                      <span className="font-semibold text-amber-700 not-italic text-[10px] block">Văn bản được neo:</span>
+                      <span className="font-semibold text-amber-700 not-italic text-xs block">Văn bản được neo:</span>
                       "{item.selectedSnippet}"
                     </div>
                   )}
@@ -207,13 +208,14 @@ export const AnchoredFeedbackPanel: React.FC<AnchoredFeedbackPanelProps> = ({
                   {/* Resolution action */}
                   <div className="mt-2.5 pt-2 border-t border-slate-200/60 flex items-center justify-between text-xs">
                     {item.resolved ? (
-                      <span className="inline-flex items-center gap-1 text-emerald-700 text-[11px] font-semibold">
+                      <span className="inline-flex items-center gap-1 text-emerald-700 text-xs font-semibold">
                         <CheckCheck className="w-3.5 h-3.5" /> Đã tiếp thu & sửa ở bản mới
                       </span>
                     ) : (
                       <button
+                        type="button"
                         onClick={() => resolveFeedback(item.id)}
-                        className="inline-flex items-center gap-1 text-[11px] font-semibold text-slate-600 hover:text-emerald-700 bg-white hover:bg-emerald-50 px-2 py-1 rounded border border-slate-200 hover:border-emerald-300 transition-colors"
+                        className="inline-flex items-center gap-1 text-xs font-semibold text-slate-600 hover:text-emerald-700 bg-white hover:bg-emerald-50 px-2 py-1 rounded border border-slate-200 hover:border-emerald-300 transition-colors"
                       >
                         <CheckCheck className="w-3.5 h-3.5" />
                         Đánh dấu đã tiếp thu

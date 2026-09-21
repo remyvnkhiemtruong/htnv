@@ -83,6 +83,7 @@ export const DiffViewer: React.FC<DiffViewerProps> = ({ v1, v2, studentName }) =
       <div className="bg-white rounded-lg border border-slate-200 p-2.5 flex flex-wrap items-center justify-between gap-2.5">
         <div className="flex items-center gap-2 overflow-x-auto pb-1 sm:pb-0 max-w-full">
           <button
+            type="button"
             onClick={() => setSelectedAxisId('all')}
             className={`px-2.5 py-1 rounded-md text-xs font-medium whitespace-nowrap transition-colors ${
               selectedAxisId === 'all'
@@ -94,6 +95,7 @@ export const DiffViewer: React.FC<DiffViewerProps> = ({ v1, v2, studentName }) =
           </button>
           {POETIC_AXES.map(axis => (
             <button
+              type="button"
               key={axis.id}
               onClick={() => setSelectedAxisId(axis.id)}
               className={`px-2.5 py-1 rounded-md text-xs font-medium whitespace-nowrap transition-colors ${
@@ -103,7 +105,7 @@ export const DiffViewer: React.FC<DiffViewerProps> = ({ v1, v2, studentName }) =
               }`}
             >
               {axis.shortName}
-              <span className="ml-1 text-[10px] opacity-75">
+              <span className="ml-1 text-xs opacity-75">
                 (+{diffResults[axis.id]?.wordsAdded})
               </span>
             </button>
@@ -112,6 +114,7 @@ export const DiffViewer: React.FC<DiffViewerProps> = ({ v1, v2, studentName }) =
 
         <div className="flex items-center gap-1 bg-slate-100 p-1 rounded-lg border border-slate-200">
           <button
+            type="button"
             onClick={() => setViewMode('side-by-side')}
             className={`inline-flex items-center gap-1 px-2.5 py-1 rounded text-xs font-semibold transition-colors ${
               viewMode === 'side-by-side' ? 'bg-white text-slate-900 shadow-xs' : 'text-slate-600 hover:text-slate-900'
@@ -121,6 +124,7 @@ export const DiffViewer: React.FC<DiffViewerProps> = ({ v1, v2, studentName }) =
             Song song (Side-by-Side)
           </button>
           <button
+            type="button"
             onClick={() => setViewMode('unified')}
             className={`inline-flex items-center gap-1 px-2.5 py-1 rounded text-xs font-semibold transition-colors ${
               viewMode === 'unified' ? 'bg-white text-slate-900 shadow-xs' : 'text-slate-600 hover:text-slate-900'

@@ -145,7 +145,7 @@ export const CompetencyRadarChart: React.FC<CompetencyAnalyticsProps> = ({
         </div>
 
         <div className="bg-emerald-50 border border-emerald-200 rounded-md px-3 py-1.5 text-right">
-          <span className="text-[11px] font-medium text-emerald-800 block">Tỷ lệ tiến bộ</span>
+          <span className="text-xs font-medium text-emerald-800 block">Tỷ lệ tiến bộ</span>
           <span className="text-lg font-bold text-emerald-700">+{growthPercent}%</span>
         </div>
       </div>
@@ -164,13 +164,13 @@ export const CompetencyRadarChart: React.FC<CompetencyAnalyticsProps> = ({
 
           return (
             <div key={axis.id} className="p-2.5 rounded-xl bg-slate-50 border border-slate-200 text-center">
-              <div className="text-[11px] font-bold text-slate-800 truncate" title={axis.title}>
+              <div className="text-xs font-bold text-slate-800 truncate" title={axis.title}>
                 {axis.shortName}
               </div>
               <div className="text-sm font-bold mt-1 text-slate-900">
                 {s2}/4.0
               </div>
-              <div className={`text-[10px] font-semibold mt-0.5 ${diff > 0 ? 'text-emerald-600' : 'text-slate-400'}`}>
+              <div className={`text-xs font-semibold mt-0.5 ${diff > 0 ? 'text-emerald-600' : 'text-slate-400'}`}>
                 {diff > 0 ? `▲ +${diff.toFixed(1)} đ` : 'Chưa đổi'}
               </div>
             </div>

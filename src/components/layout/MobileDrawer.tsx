@@ -154,7 +154,7 @@ export const MobileDrawer: React.FC<MobileDrawerProps> = ({ isOpen, onClose, cur
                   <div className="mt-0.5 text-xs text-slate-500">{ROLE_NAMES[user.role] || user.role}{user.className ? ` · ${user.className}` : ''}</div>
                 </div>
               </div>
-              <button onClick={onClose} className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl text-slate-500 hover:bg-slate-100 hover:text-slate-900" aria-label="Đóng menu">
+              <button type="button" onClick={onClose} className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl text-slate-500 hover:bg-slate-100 hover:text-slate-900" aria-label="Đóng menu">
                 <XMarkIcon className="h-5 w-5" />
               </button>
             </div>

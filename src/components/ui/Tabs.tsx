@@ -31,6 +31,7 @@ export const Tabs: React.FC<TabsProps> = ({
           const isActive = activeId === tab.id;
           return (
             <button
+              type="button"
               key={tab.id}
               disabled={tab.disabled}
               onClick={() => onChange(tab.id)}
@@ -62,6 +63,7 @@ export const Tabs: React.FC<TabsProps> = ({
         const isActive = activeId === tab.id;
         return (
           <button
+            type="button"
             key={tab.id}
             disabled={tab.disabled}
             onClick={() => onChange(tab.id)}

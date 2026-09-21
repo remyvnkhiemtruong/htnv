@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useId, useRef } from 'react';
 import { cn } from '../../utils/cn';
 import { XMarkIcon } from '@heroicons/react/24/outline';
 
@@ -21,14 +21,40 @@ export const Drawer: React.FC<DrawerProps> = ({
   position = 'right',
   width = 'lg'
 }) => {
+  const panelRef = useRef<HTMLDivElement>(null);
+  const previousFocusRef = useRef<HTMLElement | null>(null);
+  const titleId = useId();
+
   useEffect(() => {
-    if (isOpen) {
-      document.body.style.overflow = 'hidden';
-    }
-    return () => {
-      document.body.style.overflow = 'unset';
+    if (!isOpen) return;
+    const previousOverflow = document.body.style.overflow;
+    previousFocusRef.current = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+    document.body.style.overflow = 'hidden';
+    const frame = window.requestAnimationFrame(() => {
+      panelRef.current?.querySelector<HTMLElement>('button, a[href], input, select, textarea, [tabindex]:not([tabindex="-1"])')?.focus();
+    });
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        event.preventDefault();
+        onClose();
+        return;
+      }
+      if (event.key !== 'Tab' || !panelRef.current) return;
+      const focusable = [...panelRef.current.querySelectorAll<HTMLElement>('button:not([disabled]), a[href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])')];
+      if (!focusable.length) return;
+      const first = focusable[0];
+      const last = focusable[focusable.length - 1];
+      if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last.focus(); }
+      else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first.focus(); }
     };
-  }, [isOpen]);
+    window.addEventListener('keydown', handleKeyDown);
+    return () => {
+      window.cancelAnimationFrame(frame);
+      window.removeEventListener('keydown', handleKeyDown);
+      document.body.style.overflow = previousOverflow;
+      previousFocusRef.current?.focus();
+    };
+  }, [isOpen, onClose]);
 
   if (!isOpen) return null;
 
@@ -40,13 +66,13 @@ export const Drawer: React.FC<DrawerProps> = ({
 
   return (
     <div className="fixed inset-0 z-50 overflow-hidden animate-fade-in">
-      <div className="absolute inset-0 bg-slate-900/30 backdrop-blur-xs" onClick={onClose} />
+      <div className="absolute inset-0 bg-slate-900/30 backdrop-blur-xs" onClick={onClose} aria-hidden="true" />
       <div className={cn("fixed inset-y-0 flex max-w-full", position === 'right' ? "right-0" : "left-0")}>
-        <div className={cn("w-screen bg-white shadow-2xl border-l border-slate-200 flex flex-col", widths[width])}>
+        <div ref={panelRef} role="dialog" aria-modal="true" aria-labelledby={title ? titleId : undefined} tabIndex={-1} className={cn("w-screen bg-white shadow-2xl border-l border-slate-200 flex flex-col", widths[width])}>
           {title && (
             <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between">
-              <h2 className="text-sm font-bold text-slate-900">{title}</h2>
-              <button onClick={onClose} className="p-1 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100">
+              <h2 id={titleId} className="text-sm font-bold text-slate-900">{title}</h2>
+              <button type="button" onClick={onClose} aria-label="Đóng ngăn bên" className="p-1 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100">
                 <XMarkIcon className="w-5 h-5" />
               </button>
             </div>

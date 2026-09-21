@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { AppHeader } from './AppHeader';
 import { AppSidebar } from './AppSidebar';
 import { MobileDrawer } from './MobileDrawer';
@@ -19,6 +19,11 @@ export const MainLayout: React.FC<MainLayoutProps> = ({ currentView, onNavigate,
   const [isMobileDrawerOpen, setIsMobileDrawerOpen] = useState(false);
   const [isCommandPaletteOpen, setIsCommandPaletteOpen] = useState(false);
   const immersive = currentView === 'editor' || currentView === 'teacher-review';
+
+  useEffect(() => {
+    const frame = window.requestAnimationFrame(() => document.getElementById('main-content')?.focus());
+    return () => window.cancelAnimationFrame(frame);
+  }, [currentView]);
 
   return (
     <div className="flex min-h-[100dvh] flex-col overflow-x-clip bg-slate-50 font-sans text-slate-900" data-app-name="Học tốt Ngữ Văn">

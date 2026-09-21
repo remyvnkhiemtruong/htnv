@@ -153,7 +153,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({ isOpen, onClose,
         <div className="relative flex items-center border-b border-slate-200 px-4 py-3">
           <MagnifyingGlassIcon className="mr-3 h-5 w-5 shrink-0 text-slate-400" />
           <input autoFocus value={query} onChange={event => { setQuery(event.target.value); setSelectedIndex(0); }} placeholder="Tìm nhiệm vụ, tác phẩm..." autoComplete="off" autoCorrect="off" autoCapitalize="off" spellCheck={false} data-lpignore="true" data-1p-ignore="true" data-form-type="other" className="w-full bg-transparent text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none" />
-          <button onClick={onClose} className="ml-2 rounded-md p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-600" aria-label="Đóng tìm kiếm"><XMarkIcon className="h-4 w-4" /></button>
+          <button type="button" onClick={onClose} className="ml-2 rounded-md p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-600" aria-label="Đóng tìm kiếm"><XMarkIcon className="h-4 w-4" /></button>
         </div>
         <div className="max-h-80 space-y-0.5 overflow-y-auto p-2">
           {filteredCommands.length === 0 ? (
