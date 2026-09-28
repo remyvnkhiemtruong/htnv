@@ -44,10 +44,10 @@ const TEACHER_TOOLS = [
 ];
 
 const SYSTEM_INFO = [
-  ['Đơn vị áp dụng', 'Trường THPT Vị Thanh — Nền tảng học tập số môn Ngữ văn cấp THPT.'],
-  ['Đối tượng sử dụng', 'Học sinh, Giáo viên tổ Ngữ văn và Ban chuyên môn nhà trường.'],
-  ['Quy trình học tập', 'Lưu giữ toàn diện tiến trình từ dự đoán ban đầu, bài nháp V1, góp ý, bản sửa V2 đến Rubric đánh giá.'],
-  ['Tài khoản học tập', 'Cấp phát đồng bộ theo danh sách lớp học và phân quyền sư phạm của nhà trường.']
+  ['Phạm vi áp dụng', 'Dành cho học sinh và giáo viên tất cả các trường THPT trên toàn quốc.'],
+  ['Bản quyền sở hữu', 'Bản quyền thuộc về Trường THPT Vị Thanh (Copyright © THPT Vị Thanh).'],
+  ['Đối tượng sử dụng', 'Học sinh, Giáo viên tổ Ngữ văn và Ban chuyên môn các nhà trường.'],
+  ['Quy trình học tập', 'Lưu giữ toàn diện tiến trình từ dự đoán ban đầu, bài nháp V1, góp ý, bản sửa V2 đến Rubric đánh giá.']
 ];
 
 type StageKey = keyof typeof STAGE_PREVIEWS;
@@ -67,7 +67,7 @@ export const LandingView: React.FC<LandingViewProps> = ({ onNavigate }) => {
             <img src="/Logo.png" alt="Logo Trường THPT Vị Thanh" className="h-10 w-10 shrink-0 object-contain drop-shadow-sm" />
             <span className="min-w-0">
               <span className="block truncate text-sm font-bold text-slate-950">Học tốt Ngữ Văn</span>
-              <span className="block truncate text-xs font-medium text-slate-500">Trường THPT Vị Thanh</span>
+              <span className="block truncate text-xs font-medium text-slate-500">Copyright © THPT Vị Thanh</span>
             </span>
           </a>
 
@@ -95,13 +95,13 @@ export const LandingView: React.FC<LandingViewProps> = ({ onNavigate }) => {
             <div className="max-w-2xl">
               <div className="inline-flex items-center gap-2 rounded-full border border-primary-200 bg-primary-50 px-3 py-1 text-xs font-semibold text-primary-900">
                 <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
-                Trường THPT Vị Thanh · Năm học 2026–2027
+                Dành cho các trường THPT · Năm học 2026–2027
               </div>
               <h1 className="mt-4 text-3xl font-extrabold leading-tight tracking-tight text-slate-950 sm:text-4xl lg:text-5xl">
                 Học tốt Ngữ Văn qua tiến trình 6 trục thi pháp.
               </h1>
               <p className="mt-4 text-sm leading-relaxed text-slate-600 sm:text-base">
-                Đồng hành cùng học sinh Trường THPT Vị Thanh rèn luyện kỹ năng đọc hiểu văn bản, viết bài nghị luận và nâng cao kỹ năng diễn đạt qua từng mốc góp ý cụ thể.
+                Nền tảng hỗ trợ học sinh và giáo viên các trường THPT rèn luyện kỹ năng đọc hiểu văn bản, viết bài nghị luận và nâng cao kỹ năng diễn đạt theo Chương trình GDPT 2018.
               </p>
               <div className="mt-7 flex flex-wrap items-center gap-3">
                 <Button size="lg" variant="primary" onClick={goToLogin} rightIcon={<ArrowRightIcon className="h-4 w-4" />}>
@@ -220,7 +220,7 @@ export const LandingView: React.FC<LandingViewProps> = ({ onNavigate }) => {
             <div className="grid gap-8 lg:grid-cols-[280px_minmax(0,1fr)]">
               <div>
                 <h2 className="text-2xl font-bold tracking-tight text-slate-950">Thông tin hệ thống</h2>
-                <p className="mt-2 text-sm leading-6 text-slate-600">Hệ thống hồ sơ học tập số môn Ngữ văn dành cho học sinh và giáo viên Trường THPT Vị Thanh.</p>
+                <p className="mt-2 text-sm leading-6 text-slate-600">Hệ thống hồ sơ học tập số môn Ngữ văn dành cho học sinh và giáo viên các trường THPT toàn quốc.</p>
               </div>
               <dl className="grid gap-3 sm:grid-cols-2 text-xs">
                 {SYSTEM_INFO.map(([title, desc]) => (
@@ -238,10 +238,10 @@ export const LandingView: React.FC<LandingViewProps> = ({ onNavigate }) => {
       <footer className="border-t border-slate-200 bg-slate-950 text-slate-300">
         <div className="mx-auto flex max-w-6xl flex-col gap-2 px-4 py-8 text-xs sm:flex-row sm:items-center sm:justify-between sm:px-6">
           <div className="flex items-center gap-2.5">
-            <img src="/Logo.png" alt="Logo" className="h-6 w-6 object-contain" />
-            <span>Học tốt Ngữ Văn · Trường THPT Vị Thanh</span>
+            <img src="/Logo.png" alt="Logo THPT Vị Thanh" className="h-6 w-6 object-contain" />
+            <span>Học tốt Ngữ Văn · Nền tảng học tập số dành cho các trường THPT</span>
           </div>
-          <span>Năm học 2026–2027</span>
+          <span>Copyright © 2026–2027 Trường THPT Vị Thanh. All rights reserved.</span>
         </div>
       </footer>
     </div>

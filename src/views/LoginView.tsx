@@ -177,7 +177,7 @@ export const LoginView: React.FC<LoginViewProps> = ({
               </form>
             )}
 
-            <div className="mt-7 border-t border-slate-200 pt-5 text-center text-xs leading-5 text-slate-500">Tài khoản do nhà trường hoặc quản trị viên cấp.</div>
+            <div className="mt-7 border-t border-slate-200 pt-5 text-center text-xs leading-5 text-slate-500">Tài khoản do nhà trường cấp. Copyright © Trường THPT Vị Thanh.</div>
           </div>
         </section>
       </div>

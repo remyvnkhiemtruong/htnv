@@ -455,9 +455,9 @@ export const CustomContextMenu: React.FC<CustomContextMenuProps> = ({
       case 'assignment-list':
         return { icon: BookOpen, title: 'Nhiệm vụ học tập', subtitle: 'Hạn nộp & yêu cầu' };
       case 'landing':
-        return { icon: Sparkles, title: 'Học tốt Ngữ Văn', subtitle: 'Trường THPT Vị Thanh' };
+        return { icon: Sparkles, title: 'Học tốt Ngữ Văn', subtitle: 'Copyright © THPT Vị Thanh' };
       default:
-        return { icon: Home, title: 'Học tốt Ngữ Văn · THPT Vị Thanh', subtitle: roleLabel };
+        return { icon: Home, title: 'Học tốt Ngữ Văn', subtitle: `${roleLabel} · Copyright THPT Vị Thanh` };
     }
   }, [activeView, roleLabel, selectedText, selectionStats, targetContext.isImg, targetContext.isInput, targetContext.isLink]);
 
@@ -973,7 +973,7 @@ export const CustomContextMenu: React.FC<CustomContextMenuProps> = ({
       {/* Footer hint */}
       <div className="mt-1 border-t border-slate-100 pt-1 text-center text-slate-400">
         <span className="text-xs">
-          Shift + Chuột phải: Menu gốc trình duyệt
+          Copyright © THPT Vị Thanh · Shift + Chuột phải: Menu gốc
         </span>
       </div>
     </div>

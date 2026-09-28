@@ -162,7 +162,7 @@ const THEME_CONFIG: Record<
   teachersday: {
     name: 'Tri Ân 20/11',
     category: 'holiday',
-    subtitle: 'Tri ân thầy cô THPT Vị Thanh',
+    subtitle: 'Tri ân quý thầy cô giáo',
     icon: Award,
     badgeColor: 'text-amber-700 bg-amber-50 border-amber-200',
     dotColor: 'bg-amber-500',
