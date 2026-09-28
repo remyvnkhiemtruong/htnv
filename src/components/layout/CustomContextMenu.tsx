@@ -129,6 +129,7 @@ export const CustomContextMenu: React.FC<CustomContextMenuProps> = ({
   });
 
   const menuRef = useRef<HTMLDivElement | null>(null);
+  const previousFocusRef = useRef<HTMLElement | null>(null);
 
   // Determine active view dynamically
   const activeView = useMemo(() => {
@@ -163,6 +164,9 @@ export const CustomContextMenu: React.FC<CustomContextMenuProps> = ({
   // Close helper
   const closeMenu = useCallback(() => {
     setIsOpen(false);
+    if (previousFocusRef.current && document.contains(previousFocusRef.current)) {
+      previousFocusRef.current.focus();
+    }
   }, []);
 
   // Safe navigation helper
@@ -175,6 +179,16 @@ export const CustomContextMenu: React.FC<CustomContextMenuProps> = ({
     }
   }, [closeMenu, onNavigate]);
 
+  // Focus first menu item when opened
+  useEffect(() => {
+    if (!isOpen || !menuRef.current) return;
+    const frame = window.requestAnimationFrame(() => {
+      const first = menuRef.current?.querySelector<HTMLElement>('button[role="menuitem"], button');
+      first?.focus();
+    });
+    return () => window.cancelAnimationFrame(frame);
+  }, [isOpen]);
+
   // Context menu trigger listener
   useEffect(() => {
     const handleContextMenu = (e: MouseEvent) => {
@@ -182,6 +196,10 @@ export const CustomContextMenu: React.FC<CustomContextMenuProps> = ({
       if (e.shiftKey) return;
 
       e.preventDefault();
+
+      if (document.activeElement instanceof HTMLElement) {
+        previousFocusRef.current = document.activeElement;
+      }
 
       // Check highlighted text
       const selection = window.getSelection();
@@ -218,6 +236,13 @@ export const CustomContextMenu: React.FC<CustomContextMenuProps> = ({
       let x = e.clientX;
       let y = e.clientY;
 
+      // Handle keyboard context menu (Shift+F10 / Apps key where coordinates are 0,0)
+      if (x === 0 && y === 0 && document.activeElement instanceof HTMLElement) {
+        const rect = document.activeElement.getBoundingClientRect();
+        x = rect.left + rect.width / 2;
+        y = rect.bottom + 4;
+      }
+
       if (x + menuWidth > window.innerWidth - pad) {
         x = window.innerWidth - menuWidth - pad;
       }
@@ -240,7 +265,40 @@ export const CustomContextMenu: React.FC<CustomContextMenuProps> = ({
     };
 
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') closeMenu();
+      if (!isOpen) return;
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        closeMenu();
+        return;
+      }
+      if (!menuRef.current) return;
+      const items = [...menuRef.current.querySelectorAll<HTMLElement>('button[role="menuitem"], button:not([disabled])')];
+      if (!items.length) return;
+      const activeIdx = items.indexOf(document.activeElement as HTMLElement);
+
+      if (e.key === 'ArrowDown') {
+        e.preventDefault();
+        const next = activeIdx >= 0 ? (activeIdx + 1) % items.length : 0;
+        items[next]?.focus();
+      } else if (e.key === 'ArrowUp') {
+        e.preventDefault();
+        const prev = activeIdx > 0 ? activeIdx - 1 : items.length - 1;
+        items[prev]?.focus();
+      } else if (e.key === 'Home') {
+        e.preventDefault();
+        items[0]?.focus();
+      } else if (e.key === 'End') {
+        e.preventDefault();
+        items[items.length - 1]?.focus();
+      } else if (e.key === 'Tab') {
+        if (e.shiftKey && (document.activeElement === items[0] || activeIdx === -1)) {
+          e.preventDefault();
+          items[items.length - 1]?.focus();
+        } else if (!e.shiftKey && document.activeElement === items[items.length - 1]) {
+          e.preventDefault();
+          items[0]?.focus();
+        }
+      }
     };
 
     window.addEventListener('contextmenu', handleContextMenu);
@@ -254,7 +312,7 @@ export const CustomContextMenu: React.FC<CustomContextMenuProps> = ({
       window.removeEventListener('scroll', handleScroll);
       window.removeEventListener('keydown', handleKeyDown);
     };
-  }, [closeMenu]);
+  }, [closeMenu, isOpen]);
 
   // Synchronize external seasonal changes
   useEffect(() => {

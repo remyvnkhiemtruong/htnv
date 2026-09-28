@@ -252,6 +252,29 @@ export const SeasonalMouseExperience: React.FC = () => {
 
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<'season' | 'holiday'>('season');
+  const menuContainerRef = useRef<HTMLDivElement | null>(null);
+
+  // Close seasonal menu on Escape key or outside click
+  useEffect(() => {
+    if (!isMenuOpen) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        setIsMenuOpen(false);
+      }
+    };
+    const handleClickOutside = (e: MouseEvent) => {
+      if (menuContainerRef.current && !menuContainerRef.current.contains(e.target as Node)) {
+        setIsMenuOpen(false);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    window.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+      window.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [isMenuOpen]);
 
   // Refs for animation loop
   const mousePos = useRef<{ x: number; y: number; active: boolean }>({ x: -100, y: -100, active: false });
@@ -757,7 +780,7 @@ export const SeasonalMouseExperience: React.FC = () => {
 
       {/* Floating Seasonal & Holiday Control Pill */}
       <aside aria-label="Điều khiển hiệu ứng mùa và lễ hội" className="fixed bottom-16 left-3 z-30 select-none md:bottom-4 md:left-4">
-        <div className="relative">
+        <div ref={menuContainerRef} className="relative">
           {/* Expanded Menu Panel */}
           {isMenuOpen && (
             <div className="absolute bottom-full left-0 mb-2 w-72 rounded-lg border border-slate-200 bg-white p-3 shadow-lg">

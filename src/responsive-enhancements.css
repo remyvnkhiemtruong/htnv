@@ -39,6 +39,12 @@ button:active:not(:disabled),
   transform: translateY(1px);
 }
 
+/* Accessible keyboard navigation focus ring */
+:focus-visible {
+  outline: 2px solid #0284c7;
+  outline-offset: 2px;
+}
+
 /* Better mobile controls and prevents iOS focus zoom. */
 @media (max-width: 767px) {
   input,

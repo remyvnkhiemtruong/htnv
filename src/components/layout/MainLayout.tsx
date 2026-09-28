@@ -25,6 +25,17 @@ export const MainLayout: React.FC<MainLayoutProps> = ({ currentView, onNavigate,
     return () => window.cancelAnimationFrame(frame);
   }, [currentView]);
 
+  useEffect(() => {
+    const handleGlobalKeyDown = (event: KeyboardEvent) => {
+      if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'k') {
+        event.preventDefault();
+        setIsCommandPaletteOpen((prev) => !prev);
+      }
+    };
+    window.addEventListener('keydown', handleGlobalKeyDown);
+    return () => window.removeEventListener('keydown', handleGlobalKeyDown);
+  }, []);
+
   return (
     <div className="flex min-h-[100dvh] flex-col overflow-x-clip bg-slate-50 font-sans text-slate-900" data-app-name="Học tốt Ngữ Văn">
       <a href="#main-content" className="sr-only focus:not-sr-only focus:fixed focus:left-2 focus:top-2 focus:z-[70] focus:rounded-lg focus:bg-primary-700 focus:px-4 focus:py-2 focus:font-medium focus:text-white focus:outline-none focus:ring-2 focus:ring-white">Chuyển thẳng đến nội dung chính</a>
