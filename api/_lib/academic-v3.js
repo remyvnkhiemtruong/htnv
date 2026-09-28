@@ -437,6 +437,7 @@ export async function getAcademicSnapshot(user) {
         SELECT v.*, u.name author_name FROM portfolio_versions v
         LEFT JOIN app_users u ON u.id=v.created_by
         WHERE v.id=ANY($1::uuid[]) AND v.portfolio_id=ANY($2::uuid[])
+          AND v.change_source IS DISTINCT FROM 'simulation'
         ORDER BY v.sequence_no, v.submitted_at
       `, [scope.versionIds, portfolioIds])).rows : [];
     } else {
@@ -444,6 +445,7 @@ export async function getAcademicSnapshot(user) {
         SELECT v.*, u.name author_name FROM portfolio_versions v
         LEFT JOIN app_users u ON u.id=v.created_by
         WHERE v.portfolio_id=ANY($1::uuid[])
+          AND v.change_source IS DISTINCT FROM 'simulation'
         ORDER BY v.sequence_no, v.submitted_at
       `, [portfolioIds])).rows;
     }
@@ -453,6 +455,7 @@ export async function getAcademicSnapshot(user) {
              submitted_at, content_checksum
       FROM portfolio_versions
       WHERE portfolio_id=ANY($1::uuid[])
+        AND change_source IS DISTINCT FROM 'simulation'
       ORDER BY sequence_no, submitted_at
     `, [portfolioIds])).rows;
   }
@@ -549,6 +552,7 @@ export async function getAcademicSnapshot(user) {
       params.push(user.id, scope.versionIds || []);
       where += ' AND f.author_id=$2 AND f.version_id=ANY($3::uuid[])';
     }
+    where += " AND v.change_source IS DISTINCT FROM 'simulation'";
     const rows = await pool.query(`
       SELECT f.*, p.student_id, a.public_id assignment_public_id, v.version_number, u.name author_name
       FROM feedbacks f
@@ -664,6 +668,9 @@ export async function getAcademicSnapshot(user) {
       params.push(user.id);
       where = "WHERE ar.status IN ('pending','in_progress','completed') AND ar.teacher_review_status='pending' AND (ar.reviewer_id IS NULL OR ar.reviewer_id=$1)";
     }
+    where = where
+      ? `${where} AND v.change_source IS DISTINCT FROM 'simulation'`
+      : "WHERE v.change_source IS DISTINCT FROM 'simulation'";
     const rows = await pool.query(`
       SELECT ar.*, a.public_id assignment_public_id, p.student_id, u.name student_name, v.version_number
       FROM ai_review_requests ar
