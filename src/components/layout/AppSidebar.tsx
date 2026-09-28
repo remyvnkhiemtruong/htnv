@@ -140,7 +140,7 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
   return (
     <aside
       className={cn(
-        'hidden min-h-[calc(100vh-4rem)] shrink-0 flex-col justify-between border-r border-slate-200 bg-white px-2.5 py-3 transition-[width] duration-200 md:flex',
+        'hidden sticky top-16 h-[calc(100dvh-4rem)] self-start overflow-y-auto shrink-0 flex-col justify-between border-r border-slate-200 bg-white px-2.5 py-3 transition-[width] duration-200 md:flex',
         isCollapsed ? 'w-[68px]' : 'w-60',
         className
       )}

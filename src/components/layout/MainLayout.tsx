@@ -34,7 +34,7 @@ export const MainLayout: React.FC<MainLayoutProps> = ({ currentView, onNavigate,
         <main
           id="main-content"
           tabIndex={-1}
-          className={`min-w-0 flex-1 overflow-y-auto overscroll-y-contain focus:outline-none ${immersive ? 'p-0' : 'px-3 py-4 sm:px-5 sm:py-6 lg:px-8 lg:py-7 xl:px-10 xl:py-8'}`}
+          className={`min-w-0 flex-1 focus:outline-none ${immersive ? 'p-0' : 'px-3 py-4 sm:px-5 sm:py-6 lg:px-8 lg:py-7 xl:px-10 xl:py-8'}`}
         >
           <div key={currentView} className="app-view-enter min-w-0">
             {children}
