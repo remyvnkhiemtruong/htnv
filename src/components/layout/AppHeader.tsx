@@ -245,7 +245,7 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
           <ol className="list-inside list-decimal space-y-1.5 pl-1 text-slate-700">
             <li>Nếu nhiệm vụ yêu cầu dự đoán trước đọc, hoàn thành và nộp V0.</li>
             <li>Đọc ngữ liệu, viết theo các trục thi pháp và nộp V1.</li>
-            <li>Nhập phản hồi từ ChatGPT và gửi cho học sinh.</li>
+            <li>Nhận phản hồi gợi ý định hướng để tiếp tục suy nghĩ và hoàn thiện.</li>
             <li>Giáo viên xem góp ý đã gửi và có thể bổ sung nhận xét.</li>
             <li>Học sinh sửa bài, nộp V2 hoặc bản tiếp theo và ghi lí do thay đổi.</li>
             <li>Sau bản chỉnh sửa, học sinh hoàn thành REF1; giáo viên chấm Rubric.</li>

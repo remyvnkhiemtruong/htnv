@@ -32,8 +32,8 @@ const POETIC_AXES = [
 const STAGE_PREVIEWS = {
   v0: { badge: 'Khởi động tiếp nhận', title: 'V0: Dự đoán độc lập trước khi đọc', desc: 'Học sinh dựa trên nhan đề, tác giả hoặc đoạn trích mở đầu để phán đoán xung đột và tư tưởng, kèm đánh giá độ tự tin.', sample: 'Ví dụ: Dự đoán tình huống nhặt vợ trong nạn đói 1945 — Căn cứ: Nhan đề Vợ nhặt và hoàn cảnh lịch sử.' },
   v1: { badge: 'Đọc sâu văn bản', title: 'V1: Phân tích 6 trục & Trích dẫn 1 chạm', desc: 'Bàn làm việc thông minh cho phép bôi đen câu chữ ngữ liệu để trích dẫn trực tiếp vào từng trục thi pháp đang phân tích.', sample: 'Ví dụ: "Cái đói đã tràn đến xóm này tự lúc nào..." — Trục Không gian: Bức tranh xóm ngụ cư u ám thời tao loạn.' },
-  feedback: { badge: 'Đối thoại học thuật', title: 'Phản hồi Socratic: AI & Thầy Cô', desc: 'Góp ý gợi mở tư duy phản biện; giáo viên duyệt và bổ sung hướng dẫn chuyên sâu gắn chặt với mốc phiên bản học sinh nộp.', sample: 'Góp ý: "Em đã chỉ ra chi tiết nồi cháo cám, hãy phân tích thêm phản ứng của bà cụ Tứ để làm rõ tình mẫu tử."' },
-  v2: { badge: 'Chuyển hóa năng lực', title: 'V2 & REF1: So sánh trực quan & Tự phản tư', desc: 'Trình so sánh phiên bản (Visual Diff) phân định đoạn thêm/sửa; 5 câu hỏi tự phản tư REF1 giúp đúc kết kinh nghiệm học tập.', sample: 'Phản tư: "Ở bản V2, em đã liên kết được chi tiết giọt nước mắt của bà cụ Tứ với niềm tin vào tương lai."' }
+  feedback: { badge: 'Góp ý gợi mở', title: 'Góp ý gợi mở: AI trợ lực & Thầy cô', desc: 'Góp ý định hướng tư duy phân tích; giáo viên nhận xét và hướng dẫn hoàn thiện bài viết qua từng phiên bản.', sample: 'Góp ý: "Em đã chỉ ra chi tiết nồi cháo cám, hãy phân tích thêm phản ứng của bà cụ Tứ để làm rõ tình mẫu tử."' },
+  v2: { badge: 'Hoàn thiện bài viết', title: 'V2 & REF1: So sánh trực quan & Tự phản tư', desc: 'Trình so sánh phiên bản (Visual Diff) phân định đoạn thêm/sửa; 5 câu hỏi tự phản tư REF1 giúp học sinh đúc kết kinh nghiệm học tập.', sample: 'Phản tư: "Ở bản V2, em đã liên kết được chi tiết giọt nước mắt của bà cụ Tứ với niềm tin vào tương lai."' }
 };
 
 const TEACHER_TOOLS = [
@@ -44,10 +44,10 @@ const TEACHER_TOOLS = [
 ];
 
 const SYSTEM_INFO = [
-  ['Đơn vị chủ quản', 'Trường THPT Vị Thanh — Dự án Nghiên cứu Khoa học Kỹ thuật 2026–2027.'],
-  ['Đối tượng phục vụ', 'Học sinh, Giáo viên bộ môn, Người phản biện bạn học và Giám khảo nghiên cứu.'],
-  ['Cấu trúc dữ liệu học thuật', 'Bảo đảm tính bất biến của các mốc V0, V1, V2, REF1 và bảng điểm Rubric trên PostgreSQL.'],
-  ['Quyền truy cập', 'Tài khoản định danh theo phân quyền bảo mật, không mở đăng ký tự do.']
+  ['Đơn vị áp dụng', 'Trường THPT Vị Thanh — Nền tảng học tập số môn Ngữ văn cấp THPT.'],
+  ['Đối tượng sử dụng', 'Học sinh, Giáo viên tổ Ngữ văn và Ban chuyên môn nhà trường.'],
+  ['Quy trình học tập', 'Lưu giữ toàn diện tiến trình từ dự đoán ban đầu, bài nháp V1, góp ý, bản sửa V2 đến Rubric đánh giá.'],
+  ['Tài khoản học tập', 'Cấp phát đồng bộ theo danh sách lớp học và phân quyền sư phạm của nhà trường.']
 ];
 
 type StageKey = keyof typeof STAGE_PREVIEWS;
@@ -95,13 +95,13 @@ export const LandingView: React.FC<LandingViewProps> = ({ onNavigate }) => {
             <div className="max-w-2xl">
               <div className="inline-flex items-center gap-2 rounded-full border border-primary-200 bg-primary-50 px-3 py-1 text-xs font-semibold text-primary-900">
                 <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
-                Hồ sơ đọc số · Năm học 2026–2027
+                Trường THPT Vị Thanh · Năm học 2026–2027
               </div>
               <h1 className="mt-4 text-3xl font-extrabold leading-tight tracking-tight text-slate-950 sm:text-4xl lg:text-5xl">
-                Nâng cao năng lực đọc hiểu qua tiến trình 6 trục thi pháp.
+                Học tốt Ngữ Văn qua tiến trình 6 trục thi pháp.
               </h1>
               <p className="mt-4 text-sm leading-relaxed text-slate-600 sm:text-base">
-                Hệ thống lưu giữ độc lập từng phiên bản bài viết, phản hồi Socratic và kết quả Rubric để học sinh nhìn rõ sự tiến bộ trong tư duy văn học.
+                Đồng hành cùng học sinh Trường THPT Vị Thanh rèn luyện kỹ năng đọc hiểu văn bản, viết bài nghị luận và nâng cao kỹ năng diễn đạt qua từng mốc góp ý cụ thể.
               </p>
               <div className="mt-7 flex flex-wrap items-center gap-3">
                 <Button size="lg" variant="primary" onClick={goToLogin} rightIcon={<ArrowRightIcon className="h-4 w-4" />}>
@@ -220,7 +220,7 @@ export const LandingView: React.FC<LandingViewProps> = ({ onNavigate }) => {
             <div className="grid gap-8 lg:grid-cols-[280px_minmax(0,1fr)]">
               <div>
                 <h2 className="text-2xl font-bold tracking-tight text-slate-950">Thông tin hệ thống</h2>
-                <p className="mt-2 text-sm leading-6 text-slate-600">Hệ sinh thái học tập và nghiên cứu đổi mới phương pháp dạy học Ngữ văn.</p>
+                <p className="mt-2 text-sm leading-6 text-slate-600">Hệ thống hồ sơ học tập số môn Ngữ văn dành cho học sinh và giáo viên Trường THPT Vị Thanh.</p>
               </div>
               <dl className="grid gap-3 sm:grid-cols-2 text-xs">
                 {SYSTEM_INFO.map(([title, desc]) => (

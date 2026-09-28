@@ -446,7 +446,7 @@ export const CustomContextMenu: React.FC<CustomContextMenuProps> = ({
       case 'version-diff':
         return { icon: Compass, title: 'So sánh phiên bản bài làm', subtitle: 'Visual Diff 6 trục' };
       case 'teacher-review':
-        return { icon: Award, title: 'Bàn chấm bài & Phản hồi', subtitle: 'Rubric & góp ý Socratic' };
+        return { icon: Award, title: 'Bàn chấm bài giáo viên', subtitle: 'Chấm Rubric & Góp ý bài làm' };
       case 'student-analytics':
       case 'class-analytics':
         return { icon: BarChart3, title: 'Tiến độ & Phân tích', subtitle: 'Biểu đồ năng lực 6 trục' };
@@ -455,9 +455,9 @@ export const CustomContextMenu: React.FC<CustomContextMenuProps> = ({
       case 'assignment-list':
         return { icon: BookOpen, title: 'Nhiệm vụ học tập', subtitle: 'Hạn nộp & yêu cầu' };
       case 'landing':
-        return { icon: Sparkles, title: 'Trang chủ KHKT', subtitle: 'THPT Chuyên Vị Thanh' };
+        return { icon: Sparkles, title: 'Học tốt Ngữ Văn', subtitle: 'Trường THPT Vị Thanh' };
       default:
-        return { icon: Home, title: 'Học tốt Ngữ Văn', subtitle: roleLabel };
+        return { icon: Home, title: 'Học tốt Ngữ Văn · THPT Vị Thanh', subtitle: roleLabel };
     }
   }, [activeView, roleLabel, selectedText, selectionStats, targetContext.isImg, targetContext.isInput, targetContext.isLink]);
 
