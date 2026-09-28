@@ -11,6 +11,7 @@ import { PortfolioProvider } from './contexts/PortfolioContext';
 import { AuthProvider } from './contexts/AuthContext';
 import type { UserRole } from './types';
 import { AppErrorBoundary } from './components/errors/AppErrorBoundary';
+import { SeasonalMouseExperience } from './components/effects/SeasonalMouseExperience';
 
 const LandingView = lazy(() => import('./views/LandingView').then((module) => ({ default: module.LandingView })));
 const StudentDashboardView = lazy(() => import('./views/StudentDashboardView').then((module) => ({ default: module.StudentDashboardView })));
@@ -187,7 +188,18 @@ const AppContent: React.FC = () => {
 };
 
 export function App() {
-  return <AppErrorBoundary><AuthProvider><PortfolioProvider><AppProviders><AppContent /></AppProviders></PortfolioProvider></AuthProvider></AppErrorBoundary>;
+  return (
+    <AppErrorBoundary>
+      <AuthProvider>
+        <PortfolioProvider>
+          <AppProviders>
+            <SeasonalMouseExperience />
+            <AppContent />
+          </AppProviders>
+        </PortfolioProvider>
+      </AuthProvider>
+    </AppErrorBoundary>
+  );
 }
 
 export default App;
