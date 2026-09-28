@@ -123,7 +123,10 @@ try {
     revisionIds.set(publicId,version.rows[0].id);
   }
   const assignments = new Map();
-  for (const code of ['11A3','11A5','11A8','12A7']) {
+  const targetClassCodes = classes.rows
+    .filter(row => row.school_year === '2026-2027' && /^(11|12)[A-Z0-9]/.test(row.code))
+    .map(row => row.code);
+  for (const code of targetClassCodes) {
     const works = code.startsWith('11') ? ['vo-nhat','chi-pheo'] : ['xuan-toc-do-cuu-quoc','mua-la-rung-trong-vuon'];
     for (const workId of works) {
       const title = TEXTS[workId][0];
