@@ -80,8 +80,10 @@ export const StudentAnalyticsView: React.FC<StudentAnalyticsViewProps> = ({ stud
   const first = trajectory[0];
   const hasMultipleAssessments = trajectory.length >= 2;
   const axisRows = (Object.keys(labels) as PoeticAxisId[]).map(axis => {
-    const firstScore = first?.axes[axis];
-    const lastScore = latest?.axes[axis];
+    const rawFirst = first?.axes[axis];
+    const rawLast = latest?.axes[axis];
+    const firstScore = typeof rawFirst === 'number' && Number.isFinite(rawFirst) ? rawFirst : undefined;
+    const lastScore = typeof rawLast === 'number' && Number.isFinite(rawLast) ? rawLast : undefined;
     return {
       axis,
       first: firstScore,
@@ -89,7 +91,7 @@ export const StudentAnalyticsView: React.FC<StudentAnalyticsViewProps> = ({ stud
       delta: hasMultipleAssessments && typeof firstScore === 'number' && typeof lastScore === 'number' ? lastScore - firstScore : null
     };
   });
-  const weakest = axisRows.filter(row => typeof row.last === 'number').sort((a, b) => Number(a.last) - Number(b.last))[0];
+  const weakest = axisRows.filter(row => typeof row.last === 'number' && Number.isFinite(row.last)).sort((a, b) => Number(a.last) - Number(b.last))[0];
   const resolved = studentFeedback.filter(item => item.resolved).length;
 
   if (!assignmentId) {

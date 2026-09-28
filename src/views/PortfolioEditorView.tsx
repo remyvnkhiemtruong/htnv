@@ -15,7 +15,10 @@ import {
   ChevronLeftIcon,
   ChevronRightIcon,
   CloudArrowUpIcon,
-  ExclamationCircleIcon
+  ExclamationCircleIcon,
+  BookmarkSquareIcon,
+  PlusIcon,
+  SparklesIcon
 } from '@heroicons/react/24/outline';
 
 interface PortfolioEditorViewProps {
@@ -58,6 +61,7 @@ export const PortfolioEditorView: React.FC<PortfolioEditorViewProps> = ({ assign
     portfolios,
     reflections,
     saveReflection,
+    resolveFeedback,
     isLoading,
     dataError,
     refreshAcademicData
@@ -71,6 +75,8 @@ export const PortfolioEditorView: React.FC<PortfolioEditorViewProps> = ({ assign
   const [fontSizeLevel, setFontSizeLevel] = useState<'sm' | 'base' | 'lg'>('base');
   const [reflectionForm, setReflectionForm] = useState(emptyReflection);
   const [isSavingReflection, setIsSavingReflection] = useState(false);
+  const [selectedQuoteSnippet, setSelectedQuoteSnippet] = useState('');
+  const [localBackupAvailable, setLocalBackupAvailable] = useState<any>(null);
 
   // V4 Layout states
   const [isFocusMode, setIsFocusMode] = useState(false);
@@ -181,9 +187,84 @@ export const PortfolioEditorView: React.FC<PortfolioEditorViewProps> = ({ assign
     }
   };
 
-  // Keyboard shortcuts listener
+  // Local Storage Disaster Recovery Backup
+  const backupKey = assignment && currentUser.id ? `cvt_draft_backup_${currentUser.id}_${assignment.id}` : '';
+
+  useEffect(() => {
+    if (!backupKey || !portfolio?.currentDraft) return;
+    try {
+      const hasContent = Object.values(portfolio.currentDraft).some(a => Boolean(a?.analysisText?.trim()));
+      if (hasContent) {
+        localStorage.setItem(backupKey, JSON.stringify({
+          draft: portfolio.currentDraft,
+          updatedAt: Date.now()
+        }));
+      }
+    } catch {
+      // ignore
+    }
+  }, [backupKey, portfolio?.currentDraft]);
+
+  useEffect(() => {
+    if (!backupKey || !portfolio) return;
+    try {
+      const raw = localStorage.getItem(backupKey);
+      if (!raw) return;
+      const parsed = JSON.parse(raw);
+      if (!parsed?.draft) return;
+      const currentLen = Object.values(portfolio.currentDraft || {}).reduce((s, a) => s + (a?.analysisText?.length || 0), 0);
+      const backupLen = Object.values(parsed.draft || {}).reduce((s: number, a: any) => s + (a?.analysisText?.length || 0), 0);
+      if (backupLen > currentLen + 20) {
+        setLocalBackupAvailable(parsed);
+      }
+    } catch {
+      // ignore
+    }
+  }, [backupKey, portfolio]);
+
+  const restoreLocalBackup = () => {
+    if (!localBackupAvailable?.draft || !assignment) return;
+    for (const [axisId, resp] of Object.entries(localBackupAvailable.draft) as [PoeticAxisId, any][]) {
+      if (resp?.analysisText || resp?.evidenceQuotes) {
+        updateDraft(currentUser.id, assignment.id, axisId, resp.analysisText || '', resp.evidenceQuotes || []);
+      }
+    }
+    setLocalBackupAvailable(null);
+    addToast({ type: 'success', title: 'Đã khôi phục', message: 'Đã khôi phục bản nháp từ bộ nhớ cục bộ an toàn.' });
+  };
+
+  const handleTextSelection = () => {
+    const sel = window.getSelection()?.toString().trim();
+    if (sel && sel.length >= 5 && sel.length <= 400) {
+      setSelectedQuoteSnippet(sel);
+    } else {
+      setSelectedQuoteSnippet('');
+    }
+  };
+
+  const insertQuoteToEvidence = () => {
+    if (!selectedQuoteSnippet || !assignment) return;
+    const cleanQuote = selectedQuoteSnippet.replace(/\s+/g, ' ');
+    const existingQuotes = (currentAxis?.evidenceQuotes || []).map(q => q.text);
+    if (!existingQuotes.includes(cleanQuote)) {
+      const nextQuotesText = evidenceText ? `${evidenceText}\n"${cleanQuote}"` : `"${cleanQuote}"`;
+      updateEvidence(nextQuotesText);
+      addToast({
+        type: 'success',
+        title: 'Đã thêm dẫn chứng',
+        message: `Đã trích dẫn vào trục ${currentAxisMeta.shortName}.`
+      });
+    }
+    setSelectedQuoteSnippet('');
+    window.getSelection()?.removeAllRanges();
+  };
+
+  // Keyboard shortcuts listener with dialog & input guards
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
+      if (isSubmitModalOpen) return;
+      const activeTag = (document.activeElement?.tagName || '').toLowerCase();
+
       // Ctrl/Cmd + S: Save Draft
       if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 's') {
         e.preventDefault();
@@ -197,8 +278,9 @@ export const PortfolioEditorView: React.FC<PortfolioEditorViewProps> = ({ assign
         setIsSubmitModalOpen(true);
         return;
       }
-      // Alt + 1..6: Switch axis
+      // Alt + 1..6: Switch axis (bỏ qua nếu đang nhập liệu trong ô input/select khác)
       if (e.altKey && ['1', '2', '3', '4', '5', '6'].includes(e.key)) {
+        if (activeTag === 'input' || activeTag === 'select') return;
         e.preventDefault();
         const index = Number(e.key) - 1;
         if (POETIC_AXES[index]) {
@@ -216,7 +298,7 @@ export const PortfolioEditorView: React.FC<PortfolioEditorViewProps> = ({ assign
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [isFocusMode, saveNow]);
+  }, [isFocusMode, isSubmitModalOpen, saveNow]);
 
   if (isLoading && !assignment) {
     return <SkeletonEditor />;
@@ -475,6 +557,27 @@ export const PortfolioEditorView: React.FC<PortfolioEditorViewProps> = ({ assign
           {dataError && (
             <div className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-xs text-amber-900">
               Dữ liệu hiển thị có thể chưa mới nhất: {dataError}
+            </div>
+          )}
+
+          {localBackupAvailable && (
+            <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-primary-200 bg-primary-50/80 px-4 py-3 text-xs text-primary-950">
+              <div className="flex items-center gap-2">
+                <BookmarkSquareIcon className="h-4 w-4 text-primary-700 shrink-0" />
+                <span>Phát hiện bản sao lưu cục bộ gần đây từ trình duyệt. Em có muốn khôi phục không?</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <Button size="sm" variant="primary" onClick={restoreLocalBackup}>
+                  Khôi phục ngay
+                </Button>
+                <button
+                  type="button"
+                  onClick={() => setLocalBackupAvailable(null)}
+                  className="rounded px-2 py-1 text-slate-500 hover:bg-white hover:text-slate-800"
+                >
+                  Bỏ qua
+                </button>
+              </div>
             </div>
           )}
 
@@ -746,19 +849,52 @@ export const PortfolioEditorView: React.FC<PortfolioEditorViewProps> = ({ assign
 
             {inspectorTab === 'text' && (
               <div className="mt-4 space-y-3">
-                <div>
-                  <h3 className="text-xs font-bold text-slate-600">Ngữ liệu</h3>
-                  <p className="mt-1 text-xs text-slate-500">
-                    {literatureText ? `${literatureText.title} — ${literatureText.author}` : 'Chưa có ngữ liệu.'}
-                  </p>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h3 className="text-xs font-bold text-slate-600">Ngữ liệu</h3>
+                    <p className="mt-0.5 text-xs text-slate-500">
+                      {literatureText ? `${literatureText.title} — ${literatureText.author}` : 'Chưa có ngữ liệu.'}
+                    </p>
+                  </div>
+                  <span className="text-xs text-slate-400">Bôi đen chữ để trích dẫn nhanh</span>
                 </div>
                 {predictionAvailable ? (
                   <div className="rounded-lg border border-sky-200 bg-sky-50 p-3 text-xs leading-5 text-sky-900">
                     Ngữ liệu sẽ mở sau khi em nộp V0.
                   </div>
                 ) : (
-                  <div className="max-h-[65vh] overflow-y-auto whitespace-pre-wrap rounded-lg border border-slate-200 bg-white p-4 text-sm leading-7 text-slate-800">
-                    {literatureText?.fullContent || literatureText?.excerpt || 'Chưa có nội dung ngữ liệu.'}
+                  <div className="space-y-2">
+                    <div
+                      onMouseUp={handleTextSelection}
+                      className="max-h-[60vh] select-text overflow-y-auto whitespace-pre-wrap rounded-lg border border-slate-200 bg-white p-4 font-serif text-sm leading-7 text-slate-800 selection:bg-primary-100 selection:text-primary-950"
+                    >
+                      {literatureText?.fullContent || literatureText?.excerpt || 'Chưa có nội dung ngữ liệu.'}
+                    </div>
+
+                    {selectedQuoteSnippet && (
+                      <div className="animate-fade-in sticky bottom-0 z-10 flex flex-col gap-2 rounded-lg border border-primary-300 bg-primary-50 p-3 shadow-md">
+                        <div className="line-clamp-2 italic text-xs text-primary-950 font-medium">
+                          &ldquo;{selectedQuoteSnippet}&rdquo;
+                        </div>
+                        <div className="flex items-center justify-end gap-2">
+                          <button
+                            type="button"
+                            onClick={() => setSelectedQuoteSnippet('')}
+                            className="rounded px-2 py-1 text-xs text-slate-500 hover:text-slate-800"
+                          >
+                            Hủy
+                          </button>
+                          <Button
+                            size="sm"
+                            variant="primary"
+                            leftIcon={<PlusIcon className="h-3.5 w-3.5" />}
+                            onClick={insertQuoteToEvidence}
+                          >
+                            Trích vào {currentAxisMeta.shortName}
+                          </Button>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 )}
               </div>
@@ -795,23 +931,55 @@ export const PortfolioEditorView: React.FC<PortfolioEditorViewProps> = ({ assign
                 {axisFeedbacks.length === 0 ? (
                   <p className="py-6 text-center text-xs text-slate-500">Chưa có phản hồi cho trục này.</p>
                 ) : (
-                  <div className="space-y-2.5">
-                    {axisFeedbacks.map(item => (
-                      <div key={item.id} className="space-y-1.5 rounded-lg border border-slate-200 bg-white p-3 text-xs">
-                        <div className="flex items-center justify-between gap-2 font-semibold text-slate-700">
-                          <span className="truncate">{item.authorName || (item.authorRole === 'teacher' ? 'Giáo viên' : item.authorRole === 'ai' ? 'AI' : 'Bạn học')}</span>
-                          <span className={item.resolved ? 'text-emerald-700' : 'text-amber-700'}>
-                            {item.resolved ? 'Đã xử lý' : 'Cần xem lại'}
-                          </span>
-                        </div>
-                        {item.selectedSnippet && (
-                          <div className="border-l-2 border-slate-300 pl-2 italic text-slate-500">
-                            {item.selectedSnippet}
+                  <div className="space-y-3">
+                    {axisFeedbacks.map(item => {
+                      const isAi = item.authorRole === 'ai';
+                      return (
+                        <div
+                          key={item.id}
+                          className={`space-y-2 rounded-lg border p-3.5 text-xs transition-all ${
+                            isAi
+                              ? 'border-primary-200 bg-primary-50/50'
+                              : 'border-slate-200 bg-white'
+                          }`}
+                        >
+                          <div className="flex items-center justify-between gap-2 font-semibold">
+                            <div className="flex items-center gap-1.5">
+                              {isAi ? (
+                                <span className="inline-flex items-center gap-1 rounded bg-primary-100 px-1.5 py-0.5 text-xs font-bold text-primary-800">
+                                  <SparklesIcon className="h-3 w-3 text-primary-700" /> Trợ lý AI
+                                </span>
+                              ) : (
+                                <span className="text-slate-700">
+                                  {item.authorName || (item.authorRole === 'teacher' ? 'Giáo viên' : 'Bạn học')}
+                                </span>
+                              )}
+                            </div>
+                            <button
+                              type="button"
+                              onClick={() => void resolveFeedback(item.id)}
+                              className={`flex items-center gap-1 rounded px-2 py-0.5 text-xs font-medium transition-colors ${
+                                item.resolved
+                                  ? 'bg-emerald-100 text-emerald-800 font-bold'
+                                  : 'bg-slate-100 text-slate-600 hover:bg-emerald-50 hover:text-emerald-700'
+                              }`}
+                              title={item.resolved ? 'Đã xử lý' : 'Nhấp để đánh dấu đã xử lý'}
+                            >
+                              <CheckCircleIcon className="h-3 w-3" />
+                              <span>{item.resolved ? 'Đã xử lý' : 'Đánh dấu đã sửa'}</span>
+                            </button>
                           </div>
-                        )}
-                        <p className="leading-5 text-slate-700">{item.comment}</p>
-                      </div>
-                    ))}
+
+                          {item.selectedSnippet && (
+                            <div className="border-l-2 border-primary-500 bg-white/80 px-2.5 py-1.5 italic text-slate-600 rounded-r">
+                              &ldquo;{item.selectedSnippet}&rdquo;
+                            </div>
+                          )}
+
+                          <p className="leading-relaxed text-slate-800 whitespace-pre-wrap">{item.comment}</p>
+                        </div>
+                      );
+                    })}
                   </div>
                 )}
               </div>

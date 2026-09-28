@@ -29,7 +29,7 @@ export const MainLayout: React.FC<MainLayoutProps> = ({ currentView, onNavigate,
     <div className="flex min-h-[100dvh] flex-col overflow-x-clip bg-slate-50 font-sans text-slate-900" data-app-name="Học tốt Ngữ Văn">
       <a href="#main-content" className="sr-only focus:not-sr-only focus:fixed focus:left-2 focus:top-2 focus:z-[70] focus:rounded-lg focus:bg-primary-700 focus:px-4 focus:py-2 focus:font-medium focus:text-white focus:outline-none focus:ring-2 focus:ring-white">Chuyển thẳng đến nội dung chính</a>
       <AppHeader currentView={currentView} onNavigate={onNavigate} onOpenCommandPalette={() => setIsCommandPaletteOpen(true)} onOpenMobileDrawer={() => setIsMobileDrawerOpen(true)} onLogout={onLogout}/>
-      <div className="mx-auto flex w-full max-w-[100rem] flex-1 pb-[calc(5rem+env(safe-area-inset-bottom))] md:pb-0">
+      <div className={`mx-auto flex w-full max-w-[100rem] flex-1 ${immersive ? 'pb-0' : 'pb-[calc(5rem+env(safe-area-inset-bottom))]'} md:pb-0`}>
         <AppSidebar currentView={currentView} onNavigate={onNavigate} isCollapsed={isSidebarCollapsed} onToggleCollapse={() => setIsSidebarCollapsed((value) => !value)}/>
         <main
           id="main-content"
@@ -42,7 +42,7 @@ export const MainLayout: React.FC<MainLayoutProps> = ({ currentView, onNavigate,
         </main>
       </div>
       <MobileDrawer isOpen={isMobileDrawerOpen} onClose={() => setIsMobileDrawerOpen(false)} currentView={currentView} onNavigate={onNavigate} onLogout={onLogout}/>
-      {currentUser.role === 'student' && <StudentBottomNav currentView={currentView} onNavigate={onNavigate} />}
+      {currentUser.role === 'student' && !immersive && <StudentBottomNav currentView={currentView} onNavigate={onNavigate} />}
       <CommandPalette isOpen={isCommandPaletteOpen} onClose={() => setIsCommandPaletteOpen(false)} onNavigate={onNavigate}/>
     </div>
   );

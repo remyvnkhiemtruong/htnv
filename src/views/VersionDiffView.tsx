@@ -182,6 +182,52 @@ export const VersionDiffView: React.FC<VersionDiffViewProps> = ({
         </div>
       </div>
 
+      {/* Interactive Version Stepper */}
+      <div className="rounded-lg border border-slate-200 bg-white p-4">
+        <div className="mb-2.5 flex items-center justify-between">
+          <span className="text-xs font-bold text-slate-700">Tiến trình phiên bản ({versions.length} bản nộp)</span>
+          <span className="text-xs text-slate-400">Chọn 2 mốc để đối chiếu</span>
+        </div>
+        <div className="flex items-center gap-2 overflow-x-auto pb-1">
+          {versions.map((ver, idx) => {
+            const isV1 = selectedV1 === ver.versionNumber;
+            const isV2 = selectedV2 === ver.versionNumber;
+            return (
+              <div key={ver.id} className="flex items-center gap-2 shrink-0">
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (isV1) return;
+                    if (!isV1 && !isV2) setSelectedV2(ver.versionNumber);
+                    else if (isV2) setSelectedV1(ver.versionNumber);
+                  }}
+                  className={`flex flex-col items-center rounded-lg border px-3 py-2 text-xs transition-all ${
+                    isV1
+                      ? 'border-primary-600 bg-primary-50 font-bold text-primary-950 ring-2 ring-primary-500/20'
+                      : isV2
+                        ? 'border-emerald-600 bg-emerald-50 font-bold text-emerald-950 ring-2 ring-emerald-500/20'
+                        : 'border-slate-200 bg-slate-50 text-slate-700 hover:border-slate-300 hover:bg-white'
+                  }`}
+                >
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-sm font-extrabold">{ver.versionNumber}</span>
+                    {isV1 && <span className="rounded bg-primary-700 px-1 py-0.5 text-xs text-white font-semibold">Bản trước</span>}
+                    {isV2 && <span className="rounded bg-emerald-700 px-1 py-0.5 text-xs text-white font-semibold">Bản sau</span>}
+                  </div>
+                  <span className="mt-0.5 text-xs text-slate-500">
+                    {ver.stage === 'prediction' ? 'Dự đoán V0' : ver.stage === 'initial' ? 'Bản đầu V1' : 'Chỉnh sửa'}
+                  </span>
+                  <span className="text-xs text-slate-400">{formatDate(ver)}</span>
+                </button>
+                {idx < versions.length - 1 && (
+                  <div className="h-0.5 w-3 bg-slate-300 shrink-0" />
+                )}
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
       {/* Toolbar & Summary Strip */}
       <div className="space-y-4">
         <div className="flex flex-wrap items-center justify-between gap-4 rounded-lg border border-slate-200 bg-white p-4">
@@ -219,7 +265,7 @@ export const VersionDiffView: React.FC<VersionDiffViewProps> = ({
               type="button"
               onClick={() => setDiffMode('split')}
               className={`rounded px-2.5 py-1 font-medium transition-colors ${
-                diffMode === 'split' ? 'bg-white text-slate-900' : 'text-slate-600 hover:text-slate-900'
+                diffMode === 'split' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-600 hover:text-slate-900'
               }`}
             >
               Song song
@@ -228,7 +274,7 @@ export const VersionDiffView: React.FC<VersionDiffViewProps> = ({
               type="button"
               onClick={() => setDiffMode('unified')}
               className={`rounded px-2.5 py-1 font-medium transition-colors ${
-                diffMode === 'unified' ? 'bg-white text-slate-900' : 'text-slate-600 hover:text-slate-900'
+                diffMode === 'unified' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-600 hover:text-slate-900'
               }`}
             >
               Dòng chảy

@@ -81,22 +81,25 @@ export const ClassAnalyticsView: React.FC<ClassAnalyticsViewProps> = ({ onNaviga
 
   const axisStats = useMemo(() => Object.fromEntries(AXES.map(axis => {
     const perStudent = studentAggregates.map(student => {
-      const values = student.axes[axis] || [];
+      const values = (student.axes[axis] || []).filter(v => typeof v === 'number' && Number.isFinite(v));
       return values.length ? values.reduce((sum, value) => sum + value, 0) / values.length : null;
-    }).filter((value): value is number => typeof value === 'number');
+    }).filter((value): value is number => typeof value === 'number' && Number.isFinite(value));
     return [axis, { n: perStudent.length, average: perStudent.length ? perStudent.reduce((sum, value) => sum + value, 0) / perStudent.length : null }];
   })), [studentAggregates]);
 
   const weakAxis = AXES
-    .filter(axis => axisStats[axis]?.n > 0)
+    .filter(axis => (axisStats[axis]?.n || 0) > 0 && typeof axisStats[axis]?.average === 'number' && Number.isFinite(axisStats[axis]?.average))
     .sort((a, b) => Number(axisStats[a]?.average) - Number(axisStats[b]?.average))[0];
   const strongAxis = AXES
-    .filter(axis => axisStats[axis]?.n > 0)
+    .filter(axis => (axisStats[axis]?.n || 0) > 0 && typeof axisStats[axis]?.average === 'number' && Number.isFinite(axisStats[axis]?.average))
     .sort((a, b) => Number(axisStats[b]?.average) - Number(axisStats[a]?.average))[0];
 
-  const perStudentOverall = studentAggregates.map(student => student.averages.length
-    ? student.averages.reduce((sum, value) => sum + value, 0) / student.averages.length
-    : null).filter((value): value is number => typeof value === 'number');
+  const perStudentOverall = studentAggregates.map(student => {
+    const validAverages = student.averages.filter(v => typeof v === 'number' && Number.isFinite(v));
+    return validAverages.length
+      ? validAverages.reduce((sum, value) => sum + value, 0) / validAverages.length
+      : null;
+  }).filter((value): value is number => typeof value === 'number' && Number.isFinite(value));
   const overall = perStudentOverall.length ? perStudentOverall.reduce((sum, value) => sum + value, 0) / perStudentOverall.length : null;
   const submittedStudents = new Set(filtered.filter(portfolio => portfolio.versions.some(version => version.stage !== 'prediction')).map(portfolio => portfolio.studentId)).size;
   const uniqueStudents = new Set(filtered.map(portfolio => portfolio.studentId)).size;

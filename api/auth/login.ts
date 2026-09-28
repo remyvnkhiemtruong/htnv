@@ -1,5 +1,5 @@
 import { createHmac, randomBytes, scryptSync, timingSafeEqual } from "node:crypto";
-import { databaseUrl } from "../_lib/db.js";
+import { getPool } from "../_lib/db.js";
 import { assertSameOrigin, body, checkRateLimit, login, requestIp, send } from "./auth.js";
 
 function scryptHash(password:string) {
@@ -19,42 +19,37 @@ function seededPassword(secret:string,studentCode:string) {
 }
 
 async function migrateTemporaryCredential(email:string,password:string) {
-  const {Pool}=await import("pg");
-  const pool=new Pool({connectionString:databaseUrl(),max:1,idleTimeoutMillis:5000,connectionTimeoutMillis:10000});
-  try {
-    const row=(await pool.query(
-      "SELECT id,password_hash,must_change_password,profile_json FROM app_users WHERE email=$1 AND account_status='active' LIMIT 1",
-      [email]
-    )).rows[0];
-    if(!row||!row.must_change_password) return;
+  const pool = await getPool();
+  const row=(await pool.query(
+    "SELECT id,password_hash,must_change_password,profile_json FROM app_users WHERE email=$1 AND account_status='active' LIMIT 1",
+    [email]
+  )).rows[0];
+  if(!row||!row.must_change_password) return;
 
-    if(String(row.password_hash||"").startsWith("$2")) {
-      const verified=(await pool.query("SELECT crypt($1,$2)=$2 AS ok",[password,row.password_hash])).rows[0]?.ok===true;
-      if(!verified) return;
-      await pool.query(
-        "UPDATE app_users SET password_hash=$2,updated_at=now() WHERE id=$1 AND password_hash=$3",
-        [row.id,scryptHash(password),row.password_hash]
-      );
-      return;
-    }
-
-    if(row.password_hash!=="PENDING_V1" || row.profile_json?.seedSource!=="student-list-2026-09-11") return;
-    const studentCode=String(row.profile_json?.studentCode||"");
-    if(!studentCode) return;
-    const secretRow=(await pool.query(
-      "SELECT config_value FROM app_runtime_config WHERE config_key='student_roster_seed_v1' LIMIT 1"
-    )).rows[0];
-    const secret=String(secretRow?.config_value||"");
-    if(secret.length<32) return;
-    const expected=seededPassword(secret,studentCode);
-    if(!safeEqual(expected,password)) return;
+  if(String(row.password_hash||"").startsWith("$2")) {
+    const verified=(await pool.query("SELECT crypt($1,$2)=$2 AS ok",[password,row.password_hash])).rows[0]?.ok===true;
+    if(!verified) return;
     await pool.query(
-      "UPDATE app_users SET password_hash=$2,updated_at=now() WHERE id=$1 AND password_hash='PENDING_V1'",
-      [row.id,scryptHash(password)]
+      "UPDATE app_users SET password_hash=$2,updated_at=now() WHERE id=$1 AND password_hash=$3",
+      [row.id,scryptHash(password),row.password_hash]
     );
-  } finally {
-    await pool.end().catch(()=>undefined);
+    return;
   }
+
+  if(row.password_hash!=="PENDING_V1" || row.profile_json?.seedSource!=="student-list-2026-09-11") return;
+  const studentCode=String(row.profile_json?.studentCode||"");
+  if(!studentCode) return;
+  const secretRow=(await pool.query(
+    "SELECT config_value FROM app_runtime_config WHERE config_key='student_roster_seed_v1' LIMIT 1"
+  )).rows[0];
+  const secret=String(secretRow?.config_value||"");
+  if(secret.length<32) return;
+  const expected=seededPassword(secret,studentCode);
+  if(!safeEqual(expected,password)) return;
+  await pool.query(
+    "UPDATE app_users SET password_hash=$2,updated_at=now() WHERE id=$1 AND password_hash='PENDING_V1'",
+    [row.id,scryptHash(password)]
+  );
 }
 
 export default async function handler(req:any,res:any) {
