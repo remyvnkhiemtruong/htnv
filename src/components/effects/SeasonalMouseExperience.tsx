@@ -142,32 +142,54 @@ export const SeasonalMouseExperience: React.FC = () => {
       const next = !prev;
       try {
         localStorage.setItem(STORAGE_KEYS.ENABLED, String(next));
+        window.dispatchEvent(new CustomEvent('cvt:seasonal_change', {
+          detail: { enabled: next, season: currentSeason, mouseTrack: mouseTrackEnabled }
+        }));
       } catch {
         // ignore
       }
       return next;
     });
-  }, []);
+  }, [currentSeason, mouseTrackEnabled]);
 
   const selectSeason = useCallback((season: Season) => {
     setCurrentSeason(season);
     try {
       localStorage.setItem(STORAGE_KEYS.SEASON, season);
+      window.dispatchEvent(new CustomEvent('cvt:seasonal_change', {
+        detail: { season, enabled: isEnabled, mouseTrack: mouseTrackEnabled }
+      }));
     } catch {
       // ignore
     }
-  }, []);
+  }, [isEnabled, mouseTrackEnabled]);
 
   const toggleMouseTrack = useCallback(() => {
     setMouseTrackEnabled((prev) => {
       const next = !prev;
       try {
         localStorage.setItem(STORAGE_KEYS.MOUSE_TRACK, String(next));
+        window.dispatchEvent(new CustomEvent('cvt:seasonal_change', {
+          detail: { mouseTrack: next, season: currentSeason, enabled: isEnabled }
+        }));
       } catch {
         // ignore
       }
       return next;
     });
+  }, [currentSeason, isEnabled]);
+
+  // Synchronize changes from external sources (e.g. CustomContextMenu)
+  useEffect(() => {
+    const handleSync = (e: CustomEvent) => {
+      if (e.detail?.season) setCurrentSeason(e.detail.season);
+      if (typeof e.detail?.enabled === 'boolean') setIsEnabled(e.detail.enabled);
+      if (typeof e.detail?.mouseTrack === 'boolean') setMouseTrackEnabled(e.detail.mouseTrack);
+    };
+    window.addEventListener('cvt:seasonal_change', handleSync as EventListener);
+    return () => {
+      window.removeEventListener('cvt:seasonal_change', handleSync as EventListener);
+    };
   }, []);
 
   // Listen to mouse

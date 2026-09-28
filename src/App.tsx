@@ -12,6 +12,7 @@ import { AuthProvider } from './contexts/AuthContext';
 import type { UserRole } from './types';
 import { AppErrorBoundary } from './components/errors/AppErrorBoundary';
 import { SeasonalMouseExperience } from './components/effects/SeasonalMouseExperience';
+import { CustomContextMenu } from './components/layout/CustomContextMenu';
 
 const LandingView = lazy(() => import('./views/LandingView').then((module) => ({ default: module.LandingView })));
 const StudentDashboardView = lazy(() => import('./views/StudentDashboardView').then((module) => ({ default: module.StudentDashboardView })));
@@ -135,7 +136,7 @@ const AppContent: React.FC = () => {
     finally { clearAuth(); replaceToView('login'); }
   };
 
-  const handleNavigate = (view: string, extraParams?: any) => {
+  const handleNavigate = useCallback((view: string, extraParams?: any) => {
     const route = APP_ROUTES[view];
     if (!route) { setCurrentView(view); return; }
     const params = extraParams || {};
@@ -143,7 +144,18 @@ const AppContent: React.FC = () => {
     Object.entries(params).forEach(([key,value]) => { if(value!==undefined && value!==null && value!=='') query.set(key,String(value)); });
     window.history.pushState({},'',`${route.path}${query.size ? `?${query.toString()}` : ''}`);
     setCurrentView(view); setNavParams(params); window.scrollTo({ top: 0, behavior: 'smooth' });
-  };
+  }, []);
+
+  useEffect(() => {
+    const handleCustomNav = (e: Event) => {
+      const ce = e as CustomEvent<{ view: string; params?: any }>;
+      if (ce.detail?.view) {
+        handleNavigate(ce.detail.view, ce.detail.params);
+      }
+    };
+    window.addEventListener('app:navigate', handleCustomNav);
+    return () => window.removeEventListener('app:navigate', handleCustomNav);
+  }, [handleNavigate]);
 
   if (sessionChecking) return <div className="flex min-h-[100dvh] items-center justify-center bg-slate-50 px-4"><div className="rounded-lg border border-slate-200 bg-white px-6 py-5 text-center"><div className="mx-auto mb-3 h-7 w-7 animate-spin rounded-full border-2 border-slate-200 border-t-slate-900"/><p className="text-sm font-semibold text-slate-800">Đang xác thực phiên đăng nhập…</p></div></div>;
   if (!isAuthenticated) {
@@ -194,6 +206,7 @@ export function App() {
         <PortfolioProvider>
           <AppProviders>
             <SeasonalMouseExperience />
+            <CustomContextMenu />
             <AppContent />
           </AppProviders>
         </PortfolioProvider>
