@@ -101,7 +101,7 @@ export const LoginView: React.FC<LoginViewProps> = ({
           <div className="mx-auto w-full max-w-md">
             <div className="mb-8 flex items-center justify-between gap-3 border-b border-slate-200 pb-5">
               <button type="button" onClick={() => onNavigate?.('landing')} className="inline-flex min-h-10 items-center text-sm font-medium text-slate-500 hover:text-slate-900">← Trang chủ</button>
-              <img src="/Logo.png" alt="Logo THPT Vị Thanh" className="h-10 w-10 rounded-md border border-slate-200 object-cover" />
+              <img src="/Logo.png" alt="Logo THPT Vị Thanh" className="h-10 w-10 object-contain drop-shadow-sm" />
             </div>
 
             <div className="mb-7">

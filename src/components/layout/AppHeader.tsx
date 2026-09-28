@@ -196,8 +196,8 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
               <Bars3Icon className="h-5 w-5" />
             </button>
             <button type="button" onClick={() => onNavigate(home(currentUser.role))} className="flex shrink-0 items-center gap-2.5 rounded-lg focus-visible:ring-2 focus-visible:ring-primary-600 focus-visible:ring-offset-2">
-              <span className="flex h-9 w-9 items-center justify-center overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
-                <img src="/Logo.png" alt="Logo THPT Vị Thanh" className="h-full w-full object-cover" />
+              <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-white p-0.5 drop-shadow-sm">
+                <img src="/Logo.png" alt="Logo THPT Vị Thanh" className="h-full w-full object-contain" />
               </span>
               <span className="hidden text-sm font-bold tracking-tight text-primary-900 sm:inline">Học tốt Ngữ Văn</span>
             </button>
