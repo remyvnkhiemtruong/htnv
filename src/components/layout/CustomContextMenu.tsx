@@ -14,7 +14,11 @@ import {
   Snowflake,
   Flower2,
   Sun,
-  Command
+  Command,
+  Gift,
+  PartyPopper,
+  Award,
+  Moon
 } from 'lucide-react';
 import { useAuthStore } from '../../app/store/useAuthStore';
 import { useNotificationStore } from '../../app/store/useNotificationStore';
@@ -30,6 +34,14 @@ const SEASON_ITEMS: { id: Season; label: string; icon: React.ElementType; color:
   { id: 'winter', label: 'Đông', icon: Snowflake, color: 'text-sky-600' },
   { id: 'spring', label: 'Xuân', icon: Flower2, color: 'text-rose-600' },
   { id: 'summer', label: 'Hè', icon: Sun, color: 'text-orange-600' }
+];
+
+const HOLIDAY_ITEMS: { id: Season; label: string; icon: React.ElementType; color: string }[] = [
+  { id: 'christmas', label: 'Noel 🎄', icon: Sparkles, color: 'text-emerald-600' },
+  { id: 'newyear', label: 'Tết Tây 🎆', icon: PartyPopper, color: 'text-purple-600' },
+  { id: 'tet', label: 'Tết Ta 🧧', icon: Gift, color: 'text-red-600' },
+  { id: 'teachersday', label: '20/11 🎓', icon: Award, color: 'text-amber-600' },
+  { id: 'midautumn', label: 'Trung thu 🏮', icon: Moon, color: 'text-orange-600' }
 ];
 
 const STORAGE_KEYS = {
@@ -52,7 +64,11 @@ export const CustomContextMenu: React.FC<CustomContextMenuProps> = ({
   const [activeSeason, setActiveSeason] = useState<Season>(() => {
     try {
       const s = localStorage.getItem(STORAGE_KEYS.SEASON);
-      if (s && ['autumn', 'winter', 'spring', 'summer'].includes(s)) return s as Season;
+      const allKeys = [
+        'autumn', 'winter', 'spring', 'summer',
+        'christmas', 'newyear', 'tet', 'teachersday', 'midautumn'
+      ];
+      if (s && allKeys.includes(s)) return s as Season;
     } catch {
       // ignore
     }
@@ -406,10 +422,10 @@ export const CustomContextMenu: React.FC<CustomContextMenuProps> = ({
         </button>
       </div>
 
-      {/* Group 3: Seasonal & Mouse Settings */}
+      {/* Group 3: Seasonal & Holiday Settings */}
       <div className="border-b border-slate-100 pb-1.5 mb-1.5">
         <div className="flex items-center justify-between px-2.5 py-1 text-slate-400">
-          <span className="text-xs font-semibold uppercase tracking-normal">Không gian 4 mùa</span>
+          <span className="text-xs font-semibold uppercase tracking-normal">Không gian mùa & Lễ hội</span>
           <button
             type="button"
             onClick={toggleSeasonal}
@@ -446,12 +462,39 @@ export const CustomContextMenu: React.FC<CustomContextMenuProps> = ({
           })}
         </div>
 
+        {/* Special Holidays Quick Switch */}
+        <div className="mt-1 px-1.5">
+          <div className="grid grid-cols-3 gap-1">
+            {HOLIDAY_ITEMS.map((item) => {
+              const Icon = item.icon;
+              const isSelected = activeSeason === item.id && seasonalEnabled;
+              return (
+                <button
+                  key={item.id}
+                  type="button"
+                  role="menuitem"
+                  title={`Chuyển sang ${item.label}`}
+                  onClick={() => switchSeason(item.id)}
+                  className={`flex items-center justify-center gap-1 rounded-md px-1.5 py-1 text-xs transition-colors ${
+                    isSelected
+                      ? 'border border-primary-400 bg-primary-50 font-bold text-primary-900'
+                      : 'border border-slate-200 bg-slate-50/60 font-medium text-slate-600 hover:bg-slate-100'
+                  }`}
+                >
+                  <Icon className={`h-3 w-3 ${item.color}`} />
+                  <span className="truncate">{item.label}</span>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
         {/* Mouse Tracking Toggle */}
         <button
           type="button"
           role="menuitem"
           onClick={toggleMouseTrail}
-          className="flex w-full items-center justify-between rounded-md px-2.5 py-1 text-left text-xs font-medium text-slate-700 hover:bg-slate-100"
+          className="mt-1 flex w-full items-center justify-between rounded-md px-2.5 py-1 text-left text-xs font-medium text-slate-700 hover:bg-slate-100"
         >
           <span className="flex items-center gap-2">
             <Sparkles className="h-3.5 w-3.5 text-amber-500" />

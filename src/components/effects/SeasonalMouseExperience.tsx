@@ -1,7 +1,31 @@
 import React, { useEffect, useRef, useState, useCallback } from 'react';
-import { Sparkles, Leaf, Snowflake, Flower2, Sun, Power, ChevronUp, ChevronDown } from 'lucide-react';
+import {
+  Sparkles,
+  Leaf,
+  Snowflake,
+  Flower2,
+  Sun,
+  Power,
+  ChevronUp,
+  ChevronDown,
+  Gift,
+  PartyPopper,
+  Award,
+  Moon
+} from 'lucide-react';
 
-export type Season = 'autumn' | 'winter' | 'spring' | 'summer';
+export type ThemeMode =
+  | 'autumn'
+  | 'winter'
+  | 'spring'
+  | 'summer'
+  | 'christmas'
+  | 'newyear'
+  | 'tet'
+  | 'teachersday'
+  | 'midautumn';
+
+export type Season = ThemeMode; // Alias for backward compatibility
 
 interface Particle {
   x: number;
@@ -15,7 +39,7 @@ interface Particle {
   flipSpeed: number;
   opacity: number;
   color: string;
-  type: 'leaf' | 'snow' | 'petal' | 'phoenix' | 'firefly';
+  type: 'leaf' | 'snow' | 'petal' | 'phoenix' | 'firefly' | 'star' | 'ornament' | 'confetti' | 'mai' | 'lixi' | 'lantern';
   swayOffset: number;
   swaySpeed: number;
 }
@@ -28,9 +52,25 @@ interface TrailPoint {
   color: string;
 }
 
-const SEASON_CONFIG = {
+const THEME_CONFIG: Record<
+  ThemeMode,
+  {
+    name: string;
+    category: 'season' | 'holiday';
+    subtitle: string;
+    icon: React.ElementType;
+    badgeColor: string;
+    dotColor: string;
+    glowColor: string;
+    trailColor: string;
+    colors: string[];
+    types: Particle['type'][];
+    particleCount: number;
+  }
+> = {
   autumn: {
     name: 'Mùa Thu',
+    category: 'season',
     subtitle: 'Lá vàng xao xác',
     icon: Leaf,
     badgeColor: 'text-amber-700 bg-amber-50 border-amber-200',
@@ -38,11 +78,12 @@ const SEASON_CONFIG = {
     glowColor: 'rgba(245, 158, 11, 0.06)',
     trailColor: 'rgba(251, 191, 36, 0.8)',
     colors: ['#d97706', '#b45309', '#f59e0b', '#ea580c', '#c2410c'],
-    types: ['leaf' as const],
+    types: ['leaf'],
     particleCount: 22
   },
   winter: {
     name: 'Mùa Đông',
+    category: 'season',
     subtitle: 'Tuyết sương tinh khôi',
     icon: Snowflake,
     badgeColor: 'text-sky-700 bg-sky-50 border-sky-200',
@@ -50,11 +91,12 @@ const SEASON_CONFIG = {
     glowColor: 'rgba(56, 189, 248, 0.06)',
     trailColor: 'rgba(186, 230, 253, 0.9)',
     colors: ['#ffffff', '#e0f2fe', '#bae6fd', '#cbd5e1'],
-    types: ['snow' as const],
+    types: ['snow'],
     particleCount: 30
   },
   spring: {
     name: 'Mùa Xuân',
+    category: 'season',
     subtitle: 'Cánh đào bay nhẹ',
     icon: Flower2,
     badgeColor: 'text-rose-700 bg-rose-50 border-rose-200',
@@ -62,11 +104,12 @@ const SEASON_CONFIG = {
     glowColor: 'rgba(251, 113, 133, 0.06)',
     trailColor: 'rgba(253, 164, 175, 0.9)',
     colors: ['#fda4af', '#fb7185', '#f43f5e', '#fecdd3'],
-    types: ['petal' as const],
+    types: ['petal'],
     particleCount: 24
   },
   summer: {
     name: 'Mùa Hè',
+    category: 'season',
     subtitle: 'Phượng vĩ & đom đóm',
     icon: Sun,
     badgeColor: 'text-orange-700 bg-orange-50 border-orange-200',
@@ -74,13 +117,93 @@ const SEASON_CONFIG = {
     glowColor: 'rgba(249, 115, 22, 0.06)',
     trailColor: 'rgba(254, 240, 138, 0.9)',
     colors: ['#ef4444', '#dc2626', '#f87171', '#facc15'],
-    types: ['phoenix' as const, 'firefly' as const],
+    types: ['phoenix', 'firefly'],
     particleCount: 26
+  },
+  christmas: {
+    name: 'Giáng Sinh (Noel)',
+    category: 'holiday',
+    subtitle: 'Chuông vàng & sao tuyết',
+    icon: Sparkles,
+    badgeColor: 'text-emerald-700 bg-emerald-50 border-emerald-200',
+    dotColor: 'bg-emerald-500',
+    glowColor: 'rgba(16, 185, 129, 0.06)',
+    trailColor: 'rgba(251, 191, 36, 0.9)',
+    colors: ['#ffffff', '#fbbf24', '#ef4444', '#10b981'],
+    types: ['snow', 'star', 'ornament'],
+    particleCount: 26
+  },
+  newyear: {
+    name: 'Tết Dương Lịch',
+    category: 'holiday',
+    subtitle: 'Pháo hoa & kim tuyến',
+    icon: PartyPopper,
+    badgeColor: 'text-purple-700 bg-purple-50 border-purple-200',
+    dotColor: 'bg-purple-500',
+    glowColor: 'rgba(168, 85, 247, 0.06)',
+    trailColor: 'rgba(250, 204, 21, 0.9)',
+    colors: ['#fbbf24', '#ef4444', '#06b6d4', '#a855f7', '#ffffff'],
+    types: ['confetti', 'star'],
+    particleCount: 28
+  },
+  tet: {
+    name: 'Tết Âm Lịch (Tết Ta)',
+    category: 'holiday',
+    subtitle: 'Mai vàng & bao lì xì',
+    icon: Gift,
+    badgeColor: 'text-red-700 bg-red-50 border-red-200',
+    dotColor: 'bg-red-500',
+    glowColor: 'rgba(239, 68, 68, 0.06)',
+    trailColor: 'rgba(250, 204, 21, 0.95)',
+    colors: ['#facc15', '#eab308', '#fb7185', '#ef4444'],
+    types: ['mai', 'petal', 'lixi'],
+    particleCount: 26
+  },
+  teachersday: {
+    name: 'Tri Ân 20/11',
+    category: 'holiday',
+    subtitle: 'Hoa tri ân thầy cô',
+    icon: Award,
+    badgeColor: 'text-amber-700 bg-amber-50 border-amber-200',
+    dotColor: 'bg-amber-500',
+    glowColor: 'rgba(245, 158, 11, 0.06)',
+    trailColor: 'rgba(251, 191, 36, 0.9)',
+    colors: ['#f59e0b', '#fbbf24', '#d97706', '#ef4444'],
+    types: ['petal', 'star'],
+    particleCount: 24
+  },
+  midautumn: {
+    name: 'Tết Trung Thu',
+    category: 'holiday',
+    subtitle: 'Đèn ông sao & trăng rằm',
+    icon: Moon,
+    badgeColor: 'text-orange-700 bg-orange-50 border-orange-200',
+    dotColor: 'bg-orange-500',
+    glowColor: 'rgba(251, 146, 60, 0.06)',
+    trailColor: 'rgba(254, 240, 138, 0.9)',
+    colors: ['#ef4444', '#facc15', '#fb923c'],
+    types: ['lantern', 'star'],
+    particleCount: 24
   }
 };
 
-const getAutoSeason = (): Season => {
-  const month = new Date().getMonth(); // 0 = Jan, 8 = Sept
+const getAutoTheme = (): ThemeMode => {
+  const now = new Date();
+  const month = now.getMonth(); // 0 = Jan, 8 = Sep, 11 = Dec
+  const date = now.getDate();
+
+  // Noel: Dec 15 - Dec 26
+  if (month === 11 && date >= 15 && date <= 26) return 'christmas';
+  // New Year Countdown: Dec 27 - Jan 03
+  if ((month === 11 && date >= 27) || (month === 0 && date <= 3)) return 'newyear';
+  // Lunar New Year: Jan 15 - Feb 15
+  if ((month === 0 && date >= 15) || (month === 1 && date <= 15)) return 'tet';
+  // Vietnamese Teachers' Day: Nov 15 - Nov 22
+  if (month === 10 && date >= 15 && date <= 22) return 'teachersday';
+  // Mid Autumn Festival: Sep 12 - Sep 30
+  if (month === 8 && date >= 12 && date <= 30) return 'midautumn';
+
+  // 4 Seasons fallback
   if (month >= 8 && month <= 10) return 'autumn';
   if (month === 11 || month === 0 || month === 1) return 'winter';
   if (month >= 2 && month <= 4) return 'spring';
@@ -115,19 +238,20 @@ export const SeasonalMouseExperience: React.FC = () => {
     }
   });
 
-  const [currentSeason, setCurrentSeason] = useState<Season>(() => {
+  const [currentTheme, setCurrentTheme] = useState<ThemeMode>(() => {
     try {
       const stored = localStorage.getItem(STORAGE_KEYS.SEASON);
-      if (stored && ['autumn', 'winter', 'spring', 'summer'].includes(stored)) {
-        return stored as Season;
+      if (stored && Object.keys(THEME_CONFIG).includes(stored)) {
+        return stored as ThemeMode;
       }
     } catch {
       // fallback
     }
-    return getAutoSeason();
+    return getAutoTheme();
   });
 
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [activeTab, setActiveTab] = useState<'season' | 'holiday'>('season');
 
   // Refs for animation loop
   const mousePos = useRef<{ x: number; y: number; active: boolean }>({ x: -100, y: -100, active: false });
@@ -142,47 +266,58 @@ export const SeasonalMouseExperience: React.FC = () => {
       const next = !prev;
       try {
         localStorage.setItem(STORAGE_KEYS.ENABLED, String(next));
-        window.dispatchEvent(new CustomEvent('cvt:seasonal_change', {
-          detail: { enabled: next, season: currentSeason, mouseTrack: mouseTrackEnabled }
-        }));
+        window.dispatchEvent(
+          new CustomEvent('cvt:seasonal_change', {
+            detail: { enabled: next, season: currentTheme, mouseTrack: mouseTrackEnabled }
+          })
+        );
       } catch {
         // ignore
       }
       return next;
     });
-  }, [currentSeason, mouseTrackEnabled]);
+  }, [currentTheme, mouseTrackEnabled]);
 
-  const selectSeason = useCallback((season: Season) => {
-    setCurrentSeason(season);
-    try {
-      localStorage.setItem(STORAGE_KEYS.SEASON, season);
-      window.dispatchEvent(new CustomEvent('cvt:seasonal_change', {
-        detail: { season, enabled: isEnabled, mouseTrack: mouseTrackEnabled }
-      }));
-    } catch {
-      // ignore
-    }
-  }, [isEnabled, mouseTrackEnabled]);
+  const selectTheme = useCallback(
+    (theme: ThemeMode) => {
+      setCurrentTheme(theme);
+      try {
+        localStorage.setItem(STORAGE_KEYS.SEASON, theme);
+        window.dispatchEvent(
+          new CustomEvent('cvt:seasonal_change', {
+            detail: { season: theme, enabled: isEnabled, mouseTrack: mouseTrackEnabled }
+          })
+        );
+      } catch {
+        // ignore
+      }
+    },
+    [isEnabled, mouseTrackEnabled]
+  );
 
   const toggleMouseTrack = useCallback(() => {
     setMouseTrackEnabled((prev) => {
       const next = !prev;
       try {
         localStorage.setItem(STORAGE_KEYS.MOUSE_TRACK, String(next));
-        window.dispatchEvent(new CustomEvent('cvt:seasonal_change', {
-          detail: { mouseTrack: next, season: currentSeason, enabled: isEnabled }
-        }));
+        window.dispatchEvent(
+          new CustomEvent('cvt:seasonal_change', {
+            detail: { mouseTrack: next, season: currentTheme, enabled: isEnabled }
+          })
+        );
       } catch {
         // ignore
       }
       return next;
     });
-  }, [currentSeason, isEnabled]);
+  }, [currentTheme, isEnabled]);
 
   // Synchronize changes from external sources (e.g. CustomContextMenu)
   useEffect(() => {
     const handleSync = (e: CustomEvent) => {
-      if (e.detail?.season) setCurrentSeason(e.detail.season);
+      if (e.detail?.season && Object.keys(THEME_CONFIG).includes(e.detail.season)) {
+        setCurrentTheme(e.detail.season as ThemeMode);
+      }
       if (typeof e.detail?.enabled === 'boolean') setIsEnabled(e.detail.enabled);
       if (typeof e.detail?.mouseTrack === 'boolean') setMouseTrackEnabled(e.detail.mouseTrack);
     };
@@ -200,9 +335,8 @@ export const SeasonalMouseExperience: React.FC = () => {
       mousePos.current.active = true;
 
       if (isEnabled && mouseTrackEnabled) {
-        // Add trail point with controlled density
         if (Math.random() < 0.45 && trailRef.current.length < 24) {
-          const cfg = SEASON_CONFIG[currentSeason];
+          const cfg = THEME_CONFIG[currentTheme];
           trailRef.current.push({
             x: e.clientX + (Math.random() - 0.5) * 8,
             y: e.clientY + (Math.random() - 0.5) * 8,
@@ -231,7 +365,7 @@ export const SeasonalMouseExperience: React.FC = () => {
       document.removeEventListener('mouseleave', handleMouseLeave);
       document.removeEventListener('visibilitychange', handleVisibilityChange);
     };
-  }, [currentSeason, isEnabled, mouseTrackEnabled]);
+  }, [currentTheme, isEnabled, mouseTrackEnabled]);
 
   // Main canvas animation
   useEffect(() => {
@@ -264,19 +398,20 @@ export const SeasonalMouseExperience: React.FC = () => {
 
     window.addEventListener('resize', handleResize, { passive: true });
 
-    // Initialize particles for current season
-    const cfg = SEASON_CONFIG[currentSeason];
+    // Initialize particles for current theme
+    const cfg = THEME_CONFIG[currentTheme];
     const isMobile = window.innerWidth < 768;
     const count = isMobile ? Math.floor(cfg.particleCount * 0.5) : cfg.particleCount;
 
     const initParticle = (atTop = false): Particle => {
       const type = cfg.types[Math.floor(Math.random() * cfg.types.length)];
       const color = cfg.colors[Math.floor(Math.random() * cfg.colors.length)];
-      const size = type === 'snow'
-        ? 1.5 + Math.random() * 3
-        : type === 'firefly'
-          ? 2 + Math.random() * 2.5
-          : 8 + Math.random() * 9;
+      let size = 8 + Math.random() * 9;
+      if (type === 'snow') size = 1.5 + Math.random() * 3;
+      else if (type === 'firefly' || type === 'star') size = 2.5 + Math.random() * 3;
+      else if (type === 'ornament' || type === 'mai') size = 7 + Math.random() * 6;
+      else if (type === 'lixi') size = 10 + Math.random() * 5;
+      else if (type === 'confetti') size = 6 + Math.random() * 6;
 
       return {
         x: Math.random() * width,
@@ -359,7 +494,6 @@ export const SeasonalMouseExperience: React.FC = () => {
       ctx.fillStyle = p.color;
       ctx.globalAlpha = p.opacity;
 
-      // Phoenix flower petal (elongated fan-drop)
       ctx.beginPath();
       ctx.moveTo(0, -p.size);
       ctx.bezierCurveTo(p.size * 0.5, -p.size * 0.2, p.size * 0.6, p.size * 0.6, 0, p.size * 0.9);
@@ -381,6 +515,111 @@ export const SeasonalMouseExperience: React.FC = () => {
       ctx.fillStyle = grad;
       ctx.beginPath();
       ctx.arc(p.x, p.y, p.size * 3.5, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
+    };
+
+    const drawStar = (p: Particle) => {
+      ctx.save();
+      ctx.translate(p.x, p.y);
+      ctx.rotate(p.rotation);
+      ctx.fillStyle = p.color;
+      ctx.globalAlpha = p.opacity;
+      ctx.beginPath();
+      const spikes = 5;
+      const outerRadius = p.size;
+      const innerRadius = p.size * 0.45;
+      let rot = (Math.PI / 2) * 3;
+      const step = Math.PI / spikes;
+      ctx.moveTo(0, -outerRadius);
+      for (let i = 0; i < spikes; i++) {
+        ctx.lineTo(Math.cos(rot) * outerRadius, Math.sin(rot) * outerRadius);
+        rot += step;
+        ctx.lineTo(Math.cos(rot) * innerRadius, Math.sin(rot) * innerRadius);
+        rot += step;
+      }
+      ctx.closePath();
+      ctx.fill();
+      ctx.restore();
+    };
+
+    const drawOrnament = (p: Particle) => {
+      ctx.save();
+      ctx.translate(p.x, p.y);
+      ctx.rotate(p.rotation);
+      ctx.fillStyle = p.color;
+      ctx.globalAlpha = p.opacity;
+      ctx.beginPath();
+      ctx.arc(0, 0, p.size * 0.7, 0, Math.PI * 2);
+      ctx.fill();
+      // Golden top ring
+      ctx.fillStyle = '#f59e0b';
+      ctx.fillRect(-p.size * 0.25, -p.size * 0.9, p.size * 0.5, p.size * 0.25);
+      ctx.restore();
+    };
+
+    const drawConfetti = (p: Particle) => {
+      ctx.save();
+      ctx.translate(p.x, p.y);
+      ctx.rotate(p.rotation);
+      ctx.scale(Math.cos(p.flip), 1);
+      ctx.fillStyle = p.color;
+      ctx.globalAlpha = p.opacity;
+      ctx.fillRect(-p.size * 0.6, -p.size * 0.3, p.size * 1.2, p.size * 0.6);
+      ctx.restore();
+    };
+
+    const drawMai = (p: Particle) => {
+      ctx.save();
+      ctx.translate(p.x, p.y);
+      ctx.rotate(p.rotation);
+      ctx.scale(Math.cos(p.flip), 1);
+      ctx.fillStyle = p.color;
+      ctx.globalAlpha = p.opacity;
+      for (let i = 0; i < 5; i++) {
+        ctx.beginPath();
+        ctx.rotate((Math.PI * 2) / 5);
+        ctx.ellipse(0, -p.size * 0.5, p.size * 0.35, p.size * 0.5, 0, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      // Pistil center
+      ctx.fillStyle = '#ea580c';
+      ctx.beginPath();
+      ctx.arc(0, 0, p.size * 0.2, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
+    };
+
+    const drawLixi = (p: Particle) => {
+      ctx.save();
+      ctx.translate(p.x, p.y);
+      ctx.rotate(p.rotation);
+      ctx.scale(Math.cos(p.flip), 1);
+      ctx.globalAlpha = p.opacity;
+      ctx.fillStyle = '#ef4444';
+      const w = p.size * 0.85;
+      const h = p.size * 1.3;
+      ctx.fillRect(-w / 2, -h / 2, w, h);
+      // Gold seal
+      ctx.fillStyle = '#facc15';
+      ctx.beginPath();
+      ctx.arc(0, -h * 0.08, w * 0.2, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
+    };
+
+    const drawLantern = (p: Particle) => {
+      ctx.save();
+      ctx.translate(p.x, p.y);
+      ctx.rotate(p.rotation);
+      ctx.globalAlpha = p.opacity;
+      const grad = ctx.createRadialGradient(0, 0, 0, 0, 0, p.size);
+      grad.addColorStop(0, '#fef08a');
+      grad.addColorStop(0.5, p.color);
+      grad.addColorStop(1, 'rgba(239, 68, 68, 0)');
+      ctx.fillStyle = grad;
+      ctx.beginPath();
+      ctx.arc(0, 0, p.size, 0, Math.PI * 2);
       ctx.fill();
       ctx.restore();
     };
@@ -430,7 +669,7 @@ export const SeasonalMouseExperience: React.FC = () => {
         }
       }
 
-      // 3. Draw & Update Seasonal Particles
+      // 3. Draw & Update Particles
       const particles = particlesRef.current;
       const mx = mousePos.current.x;
       const my = mousePos.current.y;
@@ -439,7 +678,6 @@ export const SeasonalMouseExperience: React.FC = () => {
       for (let i = 0; i < particles.length; i++) {
         const p = particles[i];
 
-        // Motion physics
         p.rotation += p.rotationSpeed;
         p.flip += p.flipSpeed;
         p.y += p.speedY;
@@ -458,7 +696,7 @@ export const SeasonalMouseExperience: React.FC = () => {
         }
 
         // Loop boundaries
-        if (p.type === 'firefly') {
+        if (p.type === 'firefly' || p.type === 'lantern') {
           if (p.y < -20) p.y = height + 10;
           if (p.x < -20) p.x = width + 10;
           if (p.x > width + 20) p.x = -10;
@@ -470,23 +708,18 @@ export const SeasonalMouseExperience: React.FC = () => {
           if (p.x > width + 30) p.x = -20;
         }
 
-        // Render appropriate particle type
         switch (p.type) {
-          case 'leaf':
-            drawLeaf(p);
-            break;
-          case 'snow':
-            drawSnow(p);
-            break;
-          case 'petal':
-            drawPetal(p);
-            break;
-          case 'phoenix':
-            drawPhoenix(p);
-            break;
-          case 'firefly':
-            drawFirefly(p);
-            break;
+          case 'leaf': drawLeaf(p); break;
+          case 'snow': drawSnow(p); break;
+          case 'petal': drawPetal(p); break;
+          case 'phoenix': drawPhoenix(p); break;
+          case 'firefly': drawFirefly(p); break;
+          case 'star': drawStar(p); break;
+          case 'ornament': drawOrnament(p); break;
+          case 'confetti': drawConfetti(p); break;
+          case 'mai': drawMai(p); break;
+          case 'lixi': drawLixi(p); break;
+          case 'lantern': drawLantern(p); break;
         }
       }
 
@@ -501,10 +734,17 @@ export const SeasonalMouseExperience: React.FC = () => {
         cancelAnimationFrame(animationFrameId.current);
       }
     };
-  }, [currentSeason, isEnabled, mouseTrackEnabled]);
+  }, [currentTheme, isEnabled, mouseTrackEnabled]);
 
-  const activeSeasonData = SEASON_CONFIG[currentSeason];
-  const ActiveIcon = activeSeasonData.icon;
+  const activeThemeData = THEME_CONFIG[currentTheme];
+  const ActiveIcon = activeThemeData.icon;
+
+  const seasonsList = (Object.keys(THEME_CONFIG) as ThemeMode[]).filter(
+    (k) => THEME_CONFIG[k].category === 'season'
+  );
+  const holidaysList = (Object.keys(THEME_CONFIG) as ThemeMode[]).filter(
+    (k) => THEME_CONFIG[k].category === 'holiday'
+  );
 
   return (
     <>
@@ -515,16 +755,16 @@ export const SeasonalMouseExperience: React.FC = () => {
         aria-hidden="true"
       />
 
-      {/* Floating Seasonal Control Pill */}
-      <aside aria-label="Điều khiển hiệu ứng mùa" className="fixed bottom-16 left-3 z-30 select-none md:bottom-4 md:left-4">
+      {/* Floating Seasonal & Holiday Control Pill */}
+      <aside aria-label="Điều khiển hiệu ứng mùa và lễ hội" className="fixed bottom-16 left-3 z-30 select-none md:bottom-4 md:left-4">
         <div className="relative">
           {/* Expanded Menu Panel */}
           {isMenuOpen && (
-            <div className="absolute bottom-full left-0 mb-2 w-64 rounded-lg border border-slate-200 bg-white p-3 shadow-lg">
+            <div className="absolute bottom-full left-0 mb-2 w-72 rounded-lg border border-slate-200 bg-white p-3 shadow-lg">
               <div className="mb-2.5 flex items-center justify-between border-b border-slate-100 pb-2">
                 <div className="flex items-center gap-1.5 text-xs font-bold text-slate-800">
                   <Sparkles className="h-3.5 w-3.5 text-primary-600" />
-                  <span>Hiệu ứng không gian</span>
+                  <span>Không gian & Lễ hội</span>
                 </div>
                 <button
                   type="button"
@@ -542,19 +782,44 @@ export const SeasonalMouseExperience: React.FC = () => {
                 </button>
               </div>
 
-              {/* Season Selection */}
-              <div className="mb-3 space-y-1">
-                <p className="text-xs font-semibold text-slate-500">Chọn mùa trải nghiệm:</p>
+              {/* Tabs: 4 Mùa vs Dịp Lễ Hội */}
+              <div className="mb-2 flex rounded-md bg-slate-100 p-0.5 text-xs">
+                <button
+                  type="button"
+                  onClick={() => setActiveTab('season')}
+                  className={`flex-1 rounded py-1 text-center font-medium transition-all ${
+                    activeTab === 'season'
+                      ? 'bg-white font-bold text-slate-900 shadow-sm'
+                      : 'text-slate-600 hover:text-slate-900'
+                  }`}
+                >
+                  4 Mùa
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setActiveTab('holiday')}
+                  className={`flex-1 rounded py-1 text-center font-medium transition-all ${
+                    activeTab === 'holiday'
+                      ? 'bg-white font-bold text-slate-900 shadow-sm'
+                      : 'text-slate-600 hover:text-slate-900'
+                  }`}
+                >
+                  Dịp Lễ Hội
+                </button>
+              </div>
+
+              {/* Theme Grid */}
+              <div className="mb-3 max-h-44 overflow-y-auto space-y-1 pr-0.5">
                 <div className="grid grid-cols-2 gap-1.5">
-                  {(Object.keys(SEASON_CONFIG) as Season[]).map((key) => {
-                    const s = SEASON_CONFIG[key];
+                  {(activeTab === 'season' ? seasonsList : holidaysList).map((key) => {
+                    const s = THEME_CONFIG[key];
                     const Icon = s.icon;
-                    const isSelected = currentSeason === key;
+                    const isSelected = currentTheme === key;
                     return (
                       <button
                         key={key}
                         type="button"
-                        onClick={() => selectSeason(key)}
+                        onClick={() => selectTheme(key)}
                         disabled={!isEnabled}
                         className={`flex items-center gap-1.5 rounded-lg border px-2 py-1.5 text-left text-xs transition-colors ${
                           isSelected
@@ -601,13 +866,13 @@ export const SeasonalMouseExperience: React.FC = () => {
             type="button"
             onClick={() => setIsMenuOpen((prev) => !prev)}
             aria-expanded={isMenuOpen}
-            aria-label="Cài đặt hiệu ứng mùa và track chuột"
+            aria-label="Cài đặt hiệu ứng mùa, lễ hội và track chuột"
             className="flex items-center gap-2 rounded-full border border-slate-200 bg-white/95 px-3 py-1.5 text-xs font-semibold text-slate-700 shadow-sm backdrop-blur transition-all hover:border-slate-300 hover:bg-white hover:text-slate-900 focus:outline-none focus:ring-2 focus:ring-primary-500/20"
           >
             <span className="flex items-center gap-1.5">
-              <span className={`inline-block h-2 w-2 rounded-full ${isEnabled ? activeSeasonData.dotColor : 'bg-slate-300'}`} />
+              <span className={`inline-block h-2 w-2 rounded-full ${isEnabled ? activeThemeData.dotColor : 'bg-slate-300'}`} />
               <ActiveIcon className="h-3.5 w-3.5 text-slate-600" />
-              <span>{activeSeasonData.name}</span>
+              <span>{activeThemeData.name}</span>
             </span>
             {isMenuOpen ? (
               <ChevronDown className="h-3.5 w-3.5 text-slate-400" />
