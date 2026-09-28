@@ -159,14 +159,29 @@ const AppContent: React.FC = () => {
 
   if (sessionChecking) return <div className="flex min-h-[100dvh] items-center justify-center bg-slate-50 px-4"><div className="rounded-lg border border-slate-200 bg-white px-6 py-5 text-center"><div className="mx-auto mb-3 h-7 w-7 animate-spin rounded-full border-2 border-slate-200 border-t-slate-900"/><p className="text-sm font-semibold text-slate-800">Đang xác thực phiên đăng nhập…</p></div></div>;
   if (!isAuthenticated) {
-    if (currentView === 'login') return <LoginView onLoginSuccess={handleLoginSuccess} onNavigate={handleNavigate} />;
-    return <Suspense fallback={<ViewLoading />}><LandingView onNavigate={handleNavigate} /></Suspense>;
+    if (currentView === 'login') return (
+      <>
+        <CustomContextMenu currentView="login" onNavigate={handleNavigate} />
+        <LoginView onLoginSuccess={handleLoginSuccess} onNavigate={handleNavigate} />
+      </>
+    );
+    return (
+      <>
+        <CustomContextMenu currentView="landing" onNavigate={handleNavigate} />
+        <Suspense fallback={<ViewLoading />}><LandingView onNavigate={handleNavigate} /></Suspense>
+      </>
+    );
   }
   // Never render the public landing page as an intermediate authenticated state
   // while the login route is being replaced by the role home route.
   if (currentView === 'login') return <ViewLoading />;
   if (currentView === 'landing') {
-    return <Suspense fallback={<ViewLoading />}><LandingView onNavigate={handleNavigate} /></Suspense>;
+    return (
+      <>
+        <CustomContextMenu currentView="landing" onNavigate={handleNavigate} />
+        <Suspense fallback={<ViewLoading />}><LandingView onNavigate={handleNavigate} /></Suspense>
+      </>
+    );
   }
 
   const routeConfig = APP_ROUTES[currentView];
@@ -196,7 +211,14 @@ const AppContent: React.FC = () => {
     }
   };
 
-  return <MainLayout currentView={currentView} onNavigate={handleNavigate} onLogout={handleLogout}><Suspense fallback={<ViewLoading />}>{renderView()}</Suspense></MainLayout>;
+  return (
+    <>
+      <CustomContextMenu currentView={currentView} onNavigate={handleNavigate} />
+      <MainLayout currentView={currentView} onNavigate={handleNavigate} onLogout={handleLogout}>
+        <Suspense fallback={<ViewLoading />}>{renderView()}</Suspense>
+      </MainLayout>
+    </>
+  );
 };
 
 export function App() {
@@ -206,7 +228,6 @@ export function App() {
         <PortfolioProvider>
           <AppProviders>
             <SeasonalMouseExperience />
-            <CustomContextMenu />
             <AppContent />
           </AppProviders>
         </PortfolioProvider>

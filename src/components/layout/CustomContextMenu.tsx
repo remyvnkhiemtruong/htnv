@@ -4,6 +4,7 @@ import {
   Quote,
   Sparkles,
   ArrowUp,
+  ArrowDown,
   RotateCw,
   Home,
   BookOpen,
@@ -18,15 +19,36 @@ import {
   Gift,
   PartyPopper,
   Award,
-  Moon
+  Moon,
+  ExternalLink,
+  Image,
+  FileText,
+  CheckSquare,
+  Scissors,
+  Printer,
+  Compass,
+  Save,
+  Send,
+  HelpCircle
 } from 'lucide-react';
 import { useAuthStore } from '../../app/store/useAuthStore';
 import { useNotificationStore } from '../../app/store/useNotificationStore';
 import type { Season } from '../effects/SeasonalMouseExperience';
+import { APP_ROUTES } from '../../app/router/routes';
 
 interface CustomContextMenuProps {
+  currentView?: string;
   onNavigate?: (view: string, params?: any) => void;
   onOpenCommandPalette?: () => void;
+}
+
+interface TargetContext {
+  isInput: boolean;
+  inputEl: HTMLInputElement | HTMLTextAreaElement | null;
+  isImg: boolean;
+  imgSrc: string;
+  isLink: boolean;
+  linkHref: string;
 }
 
 const SEASON_ITEMS: { id: Season; label: string; icon: React.ElementType; color: string }[] = [
@@ -51,6 +73,7 @@ const STORAGE_KEYS = {
 };
 
 export const CustomContextMenu: React.FC<CustomContextMenuProps> = ({
+  currentView,
   onNavigate,
   onOpenCommandPalette
 }) => {
@@ -60,7 +83,15 @@ export const CustomContextMenu: React.FC<CustomContextMenuProps> = ({
   const [isOpen, setIsOpen] = useState(false);
   const [position, setPosition] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
   const [selectedText, setSelectedText] = useState<string>('');
-  const [isInsideEditable, setIsInsideEditable] = useState<boolean>(false);
+  const [targetContext, setTargetContext] = useState<TargetContext>({
+    isInput: false,
+    inputEl: null,
+    isImg: false,
+    imgSrc: '',
+    isLink: false,
+    linkHref: ''
+  });
+
   const [activeSeason, setActiveSeason] = useState<Season>(() => {
     try {
       const s = localStorage.getItem(STORAGE_KEYS.SEASON);
@@ -98,6 +129,14 @@ export const CustomContextMenu: React.FC<CustomContextMenuProps> = ({
   });
 
   const menuRef = useRef<HTMLDivElement | null>(null);
+
+  // Determine active view dynamically
+  const activeView = useMemo(() => {
+    if (currentView) return currentView;
+    const path = window.location.pathname;
+    const route = Object.values(APP_ROUTES).find((r) => r.path === path);
+    return route?.id || 'dashboard';
+  }, [currentView]);
 
   // Home view role mapping
   const homeView = useMemo(() => {
@@ -139,7 +178,7 @@ export const CustomContextMenu: React.FC<CustomContextMenuProps> = ({
   // Context menu trigger listener
   useEffect(() => {
     const handleContextMenu = (e: MouseEvent) => {
-      // If user holds Shift, allow the browser's native context menu
+      // If user holds Shift, allow browser native context menu
       if (e.shiftKey) return;
 
       e.preventDefault();
@@ -149,7 +188,7 @@ export const CustomContextMenu: React.FC<CustomContextMenuProps> = ({
       const text = selection ? selection.toString().trim() : '';
       setSelectedText(text);
 
-      // Check if target is an editable input or textarea
+      // Check target element details
       const target = e.target as HTMLElement | null;
       const isInput = !!(
         target &&
@@ -157,11 +196,23 @@ export const CustomContextMenu: React.FC<CustomContextMenuProps> = ({
           target.tagName === 'TEXTAREA' ||
           target.isContentEditable)
       );
-      setIsInsideEditable(isInput);
+      const inputEl = isInput && target instanceof HTMLInputElement || target instanceof HTMLTextAreaElement ? target : null;
+
+      const imgEl = target?.tagName === 'IMG' ? (target as HTMLImageElement) : target?.closest('img') || null;
+      const linkEl = target?.tagName === 'A' ? (target as HTMLAnchorElement) : target?.closest('a') || null;
+
+      setTargetContext({
+        isInput,
+        inputEl,
+        isImg: !!imgEl,
+        imgSrc: imgEl?.src || '',
+        isLink: !!linkEl,
+        linkHref: linkEl?.href || ''
+      });
 
       // Smart positioning to stay completely inside viewport boundaries
-      const menuWidth = 260;
-      const menuHeight = text ? 420 : 360;
+      const menuWidth = 270;
+      const menuHeight = 440;
       const pad = 12;
 
       let x = e.clientX;
@@ -247,13 +298,73 @@ export const CustomContextMenu: React.FC<CustomContextMenuProps> = ({
       addToast({
         type: 'success',
         title: 'Đã tạo trích dẫn',
-        message: 'Đã định dạng trích dẫn chuẩn văn học trong ngoặc kép kép “...”'
+        message: 'Đã định dạng trích dẫn chuẩn văn học trong ngoặc kép đôi “...”'
       });
     } catch {
       // ignore
     }
     closeMenu();
   }, [addToast, closeMenu, selectedText]);
+
+  const copyAsEvidencePrompt = useCallback(async () => {
+    if (!selectedText) return;
+    const prompt = `[Dẫn chứng]: “${selectedText}”\n[Phân tích nghệ thuật & ý nghĩa]: `;
+    try {
+      await navigator.clipboard.writeText(prompt);
+      addToast({
+        type: 'success',
+        title: 'Tạo khung dẫn chứng 6 trục',
+        message: 'Đã tạo mẫu dẫn chứng kèm vị trí phân tích nghệ thuật.'
+      });
+    } catch {
+      // ignore
+    }
+    closeMenu();
+  }, [addToast, closeMenu, selectedText]);
+
+  // Input editing actions
+  const pasteFromClipboard = useCallback(async () => {
+    try {
+      const text = await navigator.clipboard.readText();
+      if (targetContext.inputEl) {
+        const el = targetContext.inputEl;
+        const start = el.selectionStart || 0;
+        const end = el.selectionEnd || 0;
+        const val = el.value;
+        el.value = val.slice(0, start) + text + val.slice(end);
+        el.selectionStart = el.selectionEnd = start + text.length;
+        el.dispatchEvent(new Event('input', { bubbles: true }));
+      }
+      addToast({
+        type: 'success',
+        title: 'Đã dán nội dung',
+        message: 'Nội dung bộ nhớ tạm đã được dán vào ô nhập.'
+      });
+    } catch {
+      addToast({
+        type: 'warning',
+        title: 'Cần quyền truy cập',
+        message: 'Vui lòng nhấn Ctrl + V để dán trực tiếp.'
+      });
+    }
+    closeMenu();
+  }, [addToast, closeMenu, targetContext.inputEl]);
+
+  const selectAllInInput = useCallback(() => {
+    if (targetContext.inputEl) {
+      targetContext.inputEl.focus();
+      targetContext.inputEl.select();
+    }
+    closeMenu();
+  }, [closeMenu, targetContext.inputEl]);
+
+  const clearInputContent = useCallback(() => {
+    if (targetContext.inputEl) {
+      targetContext.inputEl.value = '';
+      targetContext.inputEl.dispatchEvent(new Event('input', { bubbles: true }));
+    }
+    closeMenu();
+  }, [closeMenu, targetContext.inputEl]);
 
   // Seasonal change dispatcher
   const switchSeason = useCallback((season: Season) => {
@@ -310,6 +421,48 @@ export const CustomContextMenu: React.FC<CustomContextMenuProps> = ({
     return { words, chars };
   }, [selectedText]);
 
+  // Contextual Title & Icon helper
+  const headerContext = useMemo(() => {
+    if (selectedText) {
+      return {
+        icon: Quote,
+        title: 'Đoạn trích bôi đen',
+        subtitle: selectionStats ? `${selectionStats.words} từ · ${selectionStats.chars} ký tự` : ''
+      };
+    }
+    if (targetContext.isImg) {
+      return { icon: Image, title: 'Hình ảnh & Logo', subtitle: 'Chi tiết đồ họa' };
+    }
+    if (targetContext.isLink) {
+      return { icon: ExternalLink, title: 'Liên kết điều hướng', subtitle: 'Đường dẫn liên kết' };
+    }
+    if (targetContext.isInput) {
+      return { icon: FileText, title: 'Ô nhập dữ liệu', subtitle: 'Soạn thảo văn bản' };
+    }
+
+    switch (activeView) {
+      case 'editor':
+        return { icon: FileText, title: 'Bàn soạn thảo bài viết', subtitle: 'Hồ sơ phiên bản V1/V2' };
+      case 'version-diff':
+        return { icon: Compass, title: 'So sánh phiên bản bài làm', subtitle: 'Visual Diff 6 trục' };
+      case 'teacher-review':
+        return { icon: Award, title: 'Bàn chấm bài & Phản hồi', subtitle: 'Rubric & góp ý Socratic' };
+      case 'student-analytics':
+      case 'class-analytics':
+        return { icon: BarChart3, title: 'Tiến độ & Phân tích', subtitle: 'Biểu đồ năng lực 6 trục' };
+      case 'literature-texts':
+        return { icon: BookMarked, title: 'Kho tác phẩm văn học', subtitle: 'Ngữ liệu chương trình' };
+      case 'assignment-list':
+        return { icon: BookOpen, title: 'Nhiệm vụ học tập', subtitle: 'Hạn nộp & yêu cầu' };
+      case 'landing':
+        return { icon: Sparkles, title: 'Trang chủ KHKT', subtitle: 'THPT Chuyên Vị Thanh' };
+      default:
+        return { icon: Home, title: 'Học tốt Ngữ Văn', subtitle: roleLabel };
+    }
+  }, [activeView, roleLabel, selectedText, selectionStats, targetContext.isImg, targetContext.isInput, targetContext.isLink]);
+
+  const HeaderIcon = headerContext.icon;
+
   if (!isOpen) return null;
 
   return (
@@ -318,15 +471,20 @@ export const CustomContextMenu: React.FC<CustomContextMenuProps> = ({
       role="menu"
       aria-label="Menu ngữ cảnh riêng Học tốt Ngữ Văn"
       style={{ top: `${position.y}px`, left: `${position.x}px` }}
-      className="fixed z-50 w-64 select-none rounded-lg border border-slate-200 bg-white/95 p-1.5 shadow-dropdown backdrop-blur-md animate-fade-in"
+      className="fixed z-50 max-h-[82vh] w-68 overflow-y-auto select-none rounded-lg border border-slate-200 bg-white/95 p-1.5 shadow-dropdown backdrop-blur-md animate-fade-in"
     >
-      {/* Header Profile / Branding */}
-      <div className="flex items-center justify-between border-b border-slate-100 px-2.5 py-1.5 mb-1">
-        <div className="flex items-center gap-1.5">
-          <div className="h-2 w-2 rounded-full bg-primary-600" />
-          <span className="text-xs font-bold text-slate-800">Học tốt Ngữ Văn</span>
+      {/* Header Context Badge */}
+      <div className="flex items-center justify-between border-b border-slate-100 px-2.5 py-1.5 mb-1 bg-slate-50/80 rounded-md">
+        <div className="flex items-center gap-1.5 min-w-0">
+          <HeaderIcon className="h-3.5 w-3.5 text-primary-600 shrink-0" />
+          <div className="min-w-0">
+            <p className="text-xs font-bold text-slate-800 truncate">{headerContext.title}</p>
+            {headerContext.subtitle && (
+              <p className="text-xs text-slate-500 truncate">{headerContext.subtitle}</p>
+            )}
+          </div>
         </div>
-        <span className="rounded-full bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-600">
+        <span className="shrink-0 rounded-full bg-slate-200/80 px-2 py-0.5 text-xs font-semibold text-slate-700">
           {roleLabel}
         </span>
       </div>
@@ -334,23 +492,24 @@ export const CustomContextMenu: React.FC<CustomContextMenuProps> = ({
       {/* Group 1: Text Selection Context */}
       {selectedText && (
         <div className="border-b border-slate-100 pb-1.5 mb-1.5">
-          <div className="flex items-center justify-between px-2.5 py-1 text-slate-400">
-            <span className="text-xs font-semibold uppercase tracking-normal">Đoạn văn bản đã chọn</span>
-            {selectionStats && (
-              <span className="text-xs font-medium text-primary-700">
-                {selectionStats.words} từ · {selectionStats.chars} ký tự
-              </span>
-            )}
-          </div>
-
           <button
             type="button"
             role="menuitem"
             onClick={copyAsLiteratureQuote}
-            className="flex w-full items-center gap-2 rounded-md px-2.5 py-1.5 text-left text-xs font-medium text-slate-800 transition-colors hover:bg-primary-50 hover:text-primary-900"
+            className="flex w-full items-center gap-2 rounded-md px-2.5 py-1.5 text-left text-xs font-semibold text-primary-950 transition-colors hover:bg-primary-50"
           >
             <Quote className="h-3.5 w-3.5 text-primary-600 shrink-0" />
             <span>Sao chép dạng trích dẫn (“...”)</span>
+          </button>
+
+          <button
+            type="button"
+            role="menuitem"
+            onClick={copyAsEvidencePrompt}
+            className="flex w-full items-center gap-2 rounded-md px-2.5 py-1.5 text-left text-xs font-medium text-slate-800 transition-colors hover:bg-slate-100"
+          >
+            <CheckSquare className="h-3.5 w-3.5 text-emerald-600 shrink-0" />
+            <span>Tạo khung dẫn chứng phân tích</span>
           </button>
 
           <button
@@ -365,9 +524,235 @@ export const CustomContextMenu: React.FC<CustomContextMenuProps> = ({
         </div>
       )}
 
-      {/* Group 2: Quick Navigation */}
+      {/* Group 2: Target Element Actions (Input, Image, Link) */}
+      {targetContext.isInput && (
+        <div className="border-b border-slate-100 pb-1.5 mb-1.5 space-y-0.5">
+          <div className="px-2.5 py-0.5 text-xs font-semibold uppercase tracking-normal text-slate-400">
+            Thao tác soạn thảo
+          </div>
+          <button
+            type="button"
+            role="menuitem"
+            onClick={pasteFromClipboard}
+            className="flex w-full items-center gap-2 rounded-md px-2.5 py-1.5 text-left text-xs font-medium text-slate-800 transition-colors hover:bg-slate-100"
+          >
+            <Copy className="h-3.5 w-3.5 text-sky-600 shrink-0" />
+            <span>Dán nội dung từ Clipboard</span>
+          </button>
+          <button
+            type="button"
+            role="menuitem"
+            onClick={selectAllInInput}
+            className="flex w-full items-center gap-2 rounded-md px-2.5 py-1.5 text-left text-xs font-medium text-slate-800 transition-colors hover:bg-slate-100"
+          >
+            <CheckSquare className="h-3.5 w-3.5 text-slate-500 shrink-0" />
+            <span>Chọn tất cả (Ctrl + A)</span>
+          </button>
+          <button
+            type="button"
+            role="menuitem"
+            onClick={clearInputContent}
+            className="flex w-full items-center gap-2 rounded-md px-2.5 py-1.5 text-left text-xs font-medium text-rose-600 transition-colors hover:bg-rose-50"
+          >
+            <Scissors className="h-3.5 w-3.5 text-rose-500 shrink-0" />
+            <span>Làm trống ô nhập</span>
+          </button>
+        </div>
+      )}
+
+      {targetContext.isImg && (
+        <div className="border-b border-slate-100 pb-1.5 mb-1.5 space-y-0.5">
+          <div className="px-2.5 py-0.5 text-xs font-semibold uppercase tracking-normal text-slate-400">
+            Thao tác hình ảnh
+          </div>
+          <button
+            type="button"
+            role="menuitem"
+            onClick={() => {
+              window.open(targetContext.imgSrc, '_blank');
+              closeMenu();
+            }}
+            className="flex w-full items-center gap-2 rounded-md px-2.5 py-1.5 text-left text-xs font-medium text-slate-800 transition-colors hover:bg-slate-100"
+          >
+            <ExternalLink className="h-3.5 w-3.5 text-slate-500 shrink-0" />
+            <span>Mở hình ảnh trong tab mới</span>
+          </button>
+          <button
+            type="button"
+            role="menuitem"
+            onClick={async () => {
+              await navigator.clipboard.writeText(targetContext.imgSrc);
+              addToast({ type: 'success', title: 'Đã sao chép liên kết ảnh', message: targetContext.imgSrc });
+              closeMenu();
+            }}
+            className="flex w-full items-center gap-2 rounded-md px-2.5 py-1.5 text-left text-xs font-medium text-slate-800 transition-colors hover:bg-slate-100"
+          >
+            <Copy className="h-3.5 w-3.5 text-slate-500 shrink-0" />
+            <span>Sao chép đường dẫn ảnh</span>
+          </button>
+        </div>
+      )}
+
+      {targetContext.isLink && !selectedText && (
+        <div className="border-b border-slate-100 pb-1.5 mb-1.5 space-y-0.5">
+          <div className="px-2.5 py-0.5 text-xs font-semibold uppercase tracking-normal text-slate-400">
+            Thao tác liên kết
+          </div>
+          <button
+            type="button"
+            role="menuitem"
+            onClick={() => {
+              window.open(targetContext.linkHref, '_blank');
+              closeMenu();
+            }}
+            className="flex w-full items-center gap-2 rounded-md px-2.5 py-1.5 text-left text-xs font-medium text-slate-800 transition-colors hover:bg-slate-100"
+          >
+            <ExternalLink className="h-3.5 w-3.5 text-slate-500 shrink-0" />
+            <span>Mở liên kết trong tab mới</span>
+          </button>
+          <button
+            type="button"
+            role="menuitem"
+            onClick={async () => {
+              await navigator.clipboard.writeText(targetContext.linkHref);
+              addToast({ type: 'success', title: 'Đã sao chép liên kết', message: targetContext.linkHref });
+              closeMenu();
+            }}
+            className="flex w-full items-center gap-2 rounded-md px-2.5 py-1.5 text-left text-xs font-medium text-slate-800 transition-colors hover:bg-slate-100"
+          >
+            <Copy className="h-3.5 w-3.5 text-slate-500 shrink-0" />
+            <span>Sao chép địa chỉ liên kết</span>
+          </button>
+        </div>
+      )}
+
+      {/* Group 3: Dynamic Page Actions Based on currentView */}
+      {activeView === 'editor' && (
+        <div className="border-b border-slate-100 pb-1.5 mb-1.5 space-y-0.5">
+          <div className="px-2.5 py-0.5 text-xs font-semibold uppercase tracking-normal text-slate-400">
+            Thao tác bài viết
+          </div>
+          <button
+            type="button"
+            role="menuitem"
+            onClick={() => {
+              addToast({ type: 'info', title: 'Bản nháp an toàn', message: 'Hệ thống tự động lưu bản nháp theo thời gian thực vào LocalStorage.' });
+              closeMenu();
+            }}
+            className="flex w-full items-center gap-2 rounded-md px-2.5 py-1.5 text-left text-xs font-medium text-slate-700 hover:bg-slate-100"
+          >
+            <Save className="h-3.5 w-3.5 text-emerald-600 shrink-0" />
+            <span>Kiểm tra trạng thái lưu nháp</span>
+          </button>
+          <button
+            type="button"
+            role="menuitem"
+            onClick={() => handleNav('version-diff')}
+            className="flex w-full items-center gap-2 rounded-md px-2.5 py-1.5 text-left text-xs font-medium text-slate-700 hover:bg-slate-100"
+          >
+            <Compass className="h-3.5 w-3.5 text-sky-600 shrink-0" />
+            <span>Mở So sánh phiên bản (Diff)</span>
+          </button>
+          <button
+            type="button"
+            role="menuitem"
+            onClick={() => handleNav('literature-texts')}
+            className="flex w-full items-center gap-2 rounded-md px-2.5 py-1.5 text-left text-xs font-medium text-slate-700 hover:bg-slate-100"
+          >
+            <BookMarked className="h-3.5 w-3.5 text-amber-600 shrink-0" />
+            <span>Tra cứu ngữ liệu tác phẩm</span>
+          </button>
+        </div>
+      )}
+
+      {activeView === 'version-diff' && (
+        <div className="border-b border-slate-100 pb-1.5 mb-1.5 space-y-0.5">
+          <div className="px-2.5 py-0.5 text-xs font-semibold uppercase tracking-normal text-slate-400">
+            Thao tác so sánh
+          </div>
+          <button
+            type="button"
+            role="menuitem"
+            onClick={() => handleNav('editor')}
+            className="flex w-full items-center gap-2 rounded-md px-2.5 py-1.5 text-left text-xs font-medium text-slate-700 hover:bg-slate-100"
+          >
+            <FileText className="h-3.5 w-3.5 text-primary-600 shrink-0" />
+            <span>Quay lại bàn soạn thảo</span>
+          </button>
+          <button
+            type="button"
+            role="menuitem"
+            onClick={() => handleNav('student-analytics')}
+            className="flex w-full items-center gap-2 rounded-md px-2.5 py-1.5 text-left text-xs font-medium text-slate-700 hover:bg-slate-100"
+          >
+            <BarChart3 className="h-3.5 w-3.5 text-emerald-600 shrink-0" />
+            <span>Xem biểu đồ tiến bộ 6 trục</span>
+          </button>
+        </div>
+      )}
+
+      {activeView === 'teacher-review' && (
+        <div className="border-b border-slate-100 pb-1.5 mb-1.5 space-y-0.5">
+          <div className="px-2.5 py-0.5 text-xs font-semibold uppercase tracking-normal text-slate-400">
+            Nghiệp vụ giáo viên
+          </div>
+          <button
+            type="button"
+            role="menuitem"
+            onClick={() => {
+              addToast({ type: 'info', title: 'Gợi ý Socratic', message: 'Hãy đặt câu hỏi gợi mở thay vì sửa từ trực tiếp để phát huy tư duy học sinh.' });
+              closeMenu();
+            }}
+            className="flex w-full items-center gap-2 rounded-md px-2.5 py-1.5 text-left text-xs font-medium text-slate-700 hover:bg-slate-100"
+          >
+            <HelpCircle className="h-3.5 w-3.5 text-amber-500 shrink-0" />
+            <span>Xem tiêu chuẩn gợi ý Socratic</span>
+          </button>
+          <button
+            type="button"
+            role="menuitem"
+            onClick={() => handleNav('class-analytics')}
+            className="flex w-full items-center gap-2 rounded-md px-2.5 py-1.5 text-left text-xs font-medium text-slate-700 hover:bg-slate-100"
+          >
+            <BarChart3 className="h-3.5 w-3.5 text-primary-600 shrink-0" />
+            <span>Phân tích năng lực toàn lớp</span>
+          </button>
+        </div>
+      )}
+
+      {activeView === 'landing' && (
+        <div className="border-b border-slate-100 pb-1.5 mb-1.5 space-y-0.5">
+          <div className="px-2.5 py-0.5 text-xs font-semibold uppercase tracking-normal text-slate-400">
+            Khám phá hệ thống
+          </div>
+          <button
+            type="button"
+            role="menuitem"
+            onClick={() => handleNav('login')}
+            className="flex w-full items-center gap-2 rounded-md px-2.5 py-1.5 text-left text-xs font-bold text-primary-700 hover:bg-primary-50"
+          >
+            <Send className="h-3.5 w-3.5 text-primary-600 shrink-0" />
+            <span>Đăng nhập hệ thống</span>
+          </button>
+          <button
+            type="button"
+            role="menuitem"
+            onClick={() => {
+              const el = document.getElementById('six-axes');
+              el?.scrollIntoView({ behavior: 'smooth' });
+              closeMenu();
+            }}
+            className="flex w-full items-center gap-2 rounded-md px-2.5 py-1.5 text-left text-xs font-medium text-slate-700 hover:bg-slate-100"
+          >
+            <Compass className="h-3.5 w-3.5 text-slate-500 shrink-0" />
+            <span>Khám phá Khung 6 trục thi pháp</span>
+          </button>
+        </div>
+      )}
+
+      {/* Group 4: Quick Navigation Core */}
       <div className="border-b border-slate-100 pb-1.5 mb-1.5 space-y-0.5">
-        <div className="px-2.5 py-1 text-xs font-semibold uppercase tracking-normal text-slate-400">
+        <div className="px-2.5 py-0.5 text-xs font-semibold uppercase tracking-normal text-slate-400">
           Điều hướng nhanh
         </div>
 
@@ -378,7 +763,7 @@ export const CustomContextMenu: React.FC<CustomContextMenuProps> = ({
           className="flex w-full items-center gap-2 rounded-md px-2.5 py-1.5 text-left text-xs font-medium text-slate-700 transition-colors hover:bg-slate-100 hover:text-slate-900"
         >
           <Home className="h-3.5 w-3.5 text-slate-500 shrink-0" />
-          <span>Bàn làm việc chính</span>
+          <span>Bàn làm việc chính ({roleLabel})</span>
         </button>
 
         <button
@@ -422,7 +807,7 @@ export const CustomContextMenu: React.FC<CustomContextMenuProps> = ({
         </button>
       </div>
 
-      {/* Group 3: Seasonal & Holiday Settings */}
+      {/* Group 5: Seasonal & Holiday Settings */}
       <div className="border-b border-slate-100 pb-1.5 mb-1.5">
         <div className="flex items-center justify-between px-2.5 py-1 text-slate-400">
           <span className="text-xs font-semibold uppercase tracking-normal">Không gian mùa & Lễ hội</span>
@@ -504,7 +889,7 @@ export const CustomContextMenu: React.FC<CustomContextMenuProps> = ({
         </button>
       </div>
 
-      {/* Group 4: Page Utilities */}
+      {/* Group 6: Page Utilities */}
       <div className="space-y-0.5">
         <button
           type="button"
@@ -528,37 +913,67 @@ export const CustomContextMenu: React.FC<CustomContextMenuProps> = ({
           </kbd>
         </button>
 
-        <button
-          type="button"
-          role="menuitem"
-          onClick={() => {
-            closeMenu();
-            window.scrollTo({ top: 0, behavior: 'smooth' });
-          }}
-          className="flex w-full items-center gap-2 rounded-md px-2.5 py-1.5 text-left text-xs font-medium text-slate-700 transition-colors hover:bg-slate-100 hover:text-slate-900"
-        >
-          <ArrowUp className="h-3.5 w-3.5 text-slate-500" />
-          <span>Lên đầu trang</span>
-        </button>
+        <div className="grid grid-cols-2 gap-1 px-1">
+          <button
+            type="button"
+            role="menuitem"
+            onClick={() => {
+              closeMenu();
+              window.scrollTo({ top: 0, behavior: 'smooth' });
+            }}
+            className="flex items-center justify-center gap-1.5 rounded-md px-2 py-1 text-xs font-medium text-slate-700 transition-colors hover:bg-slate-100 hover:text-slate-900"
+          >
+            <ArrowUp className="h-3.5 w-3.5 text-slate-500" />
+            <span>Đầu trang</span>
+          </button>
 
-        <button
-          type="button"
-          role="menuitem"
-          onClick={() => {
-            closeMenu();
-            window.location.reload();
-          }}
-          className="flex w-full items-center gap-2 rounded-md px-2.5 py-1.5 text-left text-xs font-medium text-slate-700 transition-colors hover:bg-slate-100 hover:text-slate-900"
-        >
-          <RotateCw className="h-3.5 w-3.5 text-slate-500" />
-          <span>Tải lại trang</span>
-        </button>
+          <button
+            type="button"
+            role="menuitem"
+            onClick={() => {
+              closeMenu();
+              window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
+            }}
+            className="flex items-center justify-center gap-1.5 rounded-md px-2 py-1 text-xs font-medium text-slate-700 transition-colors hover:bg-slate-100 hover:text-slate-900"
+          >
+            <ArrowDown className="h-3.5 w-3.5 text-slate-500" />
+            <span>Cuối trang</span>
+          </button>
+        </div>
+
+        <div className="grid grid-cols-2 gap-1 px-1">
+          <button
+            type="button"
+            role="menuitem"
+            onClick={() => {
+              closeMenu();
+              window.print();
+            }}
+            className="flex items-center justify-center gap-1.5 rounded-md px-2 py-1 text-xs font-medium text-slate-700 transition-colors hover:bg-slate-100 hover:text-slate-900"
+          >
+            <Printer className="h-3.5 w-3.5 text-slate-500" />
+            <span>In / PDF</span>
+          </button>
+
+          <button
+            type="button"
+            role="menuitem"
+            onClick={() => {
+              closeMenu();
+              window.location.reload();
+            }}
+            className="flex items-center justify-center gap-1.5 rounded-md px-2 py-1 text-xs font-medium text-slate-700 transition-colors hover:bg-slate-100 hover:text-slate-900"
+          >
+            <RotateCw className="h-3.5 w-3.5 text-slate-500" />
+            <span>Tải lại trang</span>
+          </button>
+        </div>
       </div>
 
       {/* Footer hint */}
       <div className="mt-1 border-t border-slate-100 pt-1 text-center text-slate-400">
         <span className="text-xs">
-          {isInsideEditable ? 'Shift + Chuột phải: Menu gốc soạn thảo' : 'Shift + Chuột phải: Menu gốc trình duyệt'}
+          Shift + Chuột phải: Menu gốc trình duyệt
         </span>
       </div>
     </div>
