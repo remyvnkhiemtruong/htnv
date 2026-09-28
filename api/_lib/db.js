@@ -25,7 +25,10 @@ export async function getPool() {
       max: 4,
       idleTimeoutMillis: 10000,
       connectionTimeoutMillis: 10000
-    }));
+    })).catch(err => {
+      poolPromise = null;
+      throw err;
+    });
   }
   return poolPromise;
 }

@@ -114,7 +114,7 @@ export const PortfolioEditorView: React.FC<PortfolioEditorViewProps> = ({ assign
     }, 0);
   }, [portfolio]);
 
-  const evidenceText = (currentAxis?.evidenceQuotes || []).map(item => item.text).join('\n');
+  const evidenceText = (currentAxis?.evidenceQuotes || []).map(item => typeof item === 'string' ? item : item?.text || '').filter(Boolean).join('\n');
   const versions = portfolio?.versions || [];
   const submittedVersions = versions.filter(item => item.stage !== 'prediction');
   const predictionVersion = versions.find(item => item.stage === 'prediction');
@@ -222,7 +222,7 @@ export const PortfolioEditorView: React.FC<PortfolioEditorViewProps> = ({ assign
     }
   }, [backupKey, portfolio]);
 
-  const restoreLocalBackup = () => {
+  const restoreLocalBackup = async () => {
     if (!localBackupAvailable?.draft || !assignment) return;
     for (const [axisId, resp] of Object.entries(localBackupAvailable.draft) as [PoeticAxisId, any][]) {
       if (resp?.analysisText || resp?.evidenceQuotes) {
@@ -230,6 +230,11 @@ export const PortfolioEditorView: React.FC<PortfolioEditorViewProps> = ({ assign
       }
     }
     setLocalBackupAvailable(null);
+    try {
+      await manualSaveDraft(currentUser.id, assignment.id);
+    } catch {
+      // safe fallback
+    }
     addToast({ type: 'success', title: 'Đã khôi phục', message: 'Đã khôi phục bản nháp từ bộ nhớ cục bộ an toàn.' });
   };
 
@@ -245,8 +250,8 @@ export const PortfolioEditorView: React.FC<PortfolioEditorViewProps> = ({ assign
   const insertQuoteToEvidence = () => {
     if (!selectedQuoteSnippet || !assignment) return;
     const cleanQuote = selectedQuoteSnippet.replace(/\s+/g, ' ');
-    const existingQuotes = (currentAxis?.evidenceQuotes || []).map(q => q.text);
-    if (!existingQuotes.includes(cleanQuote)) {
+    const existingQuotes = (currentAxis?.evidenceQuotes || []).map(q => typeof q === 'string' ? q : q?.text || '');
+    if (!evidenceText.includes(cleanQuote) && !existingQuotes.includes(cleanQuote)) {
       const nextQuotesText = evidenceText ? `${evidenceText}\n"${cleanQuote}"` : `"${cleanQuote}"`;
       updateEvidence(nextQuotesText);
       addToast({
@@ -256,7 +261,11 @@ export const PortfolioEditorView: React.FC<PortfolioEditorViewProps> = ({ assign
       });
     }
     setSelectedQuoteSnippet('');
-    window.getSelection()?.removeAllRanges();
+    try {
+      window.getSelection()?.removeAllRanges();
+    } catch {
+      // safe fallback
+    }
   };
 
   // Keyboard shortcuts listener with dialog & input guards

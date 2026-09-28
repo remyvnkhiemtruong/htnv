@@ -116,11 +116,23 @@ ${essayParts}
 Hãy đưa ra nhận xét sư phạm mang tính gợi mở, phân tích cụ thể ưu điểm và những điểm cần mở rộng hoặc chỉnh sửa cho phiên bản tiếp theo.`;
 
     try {
-      await navigator.clipboard.writeText(promptText);
+      if (navigator?.clipboard?.writeText) {
+        await navigator.clipboard.writeText(promptText);
+      } else {
+        const textarea = document.createElement('textarea');
+        textarea.value = promptText;
+        textarea.style.position = 'fixed';
+        textarea.style.opacity = '0';
+        document.body.appendChild(textarea);
+        textarea.focus();
+        textarea.select();
+        document.execCommand('copy');
+        document.body.removeChild(textarea);
+      }
       setCopiedPrompt(true);
       setTimeout(() => setCopiedPrompt(false), 2500);
     } catch {
-      // ignore
+      // safe fallback
     }
   };
 

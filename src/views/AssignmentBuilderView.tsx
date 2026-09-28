@@ -65,7 +65,8 @@ export const AssignmentBuilderView: React.FC<Props> = ({ onNavigate }) => {
           textId: texts.some(t => t.id === f.textId) ? f.textId : texts[0]?.id || '',
           rubricId: rubricOptions.some(r => r.id === f.rubricId) ? f.rubricId : rubricOptions[0]?.id || ''
         }));
-      });
+      })
+      .catch(() => {});
   }, [texts, rubricOptions]);
 
   useEffect(() => {
