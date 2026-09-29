@@ -419,7 +419,8 @@ export async function getAcademicSnapshot(user) {
       SELECT p.*, a.public_id assignment_public_id, a.id assignment_db_id,
              u.name student_name, c.code class_code,
              ${role === 'student' ? 'd.content_json' : 'NULL::jsonb AS content_json'},
-             ${role === 'student' ? 'd.updated_at' : 'NULL::timestamptz AS draft_updated_at'}
+             ${role === 'student' ? 'd.updated_at' : 'NULL::timestamptz AS draft_updated_at'},
+             ${role === 'student' ? 'd.draft_revision' : 'NULL::bigint AS draft_revision'}
       FROM portfolios p
       JOIN assignments a ON a.id=p.assignment_id
       JOIN app_users u ON u.id=p.student_id
@@ -505,6 +506,7 @@ export async function getAcademicSnapshot(user) {
       className: researcher ? pseudonym('COHORT', row.class_code) : peerOrAi ? '' : row.class_code,
       currentDraft: role === 'student' ? (row.content_json || emptyDraft()) : emptyDraft(),
       lastAutosavedAt: role === 'student' ? (row.draft_updated_at || row.updated_at) : row.updated_at,
+      draftRevision: role === 'student' ? Number(row.draft_revision || 0) : 0,
       versions,
       currentActiveVersion: versions.length ? row.active_version : 'Bản nháp',
       status: row.status
@@ -730,6 +732,8 @@ async function saveDraft(user, input, _req) {
   if (user.role !== 'student') throw new Error('FORBIDDEN');
   const assignmentId = cleanTrimmed(input.assignmentId, 200);
   const content = normalizeDraft(input.content);
+  const suppliedRevision = Number(input.draftRevision);
+  const hasSuppliedRevision = Number.isInteger(suppliedRevision) && suppliedRevision >= 0;
   const pool = await getPool();
   const client = await pool.connect();
   try {
@@ -737,14 +741,34 @@ async function saveDraft(user, input, _req) {
     const portfolio = await portfolioForStudent(client, assignmentId, user.id, true);
     if (!portfolio) throw new Error('PORTFOLIO_NOT_FOUND');
     if (portfolio.assignment_status !== 'published') throw new Error('ASSIGNMENT_CLOSED');
-    await client.query(`
-      INSERT INTO portfolio_drafts(portfolio_id,content_json,updated_by,updated_at)
-      VALUES($1,$2,$3,now())
-      ON CONFLICT(portfolio_id) DO UPDATE SET content_json=EXCLUDED.content_json,updated_by=EXCLUDED.updated_by,updated_at=now()
-    `, [portfolio.id, content, user.id]);
+
+    const draftResult = await client.query(
+      'SELECT draft_revision FROM portfolio_drafts WHERE portfolio_id=$1 FOR UPDATE',
+      [portfolio.id]
+    );
+    const currentRevision = Number(draftResult.rows[0]?.draft_revision || 0);
+    if (hasSuppliedRevision && suppliedRevision !== currentRevision) throw new Error('DRAFT_CONFLICT');
+
+    const saved = draftResult.rows.length
+      ? await client.query(`
+          UPDATE portfolio_drafts
+          SET content_json=$2, updated_by=$3, updated_at=now(), draft_revision=draft_revision+1
+          WHERE portfolio_id=$1
+          RETURNING draft_revision, updated_at
+        `, [portfolio.id, content, user.id])
+      : await client.query(`
+          INSERT INTO portfolio_drafts(portfolio_id,content_json,updated_by,updated_at,draft_revision)
+          VALUES($1,$2,$3,now(),1)
+          RETURNING draft_revision, updated_at
+        `, [portfolio.id, content, user.id]);
+
     await client.query('UPDATE portfolios SET updated_at=now() WHERE id=$1', [portfolio.id]);
     await client.query('COMMIT');
-    return { ok: true, savedAt: new Date().toISOString() };
+    return {
+      ok: true,
+      savedAt: saved.rows[0]?.updated_at || new Date().toISOString(),
+      draftRevision: Number(saved.rows[0]?.draft_revision || currentRevision + 1)
+    };
   } catch (error) {
     await client.query('ROLLBACK');
     throw error;
