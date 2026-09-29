@@ -22,12 +22,16 @@ interface PortfolioState {
   updateDraft: (studentId: string, assignmentId: string, axisId: PoeticAxisId, text: string, quotes?: EvidenceQuote[]) => void;
   manualSaveDraft: (studentId: string, assignmentId: string) => Promise<void>;
   createSnapshot: (studentId: string, assignmentId: string, versionNumber: string, changeSummary: string, authorName: string, options?: CreateSnapshotOptions) => Promise<boolean>;
+  resetSessionState: () => void;
 }
 
 const saveTimers = new Map<string, ReturnType<typeof setTimeout>>();
 const dirtyPortfolioKeys = new Set<string>();
 const pendingSubmissionKeys = new Map<string, string>();
 const inFlightSubmissions = new Map<string, Promise<boolean>>();
+const saveChains = new Map<string, Promise<void>>();
+const activeControllers = new Set<AbortController>();
+let sessionEpoch = 0;
 
 const newSubmissionKey = () => {
   if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') return crypto.randomUUID();
@@ -35,15 +39,33 @@ const newSubmissionKey = () => {
 };
 
 const postAction = async (payload: unknown) => {
-  const response = await fetch('/api/academic/action', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    credentials: 'include',
-    body: JSON.stringify(payload)
-  });
-  const data = await response.json().catch(() => ({}));
-  if (!response.ok) throw new Error(data.message || data.code || 'Không thể lưu dữ liệu');
-  return data;
+  const controller = new AbortController();
+  activeControllers.add(controller);
+  try {
+    const response = await fetch('/api/academic/action', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify(payload),
+      signal: controller.signal
+    });
+    const data = await response.json().catch(() => ({}));
+    if (!response.ok) throw new Error(data.message || data.code || 'Không thể lưu dữ liệu');
+    return data;
+  } finally {
+    activeControllers.delete(controller);
+  }
+};
+
+const enqueueSave = async (key: string, task: () => Promise<void>) => {
+  const previous = saveChains.get(key) || Promise.resolve();
+  const current = previous.catch(() => undefined).then(task);
+  saveChains.set(key, current);
+  try {
+    await current;
+  } finally {
+    if (saveChains.get(key) === current) saveChains.delete(key);
+  }
 };
 
 const blankPortfolio = (studentId: string, assignmentId: string, studentName: string, className: string): StudentPortfolio => {
@@ -67,6 +89,20 @@ export const usePortfolioStore = create<PortfolioState>((set, get) => ({
   portfolios: {},
   autosaveStatus: 'saved',
   lastSavedTime: '',
+
+  resetSessionState: () => {
+    sessionEpoch += 1;
+    for (const timer of saveTimers.values()) clearTimeout(timer);
+    saveTimers.clear();
+    dirtyPortfolioKeys.clear();
+    pendingSubmissionKeys.clear();
+    inFlightSubmissions.clear();
+    saveChains.clear();
+    for (const controller of activeControllers) controller.abort();
+    activeControllers.clear();
+    mockDb.reset();
+    set({ portfolios: {}, autosaveStatus: 'saved', lastSavedTime: '' });
+  },
 
   hydratePortfolios: (serverPortfolios) => {
     const local = get().portfolios;
@@ -110,48 +146,60 @@ export const usePortfolioStore = create<PortfolioState>((set, get) => ({
 
     const existing = saveTimers.get(key);
     if (existing) clearTimeout(existing);
-    saveTimers.set(key, setTimeout(async () => {
+    const epoch = sessionEpoch;
+    saveTimers.set(key, setTimeout(() => {
       saveTimers.delete(key);
-      set({ autosaveStatus: 'saving' });
-      try {
-        const latestDraft = get().portfolios[key]?.currentDraft || updated.currentDraft;
-        await postAction({ action: 'save_draft', assignmentId, content: latestDraft });
-        dirtyPortfolioKeys.delete(key);
-        set({ autosaveStatus: dirtyPortfolioKeys.size ? 'dirty' : 'saved', lastSavedTime: new Date().toLocaleTimeString('vi-VN') });
-      } catch {
-        dirtyPortfolioKeys.add(key);
-        set({ autosaveStatus: 'dirty' });
-      }
+      void enqueueSave(key, async () => {
+        if (epoch !== sessionEpoch) return;
+        set({ autosaveStatus: 'saving' });
+        try {
+          const latestDraft = get().portfolios[key]?.currentDraft || updated.currentDraft;
+          await postAction({ action: 'save_draft', assignmentId, content: latestDraft });
+          if (epoch !== sessionEpoch) return;
+          dirtyPortfolioKeys.delete(key);
+          set({ autosaveStatus: dirtyPortfolioKeys.size ? 'dirty' : 'saved', lastSavedTime: new Date().toLocaleTimeString('vi-VN') });
+        } catch {
+          if (epoch !== sessionEpoch) return;
+          dirtyPortfolioKeys.add(key);
+          set({ autosaveStatus: 'dirty' });
+        }
+      });
     }, 800));
   },
 
   manualSaveDraft: async (studentId, assignmentId) => {
     const key = `port-${studentId}-${assignmentId}`;
-    const port = get().getPortfolio(studentId, assignmentId);
     const pending = saveTimers.get(key);
     if (pending) {
       clearTimeout(pending);
       saveTimers.delete(key);
     }
-    set({ autosaveStatus: 'saving' });
-    try {
-      await postAction({ action: 'save_draft', assignmentId, content: port.currentDraft });
-      dirtyPortfolioKeys.delete(key);
-      set({ autosaveStatus: dirtyPortfolioKeys.size ? 'dirty' : 'saved', lastSavedTime: new Date().toLocaleTimeString('vi-VN') });
-    } catch (error) {
-      dirtyPortfolioKeys.add(key);
-      set({ autosaveStatus: 'dirty' });
-      throw error;
-    }
+    const epoch = sessionEpoch;
+    await enqueueSave(key, async () => {
+      if (epoch !== sessionEpoch) return;
+      const port = get().getPortfolio(studentId, assignmentId);
+      set({ autosaveStatus: 'saving' });
+      try {
+        await postAction({ action: 'save_draft', assignmentId, content: port.currentDraft });
+        if (epoch !== sessionEpoch) return;
+        dirtyPortfolioKeys.delete(key);
+        set({ autosaveStatus: dirtyPortfolioKeys.size ? 'dirty' : 'saved', lastSavedTime: new Date().toLocaleTimeString('vi-VN') });
+      } catch (error) {
+        if (epoch !== sessionEpoch) return;
+        dirtyPortfolioKeys.add(key);
+        set({ autosaveStatus: 'dirty' });
+        throw error;
+      }
+    });
   },
 
   createSnapshot: async (studentId, assignmentId, versionNumber, changeSummary, authorName, options = {}) => {
     const key = `port-${studentId}-${assignmentId}`;
     const existingFlight = inFlightSubmissions.get(key);
     if (existingFlight) return existingFlight;
+    const epoch = sessionEpoch;
 
     const operation = (async () => {
-      const port = get().getPortfolio(studentId, assignmentId);
       const submissionKey = pendingSubmissionKeys.get(key) || options.submissionKey || newSubmissionKey();
       pendingSubmissionKeys.set(key, submissionKey);
       try {
@@ -160,8 +208,16 @@ export const usePortfolioStore = create<PortfolioState>((set, get) => ({
           clearTimeout(pendingSave);
           saveTimers.delete(key);
         }
-        set({ autosaveStatus: 'saving' });
-        await postAction({ action: 'save_draft', assignmentId, content: port.currentDraft });
+
+        await enqueueSave(key, async () => {
+          if (epoch !== sessionEpoch) throw new Error('SESSION_CHANGED');
+          const latest = get().getPortfolio(studentId, assignmentId);
+          set({ autosaveStatus: 'saving' });
+          await postAction({ action: 'save_draft', assignmentId, content: latest.currentDraft });
+        });
+
+        if (epoch !== sessionEpoch) throw new Error('SESSION_CHANGED');
+        const port = get().getPortfolio(studentId, assignmentId);
         dirtyPortfolioKeys.delete(key);
 
         const result = await postAction({
@@ -177,6 +233,8 @@ export const usePortfolioStore = create<PortfolioState>((set, get) => ({
           revisionReason: options.revisionReason,
           linkedFeedbackIds: options.linkedFeedbackIds
         });
+        if (epoch !== sessionEpoch) throw new Error('SESSION_CHANGED');
+
         const serverVer = result.version;
         if (!serverVer?.id || !serverVer?.versionNumber) throw new Error('INVALID_VERSION_RESPONSE');
         const newVer: PortfolioVersion = {
@@ -214,8 +272,10 @@ export const usePortfolioStore = create<PortfolioState>((set, get) => ({
         }));
         return true;
       } catch {
-        dirtyPortfolioKeys.add(key);
-        set({ autosaveStatus: 'dirty' });
+        if (epoch === sessionEpoch) {
+          dirtyPortfolioKeys.add(key);
+          set({ autosaveStatus: 'dirty' });
+        }
         return false;
       } finally {
         inFlightSubmissions.delete(key);
