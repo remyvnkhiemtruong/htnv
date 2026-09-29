@@ -1,4 +1,4 @@
-import React, { createContext, useCallback, useContext, useEffect, useState } from 'react';
+import React, { createContext, useCallback, useContext, useEffect, useRef, useState } from 'react';
 import type {
   AcademicSnapshot,
   StudentPortfolio,
@@ -49,7 +49,7 @@ interface PortfolioContextType {
   dataError: string | null;
   refreshAcademicData: () => Promise<void>;
   updateDraftAxis: (assignmentId: string, axisId: PoeticAxisId, analysisText: string, evidenceQuotes?: EvidenceQuote[]) => void;
-  saveDraftImmediately: (assignmentId: string) => void;
+  saveDraftImmediately: (assignmentId: string) => Promise<void>;
   createVersionSnapshot: (assignmentId: string, versionNumber: string, changeSummary: string, options?: CreateSnapshotOptions) => Promise<boolean>;
   addAnchoredFeedback: (feedback: Omit<FeedbackItem, 'id' | 'createdAt' | 'resolved'>) => Promise<{ ok: boolean; id?: string }>;
   resolveFeedback: (feedbackId: string) => Promise<void>;
@@ -85,6 +85,7 @@ export const PortfolioProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   const manualSaveDraft = usePortfolioStore(state => state.manualSaveDraft);
   const createSnapshot = usePortfolioStore(state => state.createSnapshot);
   const getPortfolio = usePortfolioStore(state => state.getPortfolio);
+  const resetSessionState = usePortfolioStore(state => state.resetSessionState);
 
   const [assignments, setAssignments] = useState<Assignment[]>([]);
   const [literatureTexts, setLiteratureTexts] = useState<LiteratureText[]>([]);
@@ -97,6 +98,10 @@ export const PortfolioProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   const [reflections, setReflections] = useState<StudentReflectionRecord[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [dataError, setDataError] = useState<string | null>(null);
+  const snapshotControllerRef = useRef<AbortController | null>(null);
+  const snapshotEpochRef = useRef(0);
+  const activeUserIdRef = useRef(currentUser.id);
+  activeUserIdRef.current = currentUser.id;
 
   const applySnapshot = useCallback((snapshot: AcademicSnapshot) => {
     mockDb.hydrate(snapshot);
@@ -115,25 +120,54 @@ export const PortfolioProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   }, [hydratePortfolios]);
 
   const refreshAcademicData = useCallback(async () => {
-    if (!currentUser.id) return;
+    const requestedUserId = currentUser.id;
+    if (!requestedUserId) return;
+
+    snapshotControllerRef.current?.abort();
+    const controller = new AbortController();
+    snapshotControllerRef.current = controller;
+    const requestEpoch = ++snapshotEpochRef.current;
+
     setIsLoading(true);
     setDataError(null);
     try {
-      const response = await fetch('/api/academic/snapshot', { credentials: 'include', cache: 'no-store' });
+      const response = await fetch('/api/academic/snapshot', {
+        credentials: 'include',
+        cache: 'no-store',
+        signal: controller.signal
+      });
       const data = await response.json();
       if (!response.ok || !data?.snapshot) throw new Error(data?.message || 'Không thể tải dữ liệu học tập');
+      if (controller.signal.aborted || requestEpoch !== snapshotEpochRef.current || activeUserIdRef.current !== requestedUserId) return;
       applySnapshot(data.snapshot);
     } catch (error: unknown) {
+      if (controller.signal.aborted || requestEpoch !== snapshotEpochRef.current || activeUserIdRef.current !== requestedUserId) return;
       setDataError(error instanceof Error ? error.message : 'Không thể tải dữ liệu học tập');
     } finally {
-      setIsLoading(false);
+      if (requestEpoch === snapshotEpochRef.current && activeUserIdRef.current === requestedUserId) setIsLoading(false);
     }
   }, [applySnapshot, currentUser.id]);
 
   useEffect(() => {
+    snapshotControllerRef.current?.abort();
+    snapshotControllerRef.current = null;
+    snapshotEpochRef.current += 1;
+    resetSessionState();
+    setAssignments([]);
+    setLiteratureTexts([]);
+    setRubric(emptyRubric);
+    setRubrics({});
+    setFeedbacks([]);
+    setRubricSubmissions([]);
+    setAuditLogs([]);
+    setAiReviews([]);
+    setReflections([]);
+    setDataError(null);
+    setIsLoading(false);
+
     if (currentUser.id) void refreshAcademicData();
-    else mockDb.reset();
-  }, [currentUser.id, refreshAcademicData]);
+    return () => snapshotControllerRef.current?.abort();
+  }, [currentUser.id, refreshAcademicData, resetSessionState]);
 
   const getPortfolioForStudentAndAssignment = useCallback(
     (studentId: string, assignmentId: string) => getPortfolio(
@@ -148,9 +182,8 @@ export const PortfolioProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   const updateDraftAxis = (assignmentId: string, axisId: PoeticAxisId, analysisText: string, evidenceQuotes?: EvidenceQuote[]) =>
     updateDraft(currentUser.id, assignmentId, axisId, analysisText, evidenceQuotes);
 
-  const saveDraftImmediately = (assignmentId: string) => {
-    void manualSaveDraft(currentUser.id, assignmentId);
-  };
+  const saveDraftImmediately = (assignmentId: string) =>
+    manualSaveDraft(currentUser.id, assignmentId);
 
   const createVersionSnapshot = async (
     assignmentId: string,
