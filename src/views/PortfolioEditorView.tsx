@@ -100,6 +100,7 @@ export const PortfolioEditorView: React.FC<PortfolioEditorViewProps> = ({ assign
   const portfolioKey = assignment && currentUser.id ? `port-${currentUser.id}-${assignment.id}` : '';
   const portfolio = portfolioKey ? portfolios[portfolioKey] : undefined;
   const literatureText = assignment ? literatureTexts.find(item => item.id === assignment.textId) : undefined;
+  const primaryTextAvailable = Boolean(literatureText?.fullContent?.trim() || literatureText?.excerpt?.trim());
   const predictionQuestions = (assignment?.predictionTemplate?.questions || []).filter(question => Boolean(question?.trim()));
   const predictionPrompt = assignment?.predictionTemplate?.prompt?.trim() || '';
 
@@ -894,7 +895,7 @@ export const PortfolioEditorView: React.FC<PortfolioEditorViewProps> = ({ assign
                       {literatureText ? `${literatureText.title} — ${literatureText.author}` : 'Chưa có ngữ liệu.'}
                     </p>
                   </div>
-                  <span className="text-xs text-slate-400">Bôi đen chữ để trích dẫn nhanh</span>
+                  {primaryTextAvailable && <span className="text-xs text-slate-400">Bôi đen chữ để trích dẫn nhanh</span>}
                 </div>
                 {predictionAvailable ? (
                   <div className="rounded-lg border border-sky-200 bg-sky-50 p-3 text-xs leading-5 text-sky-900">
@@ -903,10 +904,17 @@ export const PortfolioEditorView: React.FC<PortfolioEditorViewProps> = ({ assign
                 ) : (
                   <div className="space-y-2">
                     <div
-                      onMouseUp={handleTextSelection}
+                      onMouseUp={primaryTextAvailable ? handleTextSelection : undefined}
                       className="max-h-[60vh] select-text overflow-y-auto whitespace-pre-wrap rounded-lg border border-slate-200 bg-white p-4 font-serif text-sm leading-7 text-slate-800 selection:bg-primary-100 selection:text-primary-950"
                     >
-                      {literatureText?.fullContent || literatureText?.excerpt || 'Chưa có nội dung ngữ liệu.'}
+                      {primaryTextAvailable ? (literatureText?.fullContent || literatureText?.excerpt) : (
+                        <span className="font-sans text-sm leading-6">
+                          <strong>Giới thiệu tác phẩm (không phải nguyên văn)</strong><br />
+                          {literatureText?.synopsis || 'Chưa có phần giới thiệu.'}
+                          {literatureText?.historicalContext && <><br /><br />Bối cảnh: {literatureText.historicalContext}</>}
+                          <br /><br />Để trích dẫn chính xác, hãy đối chiếu với bản tác phẩm do giáo viên cung cấp.
+                        </span>
+                      )}
                     </div>
 
                     {selectedQuoteSnippet && (
