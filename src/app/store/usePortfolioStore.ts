@@ -68,6 +68,23 @@ const enqueueSave = async (key: string, task: () => Promise<void>) => {
   }
 };
 
+const applySavedRevision = (
+  key: string,
+  result: { draftRevision?: number; savedAt?: string },
+  set: (partial: Partial<PortfolioState> | ((state: PortfolioState) => Partial<PortfolioState>)) => void,
+  get: () => PortfolioState
+) => {
+  const current = get().portfolios[key];
+  if (!current) return;
+  const next: StudentPortfolio = {
+    ...current,
+    draftRevision: Number(result.draftRevision ?? current.draftRevision ?? 0),
+    lastAutosavedAt: result.savedAt || current.lastAutosavedAt
+  };
+  mockDb.savePortfolio(next);
+  set(state => ({ portfolios: { ...state.portfolios, [key]: next } }));
+};
+
 const blankPortfolio = (studentId: string, assignmentId: string, studentName: string, className: string): StudentPortfolio => {
   const initialDraft: Record<PoeticAxisId, any> = {} as any;
   POETIC_AXES.forEach(axis => { initialDraft[axis.id] = { axisId: axis.id, analysisText: '', evidenceQuotes: [] }; });
@@ -78,6 +95,7 @@ const blankPortfolio = (studentId: string, assignmentId: string, studentName: st
     studentName,
     className,
     lastAutosavedAt: new Date().toISOString(),
+    draftRevision: 0,
     currentActiveVersion: 'Bản nháp',
     status: 'drafting',
     currentDraft: initialDraft,
@@ -110,7 +128,12 @@ export const usePortfolioStore = create<PortfolioState>((set, get) => ({
     for (const [key, serverPortfolio] of Object.entries(serverPortfolios)) {
       const localPortfolio = local[key];
       merged[key] = dirtyPortfolioKeys.has(key) && localPortfolio
-        ? { ...serverPortfolio, currentDraft: localPortfolio.currentDraft, lastAutosavedAt: localPortfolio.lastAutosavedAt }
+        ? {
+            ...serverPortfolio,
+            currentDraft: localPortfolio.currentDraft,
+            lastAutosavedAt: localPortfolio.lastAutosavedAt,
+            draftRevision: localPortfolio.draftRevision
+          }
         : serverPortfolio;
       mockDb.savePortfolio(merged[key]);
     }
@@ -153,9 +176,15 @@ export const usePortfolioStore = create<PortfolioState>((set, get) => ({
         if (epoch !== sessionEpoch) return;
         set({ autosaveStatus: 'saving' });
         try {
-          const latestDraft = get().portfolios[key]?.currentDraft || updated.currentDraft;
-          await postAction({ action: 'save_draft', assignmentId, content: latestDraft });
+          const latestPortfolio = get().portfolios[key] || updated;
+          const result = await postAction({
+            action: 'save_draft',
+            assignmentId,
+            content: latestPortfolio.currentDraft,
+            draftRevision: latestPortfolio.draftRevision ?? 0
+          });
           if (epoch !== sessionEpoch) return;
+          applySavedRevision(key, result, set, get);
           dirtyPortfolioKeys.delete(key);
           set({ autosaveStatus: dirtyPortfolioKeys.size ? 'dirty' : 'saved', lastSavedTime: new Date().toLocaleTimeString('vi-VN') });
         } catch {
@@ -180,8 +209,14 @@ export const usePortfolioStore = create<PortfolioState>((set, get) => ({
       const port = get().getPortfolio(studentId, assignmentId);
       set({ autosaveStatus: 'saving' });
       try {
-        await postAction({ action: 'save_draft', assignmentId, content: port.currentDraft });
+        const result = await postAction({
+          action: 'save_draft',
+          assignmentId,
+          content: port.currentDraft,
+          draftRevision: port.draftRevision ?? 0
+        });
         if (epoch !== sessionEpoch) return;
+        applySavedRevision(key, result, set, get);
         dirtyPortfolioKeys.delete(key);
         set({ autosaveStatus: dirtyPortfolioKeys.size ? 'dirty' : 'saved', lastSavedTime: new Date().toLocaleTimeString('vi-VN') });
       } catch (error) {
@@ -213,7 +248,13 @@ export const usePortfolioStore = create<PortfolioState>((set, get) => ({
           if (epoch !== sessionEpoch) throw new Error('SESSION_CHANGED');
           const latest = get().getPortfolio(studentId, assignmentId);
           set({ autosaveStatus: 'saving' });
-          await postAction({ action: 'save_draft', assignmentId, content: latest.currentDraft });
+          const result = await postAction({
+            action: 'save_draft',
+            assignmentId,
+            content: latest.currentDraft,
+            draftRevision: latest.draftRevision ?? 0
+          });
+          applySavedRevision(key, result, set, get);
         });
 
         if (epoch !== sessionEpoch) throw new Error('SESSION_CHANGED');
