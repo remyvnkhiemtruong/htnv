@@ -513,6 +513,15 @@ export async function getAcademicSnapshot(user) {
     };
   }
 
+  const studentReadingUnlocked = new Set();
+  if (role === 'student') {
+    const predictedPortfolioIds = new Set(versionRows.filter(version => version.stage === 'prediction').map(version => version.portfolio_id));
+    for (const portfolio of portfolioRows) {
+      if (portfolio.status === 'completed' || predictedPortfolioIds.has(portfolio.id)) {
+        studentReadingUnlocked.add(portfolio.assignment_db_id);
+      }
+    }
+  }
   const assignments = assignmentRows.map(row => ({
     id: row.public_id,
     title: row.title,
@@ -529,7 +538,11 @@ export async function getAcademicSnapshot(user) {
     aiGuidance: role === 'student' || role === 'peer' || role === 'researcher' ? '' : (row.ai_guidance || ''),
     commonMistakes: role === 'student' || role === 'peer' || role === 'researcher' ? '' : (row.common_mistakes || ''),
     referenceGuide: role === 'student' || role === 'peer' || role === 'researcher' ? '' : (row.reference_guide || ''),
-    predictionTemplate: row.prediction_template || {},
+    predictionTemplate: role === 'student'
+      && row.workflow_config?.predictionEnabled !== false
+      && !studentReadingUnlocked.has(row.id)
+      ? Object.fromEntries(Object.entries(row.prediction_template || {}).filter(([key]) => key !== 'readingGuide' && key !== 'readingSources'))
+      : (row.prediction_template || {}),
     workflowConfig: row.workflow_config || {}
   }));
 

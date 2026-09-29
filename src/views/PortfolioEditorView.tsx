@@ -103,6 +103,10 @@ export const PortfolioEditorView: React.FC<PortfolioEditorViewProps> = ({ assign
   const primaryTextAvailable = Boolean(literatureText?.fullContent?.trim() || literatureText?.excerpt?.trim());
   const predictionQuestions = (assignment?.predictionTemplate?.questions || []).filter(question => Boolean(question?.trim()));
   const predictionPrompt = assignment?.predictionTemplate?.prompt?.trim() || '';
+  const readingGuide = assignment?.predictionTemplate?.readingGuide?.trim() || '';
+  const readingSources = (assignment?.predictionTemplate?.readingSources || []).filter(source =>
+    source?.label?.trim() && /^https:\/\//i.test(source?.url || '')
+  );
 
   const currentAxis = portfolio?.currentDraft?.[activeAxisId];
   const axisFeedbacks = useMemo(
@@ -916,6 +920,24 @@ export const PortfolioEditorView: React.FC<PortfolioEditorViewProps> = ({ assign
                         </span>
                       )}
                     </div>
+
+                    {readingGuide && (
+                      <section className="rounded-lg border border-slate-200 bg-white p-4 text-sm leading-6 text-slate-700">
+                        <h4 className="mb-2 font-semibold text-slate-900">Hướng dẫn đọc theo sáu trục</h4>
+                        <p className="whitespace-pre-wrap">{readingGuide}</p>
+                      </section>
+                    )}
+                    {readingSources.length > 0 && (
+                      <div className="space-y-1 rounded-lg border border-slate-200 bg-slate-50 p-4 text-xs leading-5">
+                        <strong className="text-slate-700">Nguồn đọc và đối chiếu</strong>
+                        {readingSources.map(source => (
+                          <a key={source.url} href={source.url} target="_blank" rel="noopener noreferrer" className="block break-words text-primary-700 underline hover:text-primary-900">
+                            {source.label}
+                          </a>
+                        ))}
+                        <p className="text-slate-500">Trích dẫn theo đúng bản em sử dụng, ghi trang hoặc đoạn khi có thể.</p>
+                      </div>
+                    )}
 
                     {selectedQuoteSnippet && (
                       <div className="animate-fade-in sticky bottom-0 z-10 flex flex-col gap-2 rounded-lg border border-primary-300 bg-primary-50 p-3 shadow-md">

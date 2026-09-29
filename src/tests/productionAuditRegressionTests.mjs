@@ -152,8 +152,10 @@ await test('PA13: V0 hides assigned reading content until prediction is submitte
   assert(academic.includes("v.stage='prediction'"));
   assert(academic.includes("synopsis: locked ? '' : row.synopsis"));
   assert(academic.includes("fullContent: locked ? '' : row.full_content"));
+  assert(academic.includes("key !== 'readingGuide' && key !== 'readingSources'"));
   assert(editor.includes('Ngữ liệu sẽ mở sau khi em nộp V0.'));
   assert(editor.includes("literatureText?.fullContent || literatureText?.excerpt"));
+  assert(editor.includes('readingGuide && ('));
 });
 
 await test('PA14: student cannot open the literature catalog and research catalogs are read-only', () => {
