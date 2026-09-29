@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useAuthStore } from '../app/store/useAuthStore';
 import { usePortfolioStore } from '../app/store/usePortfolioStore';
+import { deriveStudentWorkflow } from '../app/workflow/workflowState';
 import { useNotificationStore } from '../app/store/useNotificationStore';
 import { usePortfolio } from '../contexts/PortfolioContext';
 import { POETIC_AXES } from '../data/seedData';
@@ -60,6 +61,7 @@ export const PortfolioEditorView: React.FC<PortfolioEditorViewProps> = ({ assign
     feedbacks,
     portfolios,
     reflections,
+    rubricSubmissions,
     saveReflection,
     resolveFeedback,
     isLoading,
@@ -81,8 +83,12 @@ export const PortfolioEditorView: React.FC<PortfolioEditorViewProps> = ({ assign
   // V4 Layout states
   const [isFocusMode, setIsFocusMode] = useState(false);
   const [isLeftCollapsed, setIsLeftCollapsed] = useState(false);
-  const [inspectorTab, setInspectorTab] = useState<'prompt' | 'text' | 'evidence' | 'feedback' | 'history' | 'ref1'>('prompt');
+  const [inspectorTab, setInspectorTab] = useState<'prompt' | 'text' | 'evidence' | 'feedback' | 'history'>('prompt');
   const [mobileTab, setMobileTab] = useState<'write' | 'evidence' | 'feedback' | 'prompt'>('write');
+  const selectMobileTab = (tab: 'write' | 'evidence' | 'feedback' | 'prompt') => {
+    setMobileTab(tab);
+    if (tab !== 'write') setInspectorTab(tab);
+  };
 
   const editorFontSizeClass = {
     sm: 'text-sm leading-6',
@@ -125,27 +131,36 @@ export const PortfolioEditorView: React.FC<PortfolioEditorViewProps> = ({ assign
   const latestReflection = latestRevision && assignment
     ? reflections.find(item => item.assignmentId === assignment.id && item.studentId === currentUser.id && item.versionId === latestRevision.id)
     : undefined;
+  const workflowState = assignment ? deriveStudentWorkflow({
+    assignment,
+    portfolio,
+    feedbacks,
+    rubricSubmissions,
+    reflectionVersionIds: reflections
+      .filter(item => item.assignmentId === assignment.id && item.studentId === currentUser.id)
+      .map(item => item.versionId)
+  }) : null;
   const currentAxisMeta = POETIC_AXES.find(axis => axis.id === activeAxisId) || POETIC_AXES[0];
   const completedAxes = POETIC_AXES.filter(axis => Boolean(portfolio?.currentDraft?.[axis.id]?.analysisText?.trim())).length;
 
   const updateAnalysis = (text: string) => {
-    if (!assignment) return;
+    if (!assignment || !workflowState?.canEdit) return;
     updateDraft(currentUser.id, assignment.id, activeAxisId, text, currentAxis?.evidenceQuotes || []);
   };
   const updateEvidence = (text: string) => {
-    if (!assignment) return;
+    if (!assignment || !workflowState?.canEdit) return;
     const quotes: EvidenceQuote[] = text.split('\n').map(line => line.trim()).filter(Boolean).map((line, index) => ({ id: `${activeAxisId}-${index + 1}`, text: line }));
     updateDraft(currentUser.id, assignment.id, activeAxisId, currentAxis?.analysisText || '', quotes);
   };
   const saveNow = React.useCallback(async () => {
-    if (!assignment) return;
+    if (!assignment || !workflowState?.canEdit) return;
     try {
       await manualSaveDraft(currentUser.id, assignment.id);
       addToast({ type: 'success', title: 'Đã lưu', message: 'Bản nháp đã được lưu thành công.' });
     } catch {
       addToast({ type: 'error', title: 'Chưa lưu được', message: 'Kiểm tra kết nối và thử lại.' });
     }
-  }, [assignment, currentUser.id, manualSaveDraft, addToast]);
+  }, [assignment, currentUser.id, manualSaveDraft, addToast, workflowState?.canEdit]);
 
   const handleConfirmSubmit = async (data: {
     changeSummary: string;
@@ -155,7 +170,7 @@ export const PortfolioEditorView: React.FC<PortfolioEditorViewProps> = ({ assign
     confidence: number;
     stage?: 'prediction' | 'initial' | 'revision';
   }) => {
-    if (!assignment) return;
+    if (!assignment || !workflowState?.canEdit) throw new Error('PORTFOLIO_READ_ONLY');
     const ok = await createSnapshot(currentUser.id, assignment.id, nextVersion, data.changeSummary, currentUser.name, {
       submissionKey: typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : undefined,
       stage: data.stage,
@@ -191,7 +206,7 @@ export const PortfolioEditorView: React.FC<PortfolioEditorViewProps> = ({ assign
   const backupKey = assignment && currentUser.id ? `cvt_draft_backup_${currentUser.id}_${assignment.id}` : '';
 
   useEffect(() => {
-    if (!backupKey || !portfolio?.currentDraft) return;
+    if (!backupKey || !portfolio?.currentDraft || !workflowState?.canEdit) return;
     try {
       const hasContent = Object.values(portfolio.currentDraft).some(a => Boolean(a?.analysisText?.trim()));
       if (hasContent) {
@@ -203,10 +218,10 @@ export const PortfolioEditorView: React.FC<PortfolioEditorViewProps> = ({ assign
     } catch {
       // ignore
     }
-  }, [backupKey, portfolio?.currentDraft]);
+  }, [backupKey, portfolio?.currentDraft, workflowState?.canEdit]);
 
   useEffect(() => {
-    if (!backupKey || !portfolio) return;
+    if (!backupKey || !portfolio || !workflowState?.canEdit) return;
     try {
       const raw = localStorage.getItem(backupKey);
       if (!raw) return;
@@ -220,10 +235,10 @@ export const PortfolioEditorView: React.FC<PortfolioEditorViewProps> = ({ assign
     } catch {
       // ignore
     }
-  }, [backupKey, portfolio]);
+  }, [backupKey, portfolio, workflowState?.canEdit]);
 
   const restoreLocalBackup = async () => {
-    if (!localBackupAvailable?.draft || !assignment) return;
+    if (!localBackupAvailable?.draft || !assignment || !workflowState?.canEdit) return;
     for (const [axisId, resp] of Object.entries(localBackupAvailable.draft) as [PoeticAxisId, any][]) {
       if (resp?.analysisText || resp?.evidenceQuotes) {
         updateDraft(currentUser.id, assignment.id, axisId, resp.analysisText || '', resp.evidenceQuotes || []);
@@ -283,8 +298,10 @@ export const PortfolioEditorView: React.FC<PortfolioEditorViewProps> = ({ assign
       // Ctrl/Cmd + Enter: Open Submit Modal
       if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
         e.preventDefault();
-        setIsPredictionMode(false);
-        setIsSubmitModalOpen(true);
+        if (workflowState?.canEdit) {
+          setIsPredictionMode(false);
+          setIsSubmitModalOpen(true);
+        }
         return;
       }
       // Alt + 1..6: Switch axis (bỏ qua nếu đang nhập liệu trong ô input/select khác)
@@ -307,7 +324,7 @@ export const PortfolioEditorView: React.FC<PortfolioEditorViewProps> = ({ assign
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [isFocusMode, isSubmitModalOpen, saveNow]);
+  }, [isFocusMode, isSubmitModalOpen, saveNow, workflowState?.canEdit]);
 
   if (isLoading && !assignment) {
     return <SkeletonEditor />;
@@ -382,11 +399,13 @@ export const PortfolioEditorView: React.FC<PortfolioEditorViewProps> = ({ assign
               <span>{isFocusMode ? 'Thoát' : 'Tập trung'}</span>
             </button>
 
-            <Button size="sm" variant="outline" onClick={saveNow} title="Phím tắt: Ctrl/Cmd + S">
-              Lưu nháp
-            </Button>
+            {workflowState?.canEdit && (
+              <Button size="sm" variant="outline" onClick={saveNow} title="Phím tắt: Ctrl/Cmd + S">
+                Lưu nháp
+              </Button>
+            )}
 
-            {predictionAvailable && (
+            {workflowState?.canEdit && predictionAvailable && (
               <Button
                 size="sm"
                 variant="ghost"
@@ -399,17 +418,19 @@ export const PortfolioEditorView: React.FC<PortfolioEditorViewProps> = ({ assign
               </Button>
             )}
 
-            <Button
-              size="sm"
-              variant="primary"
-              title="Phím tắt: Ctrl/Cmd + Enter"
-              onClick={() => {
-                setIsPredictionMode(false);
-                setIsSubmitModalOpen(true);
-              }}
-            >
-              {isInitial ? 'Nộp bài V1' : `Nộp ${nextSubmissionVersion(versions)}`}
-            </Button>
+            {workflowState?.canEdit && (
+              <Button
+                size="sm"
+                variant="primary"
+                title="Phím tắt: Ctrl/Cmd + Enter"
+                onClick={() => {
+                  setIsPredictionMode(false);
+                  setIsSubmitModalOpen(true);
+                }}
+              >
+                {isInitial ? 'Nộp bài V1' : `Nộp ${nextSubmissionVersion(versions)}`}
+              </Button>
+            )}
           </div>
         </div>
 
@@ -433,7 +454,7 @@ export const PortfolioEditorView: React.FC<PortfolioEditorViewProps> = ({ assign
             type="button"
             role="tab"
             aria-selected={mobileTab === 'write'}
-            onClick={() => setMobileTab('write')}
+            onClick={() => selectMobileTab('write')}
             className={`flex-1 py-1.5 text-center text-xs font-medium border-b-2 transition-colors ${
               mobileTab === 'write' ? 'border-primary-600 text-primary-700 font-semibold' : 'border-transparent text-slate-500'
             }`}
@@ -444,7 +465,7 @@ export const PortfolioEditorView: React.FC<PortfolioEditorViewProps> = ({ assign
             type="button"
             role="tab"
             aria-selected={mobileTab === 'evidence'}
-            onClick={() => setMobileTab('evidence')}
+            onClick={() => selectMobileTab('evidence')}
             className={`flex-1 py-1.5 text-center text-xs font-medium border-b-2 transition-colors ${
               mobileTab === 'evidence' ? 'border-primary-600 text-primary-700 font-semibold' : 'border-transparent text-slate-500'
             }`}
@@ -455,7 +476,7 @@ export const PortfolioEditorView: React.FC<PortfolioEditorViewProps> = ({ assign
             type="button"
             role="tab"
             aria-selected={mobileTab === 'feedback'}
-            onClick={() => setMobileTab('feedback')}
+            onClick={() => selectMobileTab('feedback')}
             className={`flex-1 py-1.5 text-center text-xs font-medium border-b-2 transition-colors ${
               mobileTab === 'feedback' ? 'border-primary-600 text-primary-700 font-semibold' : 'border-transparent text-slate-500'
             }`}
@@ -466,7 +487,7 @@ export const PortfolioEditorView: React.FC<PortfolioEditorViewProps> = ({ assign
             type="button"
             role="tab"
             aria-selected={mobileTab === 'prompt'}
-            onClick={() => setMobileTab('prompt')}
+            onClick={() => selectMobileTab('prompt')}
             className={`flex-1 py-1.5 text-center text-xs font-medium border-b-2 transition-colors ${
               mobileTab === 'prompt' ? 'border-primary-600 text-primary-700 font-semibold' : 'border-transparent text-slate-500'
             }`}
@@ -569,6 +590,12 @@ export const PortfolioEditorView: React.FC<PortfolioEditorViewProps> = ({ assign
             </div>
           )}
 
+          {workflowState && !workflowState.canEdit && (
+            <div className="rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700">
+              <strong>{workflowState.statusLabel}.</strong> {workflowState.nextActionHint}
+            </div>
+          )}
+
           {localBackupAvailable && (
             <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-primary-200 bg-primary-50/80 px-4 py-3 text-xs text-primary-950">
               <div className="flex items-center gap-2">
@@ -648,6 +675,7 @@ export const PortfolioEditorView: React.FC<PortfolioEditorViewProps> = ({ assign
                 </label>
                 <textarea
                   value={currentAxis?.analysisText || ''}
+                  disabled={!workflowState?.canEdit}
                   onChange={e => updateAnalysis(e.target.value)}
                   rows={isFocusMode ? 22 : 16}
                   placeholder="Viết luận điểm, phân tích chi tiết nghệ thuật, lí giải ý nghĩa..."
@@ -662,6 +690,7 @@ export const PortfolioEditorView: React.FC<PortfolioEditorViewProps> = ({ assign
                 </label>
                 <textarea
                   value={evidenceText}
+                  disabled={!workflowState?.canEdit}
                   onChange={e => updateEvidence(e.target.value)}
                   rows={3}
                   placeholder="Nhập các câu văn hoặc chi tiết nghệ thuật trích từ tác phẩm..."
@@ -1022,7 +1051,7 @@ export const PortfolioEditorView: React.FC<PortfolioEditorViewProps> = ({ assign
       </div>
 
       {/* Sticky Bottom CTA for Mobile */}
-      <div className="sticky bottom-0 z-20 flex items-center justify-between border-t border-slate-200 bg-white/95 px-4 py-2.5 backdrop-blur lg:hidden">
+      {workflowState?.canEdit && <div className="sticky bottom-0 z-20 flex items-center justify-between border-t border-slate-200 bg-white/95 px-4 py-2.5 backdrop-blur lg:hidden">
         <span className={`inline-flex items-center gap-1.5 text-xs font-medium ${saveStatus.className}`}>
           {saveStatus.icon}
           <span>{saveStatus.text}</span>
@@ -1037,10 +1066,10 @@ export const PortfolioEditorView: React.FC<PortfolioEditorViewProps> = ({ assign
         >
           {isInitial ? 'Nộp V1' : `Nộp ${nextSubmissionVersion(versions)}`}
         </Button>
-      </div>
+      </div>}
 
       {/* Submit Modal */}
-      {isSubmitModalOpen && (
+      {isSubmitModalOpen && workflowState?.canEdit && (
         <CreateVersionModal
           isOpen={isSubmitModalOpen}
           onClose={() => setIsSubmitModalOpen(false)}
