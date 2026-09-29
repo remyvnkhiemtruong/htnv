@@ -43,10 +43,14 @@ export function deriveStudentWorkflow(input: {
   const hasFeedback = Boolean(portfolio && feedbacks.some(item => item.assignmentId === assignment.id && item.studentId === portfolio.studentId));
   const hasReflection = Boolean(revision && reflectionVersionIds.includes(revision.id));
   const hasTeacherRubric = Boolean(portfolio && rubricSubmissions.some(item => item.assignmentId === assignment.id && item.studentId === portfolio.studentId && item.evaluatorRole === 'teacher'));
+  // Older stages may be retained outside the visible academic record. Do not
+  // mark an unseen V0/V1 as unfinished (or imply it is an official submission).
+  const historicalStagesVisible = !portfolio || portfolio.status !== 'completed'
+    || versions.some(version => version.stage === 'prediction' || version.stage === 'initial');
 
   const base: Array<Omit<WorkflowStepState, 'active'>> = [];
-  if (predictionRequired) base.push({ id: 'prediction', label: 'Dự đoán V0', shortLabel: 'V0', done: prediction });
-  base.push({ id: 'initial', label: 'Bản đầu V1', shortLabel: 'V1', done: academicVersions.length > 0 });
+  if (predictionRequired && historicalStagesVisible) base.push({ id: 'prediction', label: 'Dự đoán V0', shortLabel: 'V0', done: prediction });
+  if (historicalStagesVisible) base.push({ id: 'initial', label: 'Bản đầu V1', shortLabel: 'V1', done: academicVersions.length > 0 });
   base.push({ id: 'feedback', label: 'Nhận góp ý', shortLabel: 'Góp ý', done: hasFeedback });
   base.push({ id: 'revision', label: 'Chỉnh sửa V2', shortLabel: 'V2', done: Boolean(revision) });
   if (reflectionRequired) base.push({ id: 'reflection', label: 'Tự phản tư REF1', shortLabel: 'REF1', done: hasReflection });
