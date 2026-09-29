@@ -169,6 +169,9 @@ export interface PredictionTemplate {
   prompt?: string;
   questions?: string[];
   requireConfidence?: boolean;
+  /** Public study notes, shown only after the V0 prediction is submitted. */
+  readingGuide?: string;
+  readingSources?: Array<{ label: string; url: string }>;
 }
 
 export interface WorkflowConfig {
