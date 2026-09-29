@@ -129,7 +129,7 @@ export const VersionDiffView: React.FC<VersionDiffViewProps> = ({
   }
 
   if (!portfolio) return <StatePanel title="Chưa có hồ sơ" message="Không tìm thấy hồ sơ bài làm thuộc phạm vi bạn được phép xem." actionLabel="Quay lại" onAction={() => onNavigate('portfolio-list')} />;
-  if (versions.length < 2) return <StatePanel title="Chưa đủ phiên bản để so sánh" message={versions.length === 0 ? 'Chưa có bản nộp nào. Cần nộp ít nhất 2 phiên bản để so sánh.' : `Hiện mới có 1 phiên bản (${versions[0].versionNumber}). Cần nộp thêm phiên bản sửa đổi.`} actionLabel={isStudent ? 'Quay lại bài viết' : 'Quay lại danh sách'} onAction={() => onNavigate(isStudent ? 'editor' : 'portfolio-list', { assignmentId: assignment.id })} />;
+  if (versions.length < 2) return <StatePanel title="Chưa đủ phiên bản để so sánh" message={portfolio.status === 'completed' ? `Hồ sơ hiện chỉ có ${versions.length} bản nộp được phép đối chiếu. Không thể tạo bản trước từ bài đã khóa.` : versions.length === 0 ? 'Chưa có bản nộp nào. Cần nộp ít nhất 2 phiên bản để so sánh.' : `Hiện mới có 1 phiên bản (${versions[0].versionNumber}). Cần nộp thêm phiên bản sửa đổi.`} actionLabel={isStudent ? 'Quay lại bài viết' : 'Quay lại danh sách'} onAction={() => onNavigate(isStudent ? 'editor' : 'portfolio-list', { assignmentId: assignment.id })} />;
   if (requestedBeforeMissing || requestedAfterMissing) return <StatePanel title="Phiên bản không tồn tại" message="Phiên bản được yêu cầu không còn tồn tại hoặc không thuộc hồ sơ này." />;
   if (!before || !after) return <StatePanel title="Chọn phiên bản" message="Hãy chọn hai phiên bản hợp lệ để so sánh." />;
 
@@ -458,4 +458,3 @@ export const VersionDiffView: React.FC<VersionDiffViewProps> = ({
     </div>
   );
 };
-
