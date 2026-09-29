@@ -41,32 +41,63 @@ async function updateAiPromptAfterVersion(result) {
   return result;
 }
 
+async function getStudentWorkflowRow(pool, userId, assignmentId) {
+  const state = await pool.query(`
+    SELECT p.id portfolio_id, p.status portfolio_status, a.workflow_config, a.status assignment_status,
+           count(v.id) FILTER (WHERE v.stage='prediction')::int prediction_count,
+           count(v.id) FILTER (WHERE v.stage<>'prediction')::int submission_count,
+           count(v.id) FILTER (WHERE v.stage='revision')::int revision_count
+    FROM portfolios p
+    JOIN assignments a ON a.id=p.assignment_id
+    LEFT JOIN portfolio_versions v ON v.portfolio_id=p.id
+    WHERE p.student_id=$1 AND a.public_id=$2
+    GROUP BY p.id,p.status,a.workflow_config,a.status
+    LIMIT 1
+  `, [userId, assignmentId]);
+  return state.rows[0] || null;
+}
+
+async function saveDraftWithWorkflow(user, input, req) {
+  if (user.role !== 'student') return academicActionV3(user, input, req);
+  const assignmentId = cleanTrimmed(input.assignmentId, 200);
+  const pool = await getPool();
+  const row = await getStudentWorkflowRow(pool, user.id, assignmentId);
+  if (!row) throw new Error('PORTFOLIO_NOT_FOUND');
+  if (row.assignment_status !== 'published') throw new Error('ASSIGNMENT_CLOSED');
+
+  const revisionCount = Number(row.revision_count || 0);
+  if (['submitted_waiting_ai', 'ai_proposed_waiting_teacher', 'teacher_feedback_needed', 'waiting_official_rubric', 'completed'].includes(row.portfolio_status)) {
+    throw new Error('PORTFOLIO_READ_ONLY');
+  }
+  if (revisionCount > 0 && row.portfolio_status === 'feedback_received') throw new Error('PORTFOLIO_READ_ONLY');
+  return academicActionV3(user, input, req);
+}
+
 async function createVersionWithWorkflow(user, input, req) {
   if (user.role !== 'student') return academicActionV3(user, input, req);
   const assignmentId = cleanTrimmed(input.assignmentId, 200);
   const requestedStage = cleanTrimmed(input.stage, 20);
   const pool = await getPool();
-  const state = await pool.query(`
-    SELECT p.id portfolio_id, a.workflow_config, a.status assignment_status,
-           count(v.id) FILTER (WHERE v.stage='prediction')::int prediction_count,
-           count(v.id) FILTER (WHERE v.stage<>'prediction')::int submission_count
-    FROM portfolios p
-    JOIN assignments a ON a.id=p.assignment_id
-    LEFT JOIN portfolio_versions v ON v.portfolio_id=p.id
-    WHERE p.student_id=$1 AND a.public_id=$2
-    GROUP BY p.id,a.workflow_config,a.status
-    LIMIT 1
-  `, [user.id, assignmentId]);
-  const row = state.rows[0];
+  const row = await getStudentWorkflowRow(pool, user.id, assignmentId);
   if (!row) throw new Error('PORTFOLIO_NOT_FOUND');
   if (row.assignment_status !== 'published') throw new Error('ASSIGNMENT_CLOSED');
+  if (['waiting_official_rubric', 'completed'].includes(row.portfolio_status)) throw new Error('PORTFOLIO_READ_ONLY');
+
   const predictionEnabled = Boolean(row.workflow_config?.predictionEnabled);
   const predictionCount = Number(row.prediction_count || 0);
   const submissionCount = Number(row.submission_count || 0);
+  const revisionCount = Number(row.revision_count || 0);
 
-  if (requestedStage === 'prediction' && submissionCount > 0) throw new Error('PREDICTION_WINDOW_CLOSED');
-  if (requestedStage === 'initial' && predictionEnabled && predictionCount === 0) throw new Error('PREDICTION_REQUIRED_FIRST');
+  if (requestedStage === 'prediction') {
+    if (predictionCount > 0) throw new Error('PREDICTION_ALREADY_SUBMITTED');
+    if (submissionCount > 0) throw new Error('PREDICTION_WINDOW_CLOSED');
+  }
+  if (requestedStage === 'initial') {
+    if (submissionCount > 0) throw new Error('INITIAL_ALREADY_SUBMITTED');
+    if (predictionEnabled && predictionCount === 0) throw new Error('PREDICTION_REQUIRED_FIRST');
+  }
   if (requestedStage === 'revision') {
+    if (revisionCount > 0) throw new Error('REVISION_ALREADY_SUBMITTED');
     if (submissionCount === 0) throw new Error('INITIAL_VERSION_REQUIRED');
     const previous = await pool.query(`
       SELECT v.id
@@ -381,6 +412,7 @@ export async function getAcademicSnapshot(user) {
 export async function academicAction(user, input, req) {
   assertSameOrigin(req);
   const action = cleanTrimmed(input?.action, 80);
+  if (action === 'save_draft') return saveDraftWithWorkflow(user, input, req);
   if (action === 'create_version') return createVersionWithWorkflow(user, input, req);
   if (action === 'ai_claim_review') return aiClaimReview(user, input, req);
   if (action === 'ai_complete_review') return aiCompleteReview(user, input, req);

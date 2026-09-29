@@ -612,7 +612,9 @@ export async function getAcademicSnapshot(user) {
         versionId: researcher ? pseudonym('VER', row.version_id) : row.version_id,
         versionNumber: row.version_number,
         evaluatorId: researcher ? '' : (row.evaluator_id || ''),
-        evaluatorName: researcher ? 'Giáo viên' : (row.evaluator_name || ''),
+        evaluatorName: researcher
+          ? 'Giáo viên'
+          : (row.evaluator_name || (row.evaluator_role === 'teacher' ? 'Giáo viên' : row.evaluator_role === 'peer' ? 'Đồng đẳng' : 'Tự đánh giá')),
         evaluatorRole: row.evaluator_role,
         criterionScores: row.criterion_scores || {},
         overallFeedback: researcher ? '' : (row.overall_feedback || ''),
