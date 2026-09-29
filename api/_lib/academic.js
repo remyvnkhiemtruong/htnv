@@ -143,7 +143,8 @@ async function runAcademicSchema() {
       UNIQUE(assignment_id,student_id))`,
     `CREATE TABLE IF NOT EXISTS portfolio_drafts (
       portfolio_id uuid PRIMARY KEY REFERENCES portfolios(id) ON DELETE CASCADE, content_json jsonb NOT NULL DEFAULT '{}'::jsonb,
-      updated_by uuid REFERENCES app_users(id) ON DELETE SET NULL, updated_at timestamptz NOT NULL DEFAULT now())`,
+      updated_by uuid REFERENCES app_users(id) ON DELETE SET NULL, updated_at timestamptz NOT NULL DEFAULT now(),
+      draft_revision bigint NOT NULL DEFAULT 0)`,
     `CREATE TABLE IF NOT EXISTS portfolio_versions (
       id uuid PRIMARY KEY DEFAULT gen_random_uuid(), portfolio_id uuid NOT NULL REFERENCES portfolios(id) ON DELETE CASCADE,
       version_number text NOT NULL, content_json jsonb NOT NULL, change_summary text NOT NULL DEFAULT '',

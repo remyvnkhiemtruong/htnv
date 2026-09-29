@@ -109,6 +109,19 @@ await test('AF09: shared overlays and formerly pointer-only controls support key
   assert(snapshot.includes('setVersionNumber(nextSuggestedVersion)'), 'Snapshot modal must refresh its suggested version when reopened');
 });
 
+await test('AF11: draft autosave uses optimistic revision checks to prevent stale overwrites', () => {
+  const academic = read('api/_lib/academic-v3.js');
+  const store = read('src/app/store/usePortfolioStore.ts');
+  const action = read('api/academic/action.ts');
+  assert(academic.includes('SELECT draft_revision FROM portfolio_drafts WHERE portfolio_id=$1 FOR UPDATE'));
+  assert(academic.includes("throw new Error('DRAFT_CONFLICT')"));
+  assert(academic.includes('draft_revision=draft_revision+1'));
+  assert(store.includes('draftRevision: latestPortfolio.draftRevision ?? 0'));
+  assert(store.includes('applySavedRevision(key, result, set, get)'));
+  assert(action.includes('DRAFT_CONFLICT:'));
+  assert(action.includes('code === "DRAFT_CONFLICT"'));
+});
+
 await test('AF10: production UI avoids template-like AI decoration and promotional filler', () => {
   const productionFiles = [
     'src/views/LandingView.tsx',

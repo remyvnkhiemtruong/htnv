@@ -222,6 +222,7 @@ export interface StudentPortfolio {
   className: string;
   currentDraft: Record<PoeticAxisId, PoeticAxisResponse>;
   lastAutosavedAt: string;
+  draftRevision?: number;
   versions: PortfolioVersion[];
   currentActiveVersion: string;
   status: PortfolioStatus;

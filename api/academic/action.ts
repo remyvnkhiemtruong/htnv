@@ -69,7 +69,12 @@ const clientMessage = (code: string) => {
     PREDICTION_REQUIRED_FIRST: "Em cần hoàn thành và nộp phần dự đoán V0 trước khi gửi bản V1.",
     RUBRIC_NOT_FOUND: "Nhiệm vụ chưa có rubric hợp lệ. Vui lòng liên hệ giáo viên phụ trách.",
     AI_REVIEW_CLAIMED: "Bài này đang được một tài khoản AI khác xử lý.",
-    AI_REVIEW_CLOSED: "Phản hồi AI này đã được xử lý hoặc không còn mở."
+    AI_REVIEW_CLOSED: "Phản hồi AI này đã được xử lý hoặc không còn mở.",
+    DRAFT_CONFLICT: "Bản nháp đã được cập nhật ở một phiên khác. Hệ thống đã giữ nguyên nội dung trên máy này; hãy tải lại và đối chiếu trước khi lưu tiếp.",
+    PORTFOLIO_READ_ONLY: "Hồ sơ hiện đã khóa theo quy trình và không thể chỉnh sửa hoặc nộp thêm.",
+    PREDICTION_ALREADY_SUBMITTED: "V0 đã được nộp và không thể nộp lại.",
+    INITIAL_ALREADY_SUBMITTED: "V1 đã được nộp và không thể nộp lại.",
+    REVISION_ALREADY_SUBMITTED: "V2 đã được nộp và không thể nộp thêm phiên bản chỉnh sửa."
   };
   if (code.startsWith("INVALID_RUBRIC_LEVEL")) return "Mức rubric không hợp lệ.";
   return messages[code] || "Không thể thực hiện thao tác. Vui lòng thử lại.";
@@ -108,7 +113,7 @@ export default async function handler(req: any, res: any) {
     let status = 500;
     if (code === "CSRF_ORIGIN_MISMATCH" || code === "FORBIDDEN" || code.endsWith("_FORBIDDEN") || code === "FORBIDDEN_STUDENT_RUBRIC") status = 403;
     else if (code.includes("NOT_FOUND")) status = 404;
-    else if (code === "ASSIGNMENT_CLOSED" || code === "AI_REVIEW_CLAIMED" || code === "AI_REVIEW_CLOSED") status = 409;
+    else if (code === "ASSIGNMENT_CLOSED" || code === "AI_REVIEW_CLAIMED" || code === "AI_REVIEW_CLOSED" || code === "DRAFT_CONFLICT" || code === "PORTFOLIO_READ_ONLY" || code === "PREDICTION_ALREADY_SUBMITTED" || code === "INITIAL_ALREADY_SUBMITTED" || code === "REVISION_ALREADY_SUBMITTED") status = 409;
     else if (code.startsWith("INVALID") || code.includes("REQUIRED") || code === "EMPTY_RESPONSE" || code === "CANNOT_PEER_REVIEW_SELF" || code === "VALIDATION_ERROR" || code === "PREDICTION_ALREADY_SUBMITTED" || code === "PEER_REVIEWER_INVALID" || code === "PEER_STUDENT_INVALID" || code === "CONTENT_TOO_LARGE" || code === "SCHEMA_MIGRATION_REQUIRED") status = 400;
 
     const log = status >= 500 ? console.error : console.warn;
