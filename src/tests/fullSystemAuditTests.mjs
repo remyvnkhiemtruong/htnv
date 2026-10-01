@@ -390,6 +390,38 @@ await test('FSA34: retired academic implementation files are removed', () => {
   ]) assert(!fs.existsSync(path), `Retired academic implementation still exists: ${path}`);
 });
 
+await test('FSA35: health and smoke expose and verify the exact deployed commit', () => {
+  const health = read('api/health.ts');
+  const smoke = read('scripts/smoke-production.mjs');
+  assert(health.includes('VERCEL_GIT_COMMIT_SHA'), 'Health must expose the Vercel git commit SHA');
+  assert(health.includes('VERCEL_GIT_COMMIT_REF'), 'Health must expose the Vercel git ref');
+  assert(health.includes("environment: process.env.VERCEL_ENV"), 'Health must expose deployment environment');
+  assert(smoke.includes('EXPECTED_GIT_SHA'), 'Production smoke must accept an expected release SHA');
+  assert(smoke.includes('production release commit matches expected SHA'), 'Production smoke must fail on stale deployment identity');
+  assert(smoke.includes('health endpoint is private no-store'), 'Production smoke must verify private no-store health responses');
+  assert(smoke.includes('CSP blocks framing'), 'Production smoke must verify browser security headers');
+});
+
+await test('FSA36: production release gate waits for the merged SHA before smoke testing', () => {
+  const workflow = read('.github/workflows/production-release.yml');
+  const waiter = read('scripts/wait-for-production.mjs');
+  assert(workflow.includes('workflow_run:'), 'Release gate must wait for CI completion');
+  assert(workflow.includes("github.event.workflow_run.head_branch == 'main'"), 'Release gate must only publish-check main');
+  assert(workflow.includes('EXPECTED_GIT_SHA'), 'Release gate must pass the CI commit SHA to smoke');
+  assert(waiter.includes('release?.commitSha'), 'Release waiter must inspect deployed release identity');
+  assert(waiter.includes('EXPECTED_GIT_SHA'), 'Release waiter must require the expected SHA');
+  assert(waiter.includes('Production did not reach expected commit'), 'Release waiter must fail when production stays stale');
+});
+
+await test('FSA37: Neon provenance FK has a runner-safe standalone migration', () => {
+  const migration = read('scripts/migrations/20261002_feedback_provenance_fk.sql');
+  assert(migration.includes('version_feedback_links_feedback_fk'));
+  assert(migration.includes('REFERENCES feedbacks(id)'));
+  assert(migration.includes('VALIDATE CONSTRAINT version_feedback_links_feedback_fk'));
+  assert(!migration.includes('DO ' + '$'), 'Standalone FK migration must avoid procedural blocks');
+  assert(!migration.includes('CREATE OR REPLACE FUNCTION'), 'Standalone FK migration must stay runner-safe');
+});
+
 const failed = results.filter(result => !result.ok);
 console.log(`${results.length - failed.length}/${results.length} full-system audit regression tests passed.`);
 if (failed.length) process.exit(1);

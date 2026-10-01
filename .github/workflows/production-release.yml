@@ -1,0 +1,52 @@
+name: Production Release Gate
+
+on:
+  workflow_run:
+    workflows: ["CI"]
+    types: [completed]
+  workflow_dispatch:
+    inputs:
+      expected_sha:
+        description: "Git SHA that production must be serving"
+        required: true
+        type: string
+      base_url:
+        description: "Production base URL"
+        required: true
+        default: "https://htnv.io.vn"
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: production-release-gate
+  cancel-in-progress: true
+
+jobs:
+  release-gate:
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      (github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.head_branch == 'main')
+    runs-on: ubuntu-latest
+    timeout-minutes: 18
+    env:
+      BASE_URL: ${{ inputs.base_url || 'https://htnv.io.vn' }}
+      EXPECTED_GIT_SHA: ${{ inputs.expected_sha || github.event.workflow_run.head_sha }}
+      REQUIRE_DEDICATED_JWT_SECRET: "true"
+      RELEASE_WAIT_TIMEOUT_MS: "720000"
+      RELEASE_WAIT_INTERVAL_MS: "15000"
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+      - name: Setup Node
+        uses: actions/setup-node@v5
+        with:
+          node-version: 24
+          cache: npm
+      - name: Install dependencies
+        run: npm ci
+      - name: Wait for exact production commit
+        run: node scripts/wait-for-production.mjs
+      - name: Run production smoke checks
+        run: npm run smoke:production
