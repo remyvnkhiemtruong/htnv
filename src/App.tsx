@@ -1,4 +1,5 @@
 import React, { Suspense, lazy, useCallback, useEffect, useState } from 'react';
+import { Analytics } from '@vercel/analytics/react';
 import { AppProviders } from './app/providers/AppProviders';
 import { MainLayout } from './components/layout/MainLayout';
 import { LoginView } from './views/LoginView';
@@ -229,6 +230,7 @@ export function App() {
           <AppProviders>
             <SeasonalMouseExperience />
             <AppContent />
+            <Analytics />
           </AppProviders>
         </PortfolioProvider>
       </AuthProvider>
