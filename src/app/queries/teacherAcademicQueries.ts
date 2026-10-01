@@ -54,9 +54,9 @@ export interface TeacherWorkspace {
 
 export const teacherAcademicKeys = {
   all: ['teacher-academic'] as const,
-  overview: () => ['teacher-academic', 'overview'] as const,
-  workspace: (assignmentId: string, studentId: string) => ['teacher-academic', 'workspace', assignmentId, studentId] as const,
-  literature: () => ['teacher-academic', 'literature'] as const
+  overview: (userId: string) => ['teacher-academic', userId, 'overview'] as const,
+  workspace: (userId: string, assignmentId: string, studentId: string) => ['teacher-academic', userId, 'workspace', assignmentId, studentId] as const,
+  literature: (userId: string) => ['teacher-academic', userId, 'literature'] as const
 };
 
 async function getJson<T>(url: string): Promise<T> {
@@ -78,9 +78,9 @@ export async function postTeacherAcademicAction(payload: unknown) {
   return data;
 }
 
-export function useTeacherOverviewQuery(enabled = true) {
+export function useTeacherOverviewQuery(userId: string, enabled = true) {
   return useQuery({
-    queryKey: teacherAcademicKeys.overview(),
+    queryKey: teacherAcademicKeys.overview(userId),
     enabled,
     queryFn: async () => {
       const data = await getJson<{ overview: TeacherAcademicOverview }>('/api/teacher/overview');
@@ -90,9 +90,9 @@ export function useTeacherOverviewQuery(enabled = true) {
   });
 }
 
-export function useTeacherWorkspaceQuery(assignmentId: string, studentId: string, enabled = true) {
+export function useTeacherWorkspaceQuery(userId: string, assignmentId: string, studentId: string, enabled = true) {
   return useQuery({
-    queryKey: teacherAcademicKeys.workspace(assignmentId, studentId),
+    queryKey: teacherAcademicKeys.workspace(userId, assignmentId, studentId),
     enabled: enabled && Boolean(assignmentId) && Boolean(studentId),
     queryFn: async () => {
       const params = new URLSearchParams({ assignmentId, studentId });
@@ -104,9 +104,9 @@ export function useTeacherWorkspaceQuery(assignmentId: string, studentId: string
   });
 }
 
-export function useTeacherLiteratureQuery(enabled = true) {
+export function useTeacherLiteratureQuery(userId: string, enabled = true) {
   return useQuery({
-    queryKey: teacherAcademicKeys.literature(),
+    queryKey: teacherAcademicKeys.literature(userId),
     enabled,
     queryFn: async () => {
       const data = await getJson<{ literatureTexts: LiteratureText[] }>('/api/teacher/literature');
@@ -116,17 +116,17 @@ export function useTeacherLiteratureQuery(enabled = true) {
   });
 }
 
-export function useTeacherAcademicAction(assignmentId?: string, studentId?: string) {
+export function useTeacherAcademicAction(userId: string, assignmentId?: string, studentId?: string) {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: postTeacherAcademicAction,
     onSuccess: async () => {
       const invalidations: Promise<unknown>[] = [
-        queryClient.invalidateQueries({ queryKey: teacherAcademicKeys.overview() })
+        queryClient.invalidateQueries({ queryKey: teacherAcademicKeys.overview(userId) })
       ];
       if (assignmentId && studentId) {
         invalidations.push(queryClient.invalidateQueries({
-          queryKey: teacherAcademicKeys.workspace(assignmentId, studentId)
+          queryKey: teacherAcademicKeys.workspace(userId, assignmentId, studentId)
         }));
       }
       await Promise.all(invalidations);
@@ -134,7 +134,7 @@ export function useTeacherAcademicAction(assignmentId?: string, studentId?: stri
   });
 }
 
-export function useTeacherCatalogMutation() {
+export function useTeacherCatalogMutation(userId: string) {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (payload: unknown) => {
@@ -150,8 +150,8 @@ export function useTeacherCatalogMutation() {
     },
     onSuccess: async () => {
       await Promise.all([
-        queryClient.invalidateQueries({ queryKey: teacherAcademicKeys.overview() }),
-        queryClient.invalidateQueries({ queryKey: teacherAcademicKeys.literature() })
+        queryClient.invalidateQueries({ queryKey: teacherAcademicKeys.overview(userId) }),
+        queryClient.invalidateQueries({ queryKey: teacherAcademicKeys.literature(userId) })
       ]);
     }
   });
