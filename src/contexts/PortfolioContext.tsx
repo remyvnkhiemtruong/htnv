@@ -10,11 +10,13 @@ import type {
   AuditLog,
   PoeticAxisId,
   EvidenceQuote,
-  AiReviewRequest
+  AiReviewRequest,
+  AcademicClass
 } from '../types';
 import { useAuth } from './AuthContext';
 import { usePortfolioStore, type CreateSnapshotOptions } from '../app/store/usePortfolioStore';
 import { mockDb } from '../services/mockApi/mockDb';
+import { useTeacherOverviewQuery } from '../app/queries/teacherAcademicQueries';
 
 export interface StudentReflectionRecord {
   id: string;
@@ -43,6 +45,7 @@ interface PortfolioContextType {
   auditLogs: AuditLog[];
   aiReviews: AiReviewRequest[];
   reflections: StudentReflectionRecord[];
+  classes: AcademicClass[];
   autosaveStatus: 'saved' | 'saving' | 'dirty' | 'offline' | 'conflict';
   lastSavedTime: string | null;
   isLoading: boolean;
@@ -86,6 +89,10 @@ export const PortfolioProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   const createSnapshot = usePortfolioStore(state => state.createSnapshot);
   const getPortfolio = usePortfolioStore(state => state.getPortfolio);
   const resetSessionState = usePortfolioStore(state => state.resetSessionState);
+  const teacherOverviewQuery = useTeacherOverviewQuery(
+    currentUser.id,
+    currentUser.role === 'teacher' && Boolean(currentUser.id)
+  );
 
   const [assignments, setAssignments] = useState<Assignment[]>([]);
   const [literatureTexts, setLiteratureTexts] = useState<LiteratureText[]>([]);
@@ -96,6 +103,7 @@ export const PortfolioProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   const [auditLogs, setAuditLogs] = useState<AuditLog[]>([]);
   const [aiReviews, setAiReviews] = useState<AiReviewRequest[]>([]);
   const [reflections, setReflections] = useState<StudentReflectionRecord[]>([]);
+  const [classes, setClasses] = useState<AcademicClass[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [dataError, setDataError] = useState<string | null>(null);
   const snapshotControllerRef = useRef<AbortController | null>(null);
@@ -115,6 +123,7 @@ export const PortfolioProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     setRubricSubmissions(snapshot.rubricSubmissions || []);
     setAuditLogs(snapshot.auditLogs || []);
     setAiReviews(snapshot.aiReviews || []);
+    setClasses(snapshot.classes || []);
     const extended = snapshot as AcademicSnapshot & { reflections?: StudentReflectionRecord[] };
     setReflections(Array.isArray(extended.reflections) ? extended.reflections : []);
   }, [hydratePortfolios]);
@@ -122,6 +131,24 @@ export const PortfolioProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   const refreshAcademicData = useCallback(async () => {
     const requestedUserId = currentUser.id;
     if (!requestedUserId) return;
+
+    if (currentUser.role === 'teacher') {
+      setIsLoading(true);
+      setDataError(null);
+      try {
+        const result = await teacherOverviewQuery.refetch();
+        if (result.data && activeUserIdRef.current === requestedUserId) {
+          applySnapshot(result.data as AcademicSnapshot);
+        }
+        if (result.error) throw result.error;
+      } catch (error: unknown) {
+        if (activeUserIdRef.current !== requestedUserId) return;
+        setDataError(error instanceof Error ? error.message : 'Không thể tải dữ liệu giảng dạy');
+      } finally {
+        if (activeUserIdRef.current === requestedUserId) setIsLoading(false);
+      }
+      return;
+    }
 
     snapshotControllerRef.current?.abort();
     const controller = new AbortController();
@@ -146,7 +173,7 @@ export const PortfolioProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     } finally {
       if (requestEpoch === snapshotEpochRef.current && activeUserIdRef.current === requestedUserId) setIsLoading(false);
     }
-  }, [applySnapshot, currentUser.id]);
+  }, [applySnapshot, currentUser.id, currentUser.role, teacherOverviewQuery]);
 
   useEffect(() => {
     snapshotControllerRef.current?.abort();
@@ -162,15 +189,29 @@ export const PortfolioProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     setAuditLogs([]);
     setAiReviews([]);
     setReflections([]);
+    setClasses([]);
     setDataError(null);
     setIsLoading(false);
 
-    // Students use scoped TanStack Query resources instead of the legacy full snapshot.
-    // Teacher/admin/research workflows remain on the compatibility snapshot until their
-    // resource migrations are completed.
-    if (currentUser.id && currentUser.role !== 'student') void refreshAcademicData();
+    // Students and teachers use scoped TanStack Query resources.
+    // Compatibility snapshot remains only for peer/researcher/admin/AI workflows.
+    if (currentUser.id && !['student', 'teacher'].includes(currentUser.role)) void refreshAcademicData();
     return () => snapshotControllerRef.current?.abort();
   }, [currentUser.id, currentUser.role, refreshAcademicData, resetSessionState]);
+
+  useEffect(() => {
+    if (currentUser.role !== 'teacher') return;
+    setIsLoading(teacherOverviewQuery.isLoading || teacherOverviewQuery.isFetching);
+    setDataError(teacherOverviewQuery.error instanceof Error ? teacherOverviewQuery.error.message : null);
+    if (teacherOverviewQuery.data) applySnapshot(teacherOverviewQuery.data as AcademicSnapshot);
+  }, [
+    applySnapshot,
+    currentUser.role,
+    teacherOverviewQuery.data,
+    teacherOverviewQuery.error,
+    teacherOverviewQuery.isFetching,
+    teacherOverviewQuery.isLoading
+  ]);
 
   const getPortfolioForStudentAndAssignment = useCallback(
     (studentId: string, assignmentId: string) => getPortfolio(
@@ -266,6 +307,7 @@ export const PortfolioProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     auditLogs,
     aiReviews,
     reflections,
+    classes,
     autosaveStatus,
     lastSavedTime: lastSavedTime || null,
     isLoading,
