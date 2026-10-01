@@ -33,7 +33,7 @@ BEGIN
       NOT VALID;
   END IF;
 END
-$$;
+$;
 
 CREATE INDEX IF NOT EXISTS idx_vfl_feedback
   ON version_feedback_links(feedback_id);
