@@ -1,5 +1,5 @@
 import fs from 'node:fs';
-import { checksumContent, stableStringify } from '../../api/_lib/academic-v3.js';
+import { checksumContent, stableStringify } from '../../api/_lib/academic-core.js';
 import { computeAxisDiff } from '../utils/diffEngine.ts';
 
 const read = path => fs.readFileSync(path, 'utf8');
@@ -11,17 +11,17 @@ const test = async (name, fn) => {
 };
 const block = (source, start, end) => source.slice(source.indexOf(start), source.indexOf(end));
 
-const academic = read('api/_lib/academic-v3.js');
-const workflow = read('api/_lib/academic-workflow-v4.js');
+const academic = read('api/_lib/academic-core.js');
+const workflow = read('api/_lib/academic-service.js');
 const auth = read('api/auth/auth.js');
 
 await test('P01: production academic endpoints use workflow-v4 over academic-v3 core', () => {
   const action = read('api/academic/action.ts');
   const snapshot = read('api/academic/snapshot.ts');
-  assert(action.includes('academic-workflow-v4.js'));
-  assert(snapshot.includes('academic-workflow-v4.js'));
-  assert(read('api/academic/catalog.ts').includes('academic-v3.js'));
-  assert(read('api/health.ts').includes('academic-v3.js'));
+  assert(action.includes('academic-service.js'));
+  assert(snapshot.includes('academic-service.js'));
+  assert(read('api/academic/catalog.ts').includes('academic-core.js'));
+  assert(read('api/health.ts').includes('academic-core.js'));
   for (const source of [action, snapshot, read('api/academic/catalog.ts'), read('api/health.ts')]) assert(!source.includes('academic-v2.js'));
 });
 await test('P02: academic-v3 does not import legacy academic service', () => { assert(!academic.includes("from './academic.js'")); assert(!academic.includes('legacyAcademic')); });
