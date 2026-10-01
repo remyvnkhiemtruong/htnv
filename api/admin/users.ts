@@ -118,8 +118,8 @@ async function listClasses(db: any, query: any) {
   const result = await db.query(`
     SELECT
       c.id,c.code,c.name,c.school_year,c.created_at,c.updated_at,
-      count(cm.user_id) FILTER (WHERE cm.member_role='student')::int AS student_count,
-      count(cm.user_id) FILTER (WHERE cm.member_role='teacher')::int AS teacher_count,
+      count(DISTINCT cm.user_id) FILTER (WHERE cm.member_role='student')::int AS student_count,
+      count(DISTINCT cm.user_id) FILTER (WHERE cm.member_role='teacher')::int AS teacher_count,
       count(DISTINCT a.id)::int AS assignment_count
     FROM classes c
     LEFT JOIN class_members cm ON cm.class_id=c.id
