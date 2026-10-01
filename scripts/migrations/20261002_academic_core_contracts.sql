@@ -6,11 +6,11 @@
 CREATE OR REPLACE FUNCTION prevent_portfolio_version_mutation()
 RETURNS trigger
 LANGUAGE plpgsql
-AS $
+AS $migration$
 BEGIN
   RAISE EXCEPTION 'portfolio_versions are immutable';
 END
-$;
+$migration$;
 
 DROP TRIGGER IF EXISTS portfolio_versions_immutable_update ON portfolio_versions;
 CREATE TRIGGER portfolio_versions_immutable_update
@@ -18,7 +18,7 @@ BEFORE UPDATE OR DELETE ON portfolio_versions
 FOR EACH ROW
 EXECUTE FUNCTION prevent_portfolio_version_mutation();
 
-DO $
+DO $migration$
 BEGIN
   IF NOT EXISTS (
     SELECT 1
@@ -33,7 +33,7 @@ BEGIN
       NOT VALID;
   END IF;
 END
-$;
+$migration$;
 
 CREATE INDEX IF NOT EXISTS idx_vfl_feedback
   ON version_feedback_links(feedback_id);
