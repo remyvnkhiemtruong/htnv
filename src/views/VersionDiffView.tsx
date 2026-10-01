@@ -42,6 +42,7 @@ export const VersionDiffView: React.FC<VersionDiffViewProps> = ({
   const compatibility = usePortfolio();
   const isStudent = currentUser.role === 'student';
   const workspaceQuery = useStudentWorkspaceQuery(
+    currentUser.id,
     assignmentId,
     isStudent && Boolean(currentUser.id) && Boolean(assignmentId)
   );
