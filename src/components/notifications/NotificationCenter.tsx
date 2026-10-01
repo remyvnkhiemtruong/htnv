@@ -79,7 +79,7 @@ export const NotificationCenter: React.FC<NotificationCenterProps> = ({ onNaviga
 
     if (currentUser.role === 'teacher') {
       const items: AppNotification[] = [];
-      for (const review of aiReviews.filter(item => item.status === 'completed' && item.teacher_review_status === 'pending')) {
+      for (const review of aiReviews.filter(review => review.status === 'completed' && review.teacher_review_status === 'pending')) {
         items.push({
           id: `ai-review:${review.id}`,
           title: 'Góp ý AI cần giáo viên xem',
