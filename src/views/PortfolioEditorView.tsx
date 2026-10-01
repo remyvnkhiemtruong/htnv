@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { useAuthStore } from '../app/store/useAuthStore';
 import { usePortfolioStore } from '../app/store/usePortfolioStore';
@@ -99,6 +99,7 @@ export const PortfolioEditorView: React.FC<PortfolioEditorViewProps> = ({ assign
   const [selectedQuoteSnippet, setSelectedQuoteSnippet] = useState('');
   const [localBackupAvailable, setLocalBackupAvailable] = useState<any>(null);
   const [isOnline, setIsOnline] = useState(() => typeof navigator === 'undefined' ? true : navigator.onLine);
+  const analysisTextareaRef = useRef<HTMLTextAreaElement>(null);
 
   // V4 Layout states
   const [isFocusMode, setIsFocusMode] = useState(false);
@@ -278,6 +279,26 @@ export const PortfolioEditorView: React.FC<PortfolioEditorViewProps> = ({ assign
     } catch {
       addToast({ type: 'warning', title: 'Đã khôi phục trên thiết bị', message: 'Bản nháp vẫn được giữ an toàn và sẽ đồng bộ khi kết nối ổn định.' });
     }
+  };
+
+  const jumpToFeedbackAnchor = (item: typeof axisFeedbacks[number]) => {
+    setActiveAxisId(item.axisId);
+    setMobileTab('write');
+    const exact = item.anchor?.exact || item.selectedSnippet || '';
+    window.setTimeout(() => {
+      const textarea = analysisTextareaRef.current;
+      if (!textarea) return;
+      const text = textarea.value || '';
+      let start = typeof item.anchor?.start === 'number' ? item.anchor.start : -1;
+      let end = typeof item.anchor?.end === 'number' ? item.anchor.end : -1;
+      if (!exact || start < 0 || end <= start || text.slice(start, end) !== exact) {
+        start = exact ? text.indexOf(exact) : -1;
+        end = start >= 0 ? start + exact.length : -1;
+      }
+      textarea.focus();
+      if (start >= 0 && end > start) textarea.setSelectionRange(start, end);
+      textarea.scrollIntoView({ block: 'center', behavior: 'smooth' });
+    }, 0);
   };
 
   const handleTextSelection = () => {
@@ -705,6 +726,7 @@ export const PortfolioEditorView: React.FC<PortfolioEditorViewProps> = ({ assign
                   <span className="font-normal text-slate-400">Tự động lưu sau khi gõ</span>
                 </label>
                 <textarea
+                  ref={analysisTextareaRef}
                   value={currentAxis?.analysisText || ''}
                   disabled={!workflowState?.canEdit}
                   onChange={e => updateAnalysis(e.target.value)}
@@ -1072,8 +1094,16 @@ export const PortfolioEditorView: React.FC<PortfolioEditorViewProps> = ({ assign
                           </div>
 
                           {item.selectedSnippet && (
-                            <div className="border-l-2 border-primary-500 bg-white/80 px-2.5 py-1.5 italic text-slate-600 rounded-r">
-                              &ldquo;{item.selectedSnippet}&rdquo;
+                            <div className="space-y-1.5 border-l-2 border-primary-500 bg-white/80 px-2.5 py-1.5 text-slate-600 rounded-r">
+                              <div className="italic">&ldquo;{item.selectedSnippet}&rdquo;</div>
+                              <button
+                                type="button"
+                                onClick={() => jumpToFeedbackAnchor(item)}
+                                className="font-semibold not-italic text-primary-700 hover:text-primary-900"
+                              >
+                                Mở đoạn được góp ý
+                                {typeof item.anchor?.start === 'number' ? ` · vị trí ${item.anchor.start + 1}–${item.anchor.end || item.anchor.start + item.selectedSnippet.length}` : ''}
+                              </button>
                             </div>
                           )}
 
