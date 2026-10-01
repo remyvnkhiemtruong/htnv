@@ -5,7 +5,7 @@ import {
   ClockIcon
 } from '@heroicons/react/24/outline';
 import { useAuthStore } from '../../app/store/useAuthStore';
-import { usePortfolio } from '../../contexts/PortfolioContext';
+import { useStudentOverviewQuery } from '../../app/queries/studentAcademicQueries';
 import { deriveStudentWorkflow } from '../../app/workflow/workflowState';
 import { WorkflowProgress } from '../../components/workflow/WorkflowProgress';
 import { Badge, Button, Card, PageHeader, Skeleton, SkeletonCard } from '../../components/ui';
@@ -38,7 +38,14 @@ const MetricTile: React.FC<MetricTileProps> = ({ label, value, note, tone = 'def
 
 export const StudentDashboardView: React.FC<{ onNavigate: (view: string, params?: any) => void }> = ({ onNavigate }) => {
   const user = useAuthStore(s => s.currentUser);
-  const { assignments, portfolios, feedbacks, rubricSubmissions, reflections, isLoading } = usePortfolio();
+  const overviewQuery = useStudentOverviewQuery(user.role === 'student' && Boolean(user.id));
+  const overview = overviewQuery.data;
+  const assignments = overview?.assignments || [];
+  const portfolios = overview?.portfolios || {};
+  const feedbacks = overview?.feedbacks || [];
+  const rubricSubmissions = overview?.rubricSubmissions || [];
+  const reflections = overview?.reflections || [];
+  const isLoading = overviewQuery.isLoading;
   const reflectionIds = reflections.filter(r => r.studentId === user.id).map(r => r.versionId);
   const items = assignments.map(assignment => ({
     assignment,
@@ -57,6 +64,24 @@ export const StudentDashboardView: React.FC<{ onNavigate: (view: string, params?
   const studentFeedbacks = feedbacks.filter(item => item.studentId === user.id);
   const unresolvedFeedbacks = studentFeedbacks.filter(item => !item.resolved);
   const recentFeedbacks = [...studentFeedbacks].sort((a, b) => String(b.createdAt).localeCompare(String(a.createdAt))).slice(0, 3);
+
+  if (overviewQuery.isError && assignments.length === 0) {
+    return (
+      <div className="v3-page space-y-5 pb-20">
+        <PageHeader
+          eyebrow="Bàn học"
+          title="Không thể tải dữ liệu"
+          description={overviewQuery.error instanceof Error ? overviewQuery.error.message : 'Không thể tải bàn học lúc này.'}
+        />
+        <Card>
+          <div className="flex items-center justify-between gap-3">
+            <p className="text-sm text-slate-600">Dữ liệu chưa được tải. Bạn có thể thử lại mà không cần tải lại toàn trang.</p>
+            <Button variant="primary" onClick={() => void overviewQuery.refetch()}>Thử lại</Button>
+          </div>
+        </Card>
+      </div>
+    );
+  }
 
   if (isLoading && assignments.length === 0) {
     return (
