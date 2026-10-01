@@ -5,10 +5,10 @@ import { Avatar } from '../ui/Avatar';
 import { Dropdown } from '../ui/Dropdown';
 import { Modal } from '../ui/Modal';
 import { Button } from '../ui/Button';
+import { NotificationCenter } from '../notifications/NotificationCenter';
 import {
   ArrowRightOnRectangleIcon,
   Bars3Icon,
-  BellIcon,
   MagnifyingGlassIcon,
   QuestionMarkCircleIcon,
   UserCircleIcon
@@ -214,9 +214,7 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
               <span className="hidden md:inline">Tìm nhanh</span>
               <span className="hidden rounded border border-slate-200 bg-white px-1.5 py-0.5 font-mono text-xs text-slate-400 lg:inline">Ctrl K</span>
             </button>
-            <button type="button" onClick={() => addToast({ type: 'info', title: 'Thông báo', message: 'Hiện chưa có thông báo mới.' })} className="rounded-lg p-2 text-slate-400 hover:bg-slate-100 hover:text-slate-700" aria-label="Thông báo">
-              <BellIcon className="h-4 w-4" />
-            </button>
+            <NotificationCenter onNavigate={onNavigate} />
             <button type="button" onClick={() => setHelpOpen(true)} className="hidden rounded-lg p-2 text-slate-400 hover:bg-slate-100 hover:text-slate-700 sm:block" aria-label="Trợ giúp">
               <QuestionMarkCircleIcon className="h-4 w-4" />
             </button>

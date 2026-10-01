@@ -43,7 +43,7 @@ interface PortfolioContextType {
   auditLogs: AuditLog[];
   aiReviews: AiReviewRequest[];
   reflections: StudentReflectionRecord[];
-  autosaveStatus: 'saved' | 'saving' | 'dirty';
+  autosaveStatus: 'saved' | 'saving' | 'dirty' | 'offline' | 'conflict';
   lastSavedTime: string | null;
   isLoading: boolean;
   dataError: string | null;

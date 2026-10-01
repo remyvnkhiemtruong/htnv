@@ -79,9 +79,9 @@ Mật khẩu không được lưu trong repository. Admin có thể tạo/reset 
 
 - Danh sách nhiệm vụ theo lớp thật
 - V0 dự đoán trước đọc
-- Editor 6 trục + autosave server-side
+- Editor 6 trục + autosave server-side, IndexedDB recovery khi mất mạng và tự đồng bộ lại khi có kết nối
 - Version bất biến V1/V2…
-- Feedback AI/giáo viên
+- Feedback AI/giáo viên có neo đúng đoạn văn; có thể mở lại vị trí được góp ý
 - So sánh version
 - REF1 tự phản tư
 - Rubric và báo cáo tiến bộ
@@ -98,7 +98,7 @@ Mật khẩu không được lưu trong repository. Admin có thể tạo/reset 
 
 ### Giáo viên
 
-- Bàn làm việc theo lớp được phân công
+- Bàn làm việc theo lớp được phân công với Teacher Review Inbox ưu tiên, tìm kiếm và lọc việc cần xử lý
 - Review đúng học sinh + assignment + immutable version
 - Xem feedback AI đã gửi học sinh
 - Bổ sung feedback giáo viên riêng
@@ -136,6 +136,15 @@ Mật khẩu không được lưu trong repository. Admin có thể tạo/reset 
 - `POST /api/academic/action` — draft/version/feedback/rubric/assignment/AI/reflection
 - `GET /api/admin/users?scope=users|classes|class-members|audit|stats` — admin-only, phân trang/filter server-side
 - `POST /api/admin/manage` — create/update user, class membership, bulk status/class assignment, import preview/execute
+
+## Student/Teacher UX — Batch 3
+
+- Điều hướng trình duyệt do React Router quản lý; URL/query vẫn giữ hợp đồng route cũ để không phá liên kết đã dùng.
+- Editor lưu bản phục hồi vào IndexedDB cho từng học sinh+nhiệm vụ. Khi mất mạng, nội dung vẫn được giữ trên thiết bị; khi online trở lại hệ thống thử đồng bộ. Xung đột `draftRevision` được hiển thị riêng thay vì ghi đè im lặng.
+- Phản hồi giáo viên/peer lưu `anchor_json` theo immutable version: trục, vị trí ký tự, đoạn chính xác và ngữ cảnh trước/sau. Học sinh có thể bấm để mở lại đoạn được góp ý; nếu offset không còn khớp draft hiện tại, UI fallback theo exact snippet.
+- Teacher Review Inbox ưu tiên bài cần giáo viên xem, góp ý AI đang chờ và bài đã có REF1 chờ Rubric; hỗ trợ tìm kiếm và lọc.
+- Notification Center trên header tổng hợp phản hồi chưa xử lý/Rubric cho học sinh và AI/Rubric/teacher action cho giáo viên. Trạng thái đã đọc chỉ là preference UI lưu cục bộ theo user, không thay đổi trạng thái học thuật.
+- Batch 3 không thêm Vercel Function và không cần migration schema mới; `feedbacks.anchor_json` đã tồn tại.
 
 ## PostgreSQL
 
@@ -195,7 +204,7 @@ Admin có thể nhập `.xlsx`, `.csv`, `.tsv` với các cột: Họ và tên, 
 - Không cho phép đăng ký tài khoản công khai; tài khoản chỉ được cấp/quản trị qua luồng admin.
 - Không dùng localStorage làm database.
 - Không dùng dữ liệu giả thay cho editor/version/review/audit/analytics production.
-- Draft autosave không tạo version.
+- Draft autosave không tạo version; bản phục hồi cục bộ chỉ là lớp an toàn khi chưa đồng bộ, không phải database chính.
 - Version và REF1 đã nộp là bất biến.
 - AI Response là manual ChatGPT-paste flow; feedback AI hiển thị cho học sinh ngay.
 - AI không chấm điểm chính thức.

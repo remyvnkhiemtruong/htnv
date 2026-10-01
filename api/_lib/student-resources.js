@@ -43,7 +43,8 @@ const mapFeedback = row => ({
   resolved: Boolean(row.resolved),
   resolvedAt: row.resolved_at || null,
   resolvedByVersionId: row.resolved_by_version_id || null,
-  sourceAiReviewId: row.source_ai_review_id || null
+  sourceAiReviewId: row.source_ai_review_id || null,
+  anchor: row.anchor_json || null
 });
 
 const mapRubricSubmission = row => ({

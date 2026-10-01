@@ -1,11 +1,12 @@
-import React, { Suspense, lazy, useCallback, useEffect, useState } from 'react';
+import React, { Suspense, lazy, useCallback, useEffect, useRef, useState } from 'react';
+import { BrowserRouter, useLocation, useNavigate } from 'react-router-dom';
 import { AppProviders } from './app/providers/AppProviders';
 import { MainLayout } from './components/layout/MainLayout';
 import { LoginView } from './views/LoginView';
 import { ForbiddenView } from './views/ForbiddenView';
 import { NotFoundView } from './views/NotFoundView';
 import { useAuthStore } from './app/store/useAuthStore';
-import { APP_ROUTES } from './app/router/routes';
+import { APP_ROUTES, hrefForView, routeStateFromLocation } from './app/router/routes';
 import { canAccessRoute } from './app/auth/accessControl';
 import { PortfolioProvider } from './contexts/PortfolioContext';
 import { AuthProvider } from './contexts/AuthContext';
@@ -41,14 +42,6 @@ const homeViewForRole = (role: UserRole) => {
   return 'dashboard';
 };
 
-const locationState = () => {
-  const route = Object.values(APP_ROUTES).find(item => item.path === window.location.pathname);
-  const query = new URLSearchParams(window.location.search);
-  const params: Record<string,string> = {};
-  query.forEach((value,key) => { params[key] = value; });
-  return { view: route?.id || 'not-found', params };
-};
-
 const ViewLoading = () => (
   <div className="flex min-h-64 items-center justify-center px-4">
     <div className="text-center"><div className="mx-auto mb-3 h-7 w-7 animate-spin rounded-full border-2 border-slate-200 border-t-slate-900"/><p className="text-sm font-semibold text-slate-600">Đang tải phân hệ…</p></div>
@@ -56,24 +49,26 @@ const ViewLoading = () => (
 );
 
 const AppContent: React.FC = () => {
+  const location = useLocation();
+  const routerNavigate = useNavigate();
+  const locationRef = useRef({ pathname: location.pathname, search: location.search });
+  locationRef.current = { pathname: location.pathname, search: location.search };
   const currentUser = useAuthStore((state) => state.currentUser);
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
   const setAuthenticatedUser = useAuthStore((state) => state.setAuthenticatedUser);
   const clearAuth = useAuthStore((state) => state.logout);
-  const initial = locationState();
+  const initial = routeStateFromLocation(location.pathname, location.search);
   const [sessionChecking, setSessionChecking] = useState(true);
   const [currentView, setCurrentView] = useState<string>(initial.view);
   const [navParams, setNavParams] = useState<any>(initial.params);
 
   const replaceToView = useCallback((view:string, params:Record<string,any> = {}) => {
-    const route = APP_ROUTES[view];
-    if (!route) return;
-    const query = new URLSearchParams();
-    Object.entries(params).forEach(([key,value]) => { if(value!==undefined && value!==null && value!=='') query.set(key,String(value)); });
-    const url = `${route.path}${query.size ? `?${query.toString()}` : ''}`;
-    window.history.replaceState({},'',url);
-    setCurrentView(view); setNavParams(params);
-  }, []);
+    const url = hrefForView(view, params);
+    if (!url) return;
+    routerNavigate(url, { replace: true });
+    setCurrentView(view);
+    setNavParams(params);
+  }, [routerNavigate]);
 
   useEffect(() => {
     let active = true;
@@ -95,13 +90,13 @@ const AppContent: React.FC = () => {
           className:data.user.className || '',
           profile:data.user.profile || {}
         });
-        const current = locationState();
+        const current = routeStateFromLocation(locationRef.current.pathname, locationRef.current.search);
         if (current.view === 'login' || current.view === 'not-found' || current.view === 'landing') replaceToView(homeViewForRole(data.user.role));
         else { setCurrentView(current.view); setNavParams(current.params); }
       } catch {
         if (!active) return;
         clearAuth();
-        const current = locationState();
+        const current = routeStateFromLocation(locationRef.current.pathname, locationRef.current.search);
         if (current.view !== 'landing' && current.view !== 'login') {
           replaceToView('login');
         } else {
@@ -111,10 +106,14 @@ const AppContent: React.FC = () => {
       } finally { if(active) setSessionChecking(false); }
     };
     void verifySession();
-    const onPop = () => { const current=locationState(); setCurrentView(current.view); setNavParams(current.params); };
-    window.addEventListener('popstate',onPop);
-    return () => { active=false; window.removeEventListener('popstate',onPop); };
+    return () => { active=false; };
   }, [clearAuth, replaceToView, setAuthenticatedUser]);
+
+  useEffect(() => {
+    const current = routeStateFromLocation(location.pathname, location.search);
+    setCurrentView(current.view);
+    setNavParams(current.params);
+  }, [location.pathname, location.search]);
 
   // LoginView updates the auth store synchronously before its success callback runs.
   // Keep a parent-level recovery redirect so the app can never remain authenticated
@@ -137,14 +136,14 @@ const AppContent: React.FC = () => {
   };
 
   const handleNavigate = useCallback((view: string, extraParams?: any) => {
-    const route = APP_ROUTES[view];
-    if (!route) { setCurrentView(view); return; }
     const params = extraParams || {};
-    const query = new URLSearchParams();
-    Object.entries(params).forEach(([key,value]) => { if(value!==undefined && value!==null && value!=='') query.set(key,String(value)); });
-    window.history.pushState({},'',`${route.path}${query.size ? `?${query.toString()}` : ''}`);
-    setCurrentView(view); setNavParams(params); window.scrollTo({ top: 0, behavior: 'smooth' });
-  }, []);
+    const url = hrefForView(view, params);
+    if (!url) { setCurrentView(view); return; }
+    routerNavigate(url);
+    setCurrentView(view);
+    setNavParams(params);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }, [routerNavigate]);
 
   useEffect(() => {
     const handleCustomNav = (e: Event) => {
@@ -224,14 +223,16 @@ const AppContent: React.FC = () => {
 export function App() {
   return (
     <AppErrorBoundary>
-      <AuthProvider>
-        <PortfolioProvider>
-          <AppProviders>
-            <SeasonalMouseExperience />
-            <AppContent />
-          </AppProviders>
-        </PortfolioProvider>
-      </AuthProvider>
+      <BrowserRouter>
+        <AuthProvider>
+          <PortfolioProvider>
+            <AppProviders>
+              <SeasonalMouseExperience />
+              <AppContent />
+            </AppProviders>
+          </PortfolioProvider>
+        </AuthProvider>
+      </BrowserRouter>
     </AppErrorBoundary>
   );
 }

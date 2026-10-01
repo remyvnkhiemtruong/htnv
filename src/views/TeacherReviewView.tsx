@@ -1,9 +1,9 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useAuthStore } from '../app/store/useAuthStore';
 import { useNotificationStore } from '../app/store/useNotificationStore';
 import { usePortfolio } from '../contexts/PortfolioContext';
 import { POETIC_AXES } from '../data/seedData';
-import type { PoeticAxisId, RubricMatrix } from '../types';
+import type { FeedbackAnchor, PoeticAxisId, RubricMatrix } from '../types';
 import { Badge, Button } from '../components/ui';
 import {
   ArrowLeftIcon,
@@ -79,6 +79,8 @@ export const TeacherReviewView: React.FC<TeacherReviewViewProps> = ({
   const [activeAxisId, setActiveAxisId] = useState<PoeticAxisId>('plot_situation');
   const [selectedVersion, setSelectedVersion] = useState('');
   const [selectedText, setSelectedText] = useState('');
+  const [selectedAnchor, setSelectedAnchor] = useState<FeedbackAnchor | null>(null);
+  const responseTextRef = useRef<HTMLDivElement>(null);
   const [feedbackText, setFeedbackText] = useState('');
   const [overallFeedback, setOverallFeedback] = useState('');
   const [rubricScores, setRubricScores] = useState<Record<string, number>>({});
@@ -227,7 +229,7 @@ export const TeacherReviewView: React.FC<TeacherReviewViewProps> = ({
     const firstVisibleIndex = queue.findIndex(item => item.id === filteredQueue[0].id);
     if (firstVisibleIndex >= 0) {
       setCurrentIndex(firstVisibleIndex);
-      setSelectedText('');
+      setSelectedText(''); setSelectedAnchor(null);
     }
   }, [filteredQueue, visibleQueueIndex, queue]);
 
@@ -238,7 +240,7 @@ export const TeacherReviewView: React.FC<TeacherReviewViewProps> = ({
     const nextIndex = queue.findIndex(item => item.id === nextItem.id);
     if (nextIndex >= 0) {
       setCurrentIndex(nextIndex);
-      setSelectedText('');
+      setSelectedText(''); setSelectedAnchor(null);
     }
   };
 
@@ -288,13 +290,14 @@ export const TeacherReviewView: React.FC<TeacherReviewViewProps> = ({
         versionNumber: selectedSnapshot.versionNumber,
         axisId: activeAxisId,
         selectedSnippet: selectedText,
+        anchor: selectedAnchor || { type: 'axis', axisId: activeAxisId },
         comment,
         authorId: currentUser.id,
         authorName: currentUser.name,
         authorRole: evaluatorRole
       });
       setFeedbackText('');
-      setSelectedText('');
+      setSelectedText(''); setSelectedAnchor(null);
       addToast({ type: 'success', title: 'Đã lưu phản hồi', message: 'Nhận xét đã được lưu cho đúng phiên bản.' });
     } catch (error: unknown) {
       addToast({ type: 'error', title: 'Lỗi gửi phản hồi', message: error instanceof Error ? error.message : 'Không thể lưu nhận xét.' });
@@ -373,8 +376,33 @@ export const TeacherReviewView: React.FC<TeacherReviewViewProps> = ({
   };
 
   const captureSelection = () => {
-    const text = window.getSelection()?.toString().trim() || '';
-    if (text.length >= 5) setSelectedText(text.slice(0, 1000));
+    const selection = window.getSelection();
+    const container = responseTextRef.current;
+    if (!selection || !container || selection.rangeCount === 0 || selection.isCollapsed) return;
+    const range = selection.getRangeAt(0);
+    if (!container.contains(range.commonAncestorContainer)) return;
+    const exact = selection.toString().trim();
+    if (exact.length < 5) return;
+
+    const prefixRange = range.cloneRange();
+    prefixRange.selectNodeContents(container);
+    prefixRange.setEnd(range.startContainer, range.startOffset);
+    const start = prefixRange.toString().length;
+    const fullText = container.textContent || '';
+    const selected = exact.slice(0, 1000);
+    const locatedStart = fullText.indexOf(selected, Math.max(0, start - 8));
+    const safeStart = locatedStart >= 0 ? locatedStart : start;
+    const safeEnd = Math.min(fullText.length, safeStart + selected.length);
+    setSelectedText(selected);
+    setSelectedAnchor({
+      type: 'text-range',
+      axisId: activeAxisId,
+      start: safeStart,
+      end: safeEnd,
+      exact: selected,
+      prefix: fullText.slice(Math.max(0, safeStart - 80), safeStart),
+      suffix: fullText.slice(safeEnd, safeEnd + 80)
+    });
   };
 
   const attachSnippetToComment = () => setActiveTab('comment');
@@ -444,7 +472,7 @@ export const TeacherReviewView: React.FC<TeacherReviewViewProps> = ({
                 const active = actualIndex === currentIndex;
                 const isGraded = rubricSubmissions.some(r => r.studentId === item.studentId && r.assignmentId === item.assignmentId && r.evaluatorRole === evaluatorRole);
                 return (
-                  <button key={item.id} type="button" onClick={() => { setCurrentIndex(actualIndex); setSelectedText(''); }} aria-current={active ? 'true' : undefined} className={`w-full rounded-lg border px-3 py-2 text-left text-xs transition-colors ${active ? 'border-primary-300 bg-primary-50/90 font-semibold text-primary-950' : 'border-transparent text-slate-600 hover:border-slate-200 hover:bg-white hover:text-slate-900'}`}>
+                  <button key={item.id} type="button" onClick={() => { setCurrentIndex(actualIndex); setSelectedText(''); setSelectedAnchor(null); }} aria-current={active ? 'true' : undefined} className={`w-full rounded-lg border px-3 py-2 text-left text-xs transition-colors ${active ? 'border-primary-300 bg-primary-50/90 font-semibold text-primary-950' : 'border-transparent text-slate-600 hover:border-slate-200 hover:bg-white hover:text-slate-900'}`}>
                     <div className="flex items-center justify-between gap-1"><span className="truncate">{item.studentName}</span>{isGraded ? <CheckCircleIcon className="h-3.5 w-3.5 shrink-0 text-emerald-600" title="Đã chấm Rubric" /> : <ClockIcon className="h-3.5 w-3.5 shrink-0 text-amber-500" title="Chưa chấm" />}</div>
                     <div className={`mt-0.5 text-xs ${active ? 'text-primary-700' : 'text-slate-400'}`}>Lớp {item.className || '—'} · {item.versions[item.versions.length - 1]?.versionNumber}</div>
                   </button>
@@ -487,8 +515,8 @@ export const TeacherReviewView: React.FC<TeacherReviewViewProps> = ({
 
           <section className="space-y-4">
             <div className="flex flex-wrap items-baseline justify-between gap-2 border-b border-slate-200 pb-3"><div><div className="text-xs font-bold text-slate-400">Phiên bản đã nộp</div><h2 className="mt-1 text-lg font-bold tracking-tight text-slate-950">{POETIC_AXES.find(axis => axis.id === activeAxisId)?.title}</h2></div><div className="flex items-center gap-2"><Badge variant="outline">{selectedSnapshot.versionNumber}</Badge><span className="text-xs text-slate-400">{activeResponse?.analysisText ? `${activeResponse.analysisText.trim().split(/\s+/).length} từ` : '0 từ'}</span></div></div>
-            {selectedText && !isAdminReadOnly && <div className="flex items-center justify-between rounded-lg border border-primary-200 bg-primary-50/80 px-3.5 py-2 text-xs"><div className="truncate text-primary-900"><span className="font-semibold">Đã chọn đoạn:</span> &ldquo;{selectedText.slice(0, 70)}{selectedText.length > 70 ? '...' : ''}&rdquo;</div><div className="flex items-center gap-1.5 shrink-0 ml-2"><Button size="sm" variant="primary" onClick={attachSnippetToComment} leftIcon={<PencilSquareIcon className="h-3.5 w-3.5" />}>Gắn nhận xét</Button><Button size="sm" variant="ghost" onClick={() => setSelectedText('')}>Bỏ chọn</Button></div></div>}
-            <div onMouseUp={captureSelection} className="min-h-64 select-text whitespace-pre-wrap rounded-lg border border-slate-200 bg-white p-5 text-[15px] leading-8 text-slate-800 selection:bg-primary-100 selection:text-primary-900">{activeResponse?.analysisText?.trim() || <span className="italic text-slate-400">Học sinh chưa viết nội dung ở trục này.</span>}</div>
+            {selectedText && !isAdminReadOnly && <div className="flex items-center justify-between rounded-lg border border-primary-200 bg-primary-50/80 px-3.5 py-2 text-xs"><div className="truncate text-primary-900"><span className="font-semibold">Đã chọn đoạn:</span> &ldquo;{selectedText.slice(0, 70)}{selectedText.length > 70 ? '...' : ''}&rdquo;</div><div className="flex items-center gap-1.5 shrink-0 ml-2"><Button size="sm" variant="primary" onClick={attachSnippetToComment} leftIcon={<PencilSquareIcon className="h-3.5 w-3.5" />}>Gắn nhận xét</Button><Button size="sm" variant="ghost" onClick={() => { setSelectedText(''); setSelectedAnchor(null); }}>Bỏ chọn</Button></div></div>}
+            <div ref={responseTextRef} onMouseUp={captureSelection} className="min-h-64 select-text whitespace-pre-wrap rounded-lg border border-slate-200 bg-white p-5 text-[15px] leading-8 text-slate-800 selection:bg-primary-100 selection:text-primary-900">{activeResponse?.analysisText?.trim() || <span className="italic text-slate-400">Học sinh chưa viết nội dung ở trục này.</span>}</div>
             {activeResponse?.evidenceQuotes && activeResponse.evidenceQuotes.length > 0 && <div className="space-y-2.5 rounded-lg border border-slate-200 bg-slate-50/60 p-4"><div className="text-xs font-bold text-slate-500">Dẫn chứng học sinh ({activeResponse.evidenceQuotes.length})</div><div className="space-y-2">{activeResponse.evidenceQuotes.map((item, index) => <blockquote key={item?.id || index} className="rounded-md border-l-3 border-primary-400 bg-white p-3 text-xs italic leading-relaxed text-slate-700">&ldquo;{typeof item === 'string' ? item : item?.text || ''}&rdquo;</blockquote>)}</div></div>}
           </section>
 
@@ -503,7 +531,7 @@ export const TeacherReviewView: React.FC<TeacherReviewViewProps> = ({
             <button type="button" onClick={() => setActiveTab('reflection')} className={`flex-1 flex items-center justify-center gap-1 rounded-md py-1.5 font-medium transition ${activeTab === 'reflection' ? 'bg-slate-900 text-white' : 'text-slate-600 hover:text-slate-900'}`}><BookOpenIcon className="h-3.5 w-3.5" /><span>REF1</span></button>
           </div>
 
-          {activeTab === 'comment' && <section className="space-y-3 rounded-lg border border-slate-200 bg-white p-4"><div><h3 className="text-sm font-bold text-slate-900">Nhận xét trực tiếp</h3><p className="mt-0.5 text-xs text-slate-500 leading-relaxed">{isAdminReadOnly ? 'Quản trị viên đang xem bài ở chế độ chỉ đọc.' : 'Bôi đen một đoạn để gắn nhận xét, hoặc nhập nhận xét chung cho trục này.'}</p></div>{selectedText ? <div className="rounded-lg border-l-2 border-primary-400 bg-primary-50/70 p-2.5 text-xs italic leading-relaxed text-slate-700"><div className="flex items-center justify-between font-semibold not-italic text-primary-900 mb-1"><span>Đoạn trích gắn kèm</span><button type="button" onClick={() => setSelectedText('')} className="text-slate-400 hover:text-slate-600">×</button></div>&ldquo;{selectedText}&rdquo;</div> : <div className="rounded-lg border border-dashed border-slate-200 bg-slate-50/50 p-2.5 text-center text-xs text-slate-400">Chưa chọn đoạn trích (nhận xét sẽ gắn vào toàn trục)</div>}<div><textarea rows={5} value={feedbackText} onChange={event => setFeedbackText(event.target.value)} disabled={isAdminReadOnly} placeholder={isAdminReadOnly ? 'Chế độ chỉ đọc' : 'Nhập nhận xét cho học sinh...'} className="w-full rounded-lg border border-slate-300 bg-white p-3 text-sm leading-relaxed outline-none disabled:bg-slate-50 disabled:text-slate-400 focus:border-primary-600 focus:ring-2 focus:ring-primary-600/10" /></div>{!isAdminReadOnly && <Button className="w-full" size="sm" variant="primary" isLoading={isSubmittingFeedback} onClick={createFeedback}>Gửi nhận xét</Button>}</section>}
+          {activeTab === 'comment' && <section className="space-y-3 rounded-lg border border-slate-200 bg-white p-4"><div><h3 className="text-sm font-bold text-slate-900">Nhận xét trực tiếp</h3><p className="mt-0.5 text-xs text-slate-500 leading-relaxed">{isAdminReadOnly ? 'Quản trị viên đang xem bài ở chế độ chỉ đọc.' : 'Bôi đen một đoạn để gắn nhận xét, hoặc nhập nhận xét chung cho trục này.'}</p></div>{selectedText ? <div className="rounded-lg border-l-2 border-primary-400 bg-primary-50/70 p-2.5 text-xs italic leading-relaxed text-slate-700"><div className="flex items-center justify-between font-semibold not-italic text-primary-900 mb-1"><span>Đoạn trích gắn kèm</span><button type="button" onClick={() => { setSelectedText(''); setSelectedAnchor(null); }} className="text-slate-400 hover:text-slate-600">×</button></div>&ldquo;{selectedText}&rdquo;</div> : <div className="rounded-lg border border-dashed border-slate-200 bg-slate-50/50 p-2.5 text-center text-xs text-slate-400">Chưa chọn đoạn trích (nhận xét sẽ gắn vào toàn trục)</div>}<div><textarea rows={5} value={feedbackText} onChange={event => setFeedbackText(event.target.value)} disabled={isAdminReadOnly} placeholder={isAdminReadOnly ? 'Chế độ chỉ đọc' : 'Nhập nhận xét cho học sinh...'} className="w-full rounded-lg border border-slate-300 bg-white p-3 text-sm leading-relaxed outline-none disabled:bg-slate-50 disabled:text-slate-400 focus:border-primary-600 focus:ring-2 focus:ring-primary-600/10" /></div>{!isAdminReadOnly && <Button className="w-full" size="sm" variant="primary" isLoading={isSubmittingFeedback} onClick={createFeedback}>Gửi nhận xét</Button>}</section>}
 
           {activeTab === 'rubric' && <section className="space-y-4 rounded-lg border border-slate-200 bg-white p-4"><div className="flex items-center justify-between gap-3 border-b border-slate-100 pb-3"><div><h3 className="text-sm font-bold text-slate-900">{activeRubric.title || 'Rubric đánh giá'}</h3><p className="mt-0.5 text-xs text-slate-500">Chọn đủ mức cho 6 tiêu chí trước khi lưu.</p></div><div className="rounded-lg bg-slate-900 px-3 py-1.5 text-sm font-bold text-white">{totalScore}/{maxScore}đ</div></div>{!activeRubric.criteria.length ? <p className="text-xs text-slate-500">Nhiệm vụ chưa có rubric hợp lệ.</p> : <div className="space-y-3 max-h-[44vh] overflow-y-auto pr-1">{activeRubric.criteria.map((criterion, idx) => { const currentLevel = rubricScores[criterion.id] || 0; return <div key={criterion.id} className="space-y-2 border-b border-slate-100 pb-3 last:border-0"><div className="flex items-center justify-between"><span className="text-xs font-semibold leading-5 text-slate-800">{idx + 1}. {criterion.title}</span>{currentLevel > 0 ? <span className="text-xs font-bold text-primary-700">Mức {currentLevel}</span> : <span className="text-xs text-amber-600 font-medium">Chưa chọn</span>}</div><div className="grid grid-cols-4 gap-1.5">{criterion.levels.map(level => { const isSelected = currentLevel === level.level; return <button key={level.level} type="button" title={`${criterion.title}: mức ${level.level} - ${level.label}`} disabled={isAdminReadOnly} onClick={() => setRubricScores(previous => ({ ...previous, [criterion.id]: level.level }))} className={`flex flex-col items-center justify-center rounded-lg border py-1.5 px-1 text-xs transition ${isSelected ? 'border-primary-700 bg-primary-700 text-white font-bold' : 'border-slate-200 bg-white text-slate-700 hover:border-primary-300 hover:bg-primary-50'}`}><span className="font-bold">M{level.level}</span><span className={`text-xs truncate max-w-full ${isSelected ? 'text-primary-100' : 'text-slate-400'}`}>{level.score}đ</span></button>; })}</div></div>; })}</div>}<div><label className="block text-xs font-semibold text-slate-700 mb-1">Nhận xét tổng kết toàn bài</label><textarea rows={3} value={overallFeedback} onChange={event => setOverallFeedback(event.target.value)} disabled={isAdminReadOnly} placeholder={isAdminReadOnly ? 'Chế độ chỉ đọc' : 'Nhập nhận xét tổng kết...'} className="w-full rounded-lg border border-slate-300 bg-white p-2.5 text-xs leading-relaxed outline-none disabled:bg-slate-50 disabled:text-slate-400 focus:border-primary-600 focus:ring-2 focus:ring-primary-600/10" /></div>{!isAdminReadOnly && <Button className="w-full" size="sm" variant="primary" disabled={!activeRubric.criteria.length} isLoading={isSubmittingRubric} onClick={saveRubric}>Lưu điểm Rubric</Button>}</section>}
 
