@@ -196,7 +196,7 @@ export function useAdminStatsQuery() {
 export function useAdminMutation() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: adminAction,
+    mutationFn: (payload: unknown) => adminAction(payload),
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: adminKeys.all });
     }
