@@ -100,7 +100,8 @@ async function inflateRaw(bytes: Uint8Array) {
   if (typeof DecompressionStream === 'undefined') {
     throw new Error('Trình duyệt này chưa hỗ trợ giải nén XLSX. Hãy dùng Chrome/Edge mới hoặc lưu file thành CSV.');
   }
-  const stream = new Blob([bytes]).stream().pipeThrough(new DecompressionStream('deflate-raw'));
+  const ownedBuffer = bytes.slice().buffer as ArrayBuffer;
+  const stream = new Blob([ownedBuffer]).stream().pipeThrough(new DecompressionStream('deflate-raw'));
   return new Uint8Array(await new Response(stream).arrayBuffer());
 }
 
