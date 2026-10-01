@@ -63,10 +63,11 @@ export const PortfolioEditorView: React.FC<PortfolioEditorViewProps> = ({ assign
   const currentUser = useAuthStore(state => state.currentUser);
   const queryClient = useQueryClient();
   const workspaceQuery = useStudentWorkspaceQuery(
+    currentUser.id,
     assignmentId,
     currentUser.role === 'student' && Boolean(currentUser.id)
   );
-  const studentAction = useStudentAcademicAction(assignmentId);
+  const studentAction = useStudentAcademicAction(currentUser.id, assignmentId);
   const workspace = workspaceQuery.data;
   const feedbacks = workspace?.feedbacks || [];
   const reflections = workspace?.reflections || [];
