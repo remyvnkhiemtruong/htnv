@@ -107,7 +107,7 @@ await test('FSA10: admin user management persists detailed profiles and class as
   for (const token of ['profile_json', 'classCode', 'studentCode', 'staffCode', 'department']) {
     assert(api.includes(token), `Admin API missing detailed user token: ${token}`);
   }
-  for (const token of ['newProfile', 'newClassCode', 'Hồ sơ người dùng', 'Mã học sinh', 'Tổ / bộ môn / đơn vị']) {
+  for (const token of ['newProfile', 'newClassCode', 'Mã học sinh', 'Tổ / bộ môn', 'Hồ sơ — ']) {
     assert(view.includes(token), `Admin UI missing detailed user token: ${token}`);
   }
 });
@@ -174,6 +174,63 @@ await test('FSA16: production smoke follows the canonical domain redirect', () =
   assert(source.includes("redirect: 'follow'"), 'Smoke checks must follow htnv.io.vn -> www.htnv.io.vn');
   assert(source.includes('/api/student/overview'), 'Smoke checks must cover the scoped student resource');
   assert(source.includes('/api/student/workspace?assignmentId=smoke-invalid'), 'Smoke checks must cover the student workspace resource');
+});
+
+await test('FSA17: admin management uses paginated server resources instead of academic mega snapshot', () => {
+  const view = read('src/views/AdminAuditView.tsx');
+  const queries = read('src/app/queries/adminManagementQueries.ts');
+  assert(!view.includes("fetch('/api/academic/snapshot'"), 'Admin view must not load the academic mega snapshot');
+  for (const token of ['useAdminUsersQuery', 'useAdminClassesQuery', 'useAdminAuditQuery', 'useAdminStatsQuery']) {
+    assert(view.includes(token), `Admin view missing query: ${token}`);
+  }
+  for (const token of ["scope: 'users'", "scope: 'classes'", "scope: 'audit'", "scope: 'stats'"]) {
+    assert(queries.includes(token), `Admin query layer missing scope: ${token}`);
+  }
+});
+
+await test('FSA18: admin API supports server pagination search and class membership detail', () => {
+  const source = read('api/admin/users.ts');
+  for (const token of [
+    'pageSize',
+    'LIMIT',
+    'OFFSET',
+    "scope === \"class-members\"",
+    'class_codes',
+    'count(DISTINCT cm.user_id)'
+  ]) assert(source.includes(token), `Admin resource API missing: ${token}`);
+});
+
+await test('FSA19: bulk admin actions protect self-lockout and student academic history', () => {
+  const source = read('api/admin/manage.ts');
+  for (const token of [
+    "action === 'bulk_update_status'",
+    'SELF_LOCKOUT_BLOCKED',
+    "action === 'bulk_assign_class'",
+    "action === 'remove_member'",
+    'MEMBERSHIP_HAS_HISTORY',
+    'provisionStudentForClass'
+  ]) assert(source.includes(token), `Admin bulk safety missing: ${token}`);
+});
+
+await test('FSA20: user import previews before write and supports XLSX without a new runtime dependency', () => {
+  const api = read('api/admin/manage.ts');
+  const parser = read('src/utils/userImportFile.ts');
+  const modal = read('src/views/admin/AdminUserImportModal.tsx');
+  assert(api.includes("action === 'import_users'"), 'Import action missing');
+  assert(api.includes('dryRun'), 'Import must have dry-run preview');
+  assert(api.includes('IMPORT_TOO_LARGE'), 'Import row limit missing');
+  assert(parser.includes('0x06054b50'), 'XLSX ZIP central directory parser missing');
+  assert(parser.includes("new DecompressionStream('deflate-raw')"), 'XLSX decompression missing');
+  assert(modal.includes('readUserImportFile'), 'Import modal must parse selected file before preview');
+  assert(modal.includes("dryRun: true"), 'Import modal must request backend preview before write');
+});
+
+await test('FSA21: drawer focus lifecycle is stable while editing admin forms', () => {
+  const source = read('src/components/ui/Drawer.tsx');
+  assert(source.includes('const onCloseRef = useRef(onClose)'), 'Drawer must keep latest close callback in a ref');
+  assert(source.includes('onCloseRef.current()'), 'Drawer Escape handler must use stable ref');
+  assert(source.includes('}, [isOpen]);'), 'Drawer focus lifecycle must only restart when opened/closed');
+  assert(!source.includes('}, [isOpen, onClose]);'), 'Inline close callbacks must not reset drawer focus');
 });
 
 const failed = results.filter(result => !result.ok);
