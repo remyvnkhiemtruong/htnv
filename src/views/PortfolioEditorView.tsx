@@ -13,6 +13,7 @@ import { POETIC_AXES } from '../data/seedData';
 import type { EvidenceQuote, PoeticAxisId } from '../types';
 import { Badge, Button, SkeletonEditor } from '../components/ui';
 import { CreateVersionModal } from '../components/versioning/CreateVersionModal';
+import { clearDraftRecovery, getDraftRecovery } from '../app/offline/draftRecovery';
 import {
   ArrowLeftIcon,
   ArrowsPointingInIcon,
@@ -79,7 +80,8 @@ export const PortfolioEditorView: React.FC<PortfolioEditorViewProps> = ({ assign
     manualSaveDraft,
     createSnapshot,
     autosaveStatus,
-    lastSavedTime
+    lastSavedTime,
+    lastSaveError
   } = usePortfolioStore();
   const { addToast } = useNotificationStore();
 
@@ -96,6 +98,7 @@ export const PortfolioEditorView: React.FC<PortfolioEditorViewProps> = ({ assign
   const [isSavingReflection, setIsSavingReflection] = useState(false);
   const [selectedQuoteSnippet, setSelectedQuoteSnippet] = useState('');
   const [localBackupAvailable, setLocalBackupAvailable] = useState<any>(null);
+  const [isOnline, setIsOnline] = useState(() => typeof navigator === 'undefined' ? true : navigator.onLine);
 
   // V4 Layout states
   const [isFocusMode, setIsFocusMode] = useState(false);
@@ -232,40 +235,33 @@ export const PortfolioEditorView: React.FC<PortfolioEditorViewProps> = ({ assign
     }
   };
 
-  // Local Storage Disaster Recovery Backup
-  const backupKey = assignment && currentUser.id ? `cvt_draft_backup_${currentUser.id}_${assignment.id}` : '';
+  // IndexedDB recovery: every local edit is persisted by the portfolio store.
+  useEffect(() => {
+    if (!assignment || !currentUser.id || !portfolio || !workflowState?.canEdit) return;
+    let active = true;
+    void getDraftRecovery(currentUser.id, assignment.id).then(recovery => {
+      if (!active || !recovery?.draft) return;
+      const currentLen = Object.values(portfolio.currentDraft || {}).reduce((sum, axis) => sum + (axis?.analysisText?.length || 0), 0);
+      const recoveryLen = Object.values(recovery.draft || {}).reduce((sum, axis) => sum + (axis?.analysisText?.length || 0), 0);
+      const newerThanServer = recovery.updatedAt > new Date(portfolio.lastAutosavedAt || 0).getTime();
+      if (newerThanServer && recoveryLen >= currentLen) setLocalBackupAvailable(recovery);
+    });
+    return () => { active = false; };
+  }, [assignment, currentUser.id, portfolio?.id, portfolio?.lastAutosavedAt, workflowState?.canEdit]);
 
   useEffect(() => {
-    if (!backupKey || !portfolio?.currentDraft || !workflowState?.canEdit) return;
-    try {
-      const hasContent = Object.values(portfolio.currentDraft).some(a => Boolean(a?.analysisText?.trim()));
-      if (hasContent) {
-        localStorage.setItem(backupKey, JSON.stringify({
-          draft: portfolio.currentDraft,
-          updatedAt: Date.now()
-        }));
-      }
-    } catch {
-      // ignore
-    }
-  }, [backupKey, portfolio?.currentDraft, workflowState?.canEdit]);
-
-  useEffect(() => {
-    if (!backupKey || !portfolio || !workflowState?.canEdit) return;
-    try {
-      const raw = localStorage.getItem(backupKey);
-      if (!raw) return;
-      const parsed = JSON.parse(raw);
-      if (!parsed?.draft) return;
-      const currentLen = Object.values(portfolio.currentDraft || {}).reduce((s, a) => s + (a?.analysisText?.length || 0), 0);
-      const backupLen = Object.values(parsed.draft || {}).reduce((s: number, a: any) => s + (a?.analysisText?.length || 0), 0);
-      if (backupLen > currentLen + 20) {
-        setLocalBackupAvailable(parsed);
-      }
-    } catch {
-      // ignore
-    }
-  }, [backupKey, portfolio, workflowState?.canEdit]);
+    const online = () => {
+      setIsOnline(true);
+      if (assignment && workflowState?.canEdit && autosaveStatus === 'offline') void saveNow();
+    };
+    const offline = () => setIsOnline(false);
+    window.addEventListener('online', online);
+    window.addEventListener('offline', offline);
+    return () => {
+      window.removeEventListener('online', online);
+      window.removeEventListener('offline', offline);
+    };
+  }, [assignment, autosaveStatus, saveNow, workflowState?.canEdit]);
 
   const restoreLocalBackup = async () => {
     if (!localBackupAvailable?.draft || !assignment || !workflowState?.canEdit) return;
@@ -277,10 +273,11 @@ export const PortfolioEditorView: React.FC<PortfolioEditorViewProps> = ({ assign
     setLocalBackupAvailable(null);
     try {
       await manualSaveDraft(currentUser.id, assignment.id);
+      await clearDraftRecovery(currentUser.id, assignment.id);
+      addToast({ type: 'success', title: 'Đã khôi phục và đồng bộ', message: 'Bản nháp cục bộ đã được lưu lên hệ thống.' });
     } catch {
-      // safe fallback
+      addToast({ type: 'warning', title: 'Đã khôi phục trên thiết bị', message: 'Bản nháp vẫn được giữ an toàn và sẽ đồng bộ khi kết nối ổn định.' });
     }
-    addToast({ type: 'success', title: 'Đã khôi phục', message: 'Đã khôi phục bản nháp từ bộ nhớ cục bộ an toàn.' });
   };
 
   const handleTextSelection = () => {
@@ -373,10 +370,14 @@ export const PortfolioEditorView: React.FC<PortfolioEditorViewProps> = ({ assign
   }
 
   const saveStatus = autosaveStatus === 'saving'
-    ? { text: 'Đang lưu…', className: 'v3-save-busy text-sky-600', icon: <CloudArrowUpIcon className="h-4 w-4 animate-pulse" /> }
-    : autosaveStatus === 'dirty'
-      ? { text: 'Có thay đổi chưa lưu', className: 'v3-save-dirty text-amber-600', icon: <ExclamationCircleIcon className="h-4 w-4" /> }
-      : { text: `Đã lưu ${lastSavedTime || 'gần đây'}`, className: 'v3-save-ok text-emerald-600', icon: <CheckCircleIcon className="h-4 w-4" /> };
+    ? { text: 'Đang đồng bộ…', className: 'v3-save-busy text-sky-600', icon: <CloudArrowUpIcon className="h-4 w-4 animate-pulse" /> }
+    : autosaveStatus === 'conflict'
+      ? { text: 'Có xung đột bản nháp', className: 'v3-save-dirty text-rose-600', icon: <ExclamationCircleIcon className="h-4 w-4" /> }
+      : autosaveStatus === 'offline' || !isOnline
+        ? { text: 'Đã giữ trên thiết bị · chờ mạng', className: 'v3-save-dirty text-amber-700', icon: <ExclamationCircleIcon className="h-4 w-4" /> }
+        : autosaveStatus === 'dirty'
+          ? { text: 'Có thay đổi chưa đồng bộ', className: 'v3-save-dirty text-amber-600', icon: <ExclamationCircleIcon className="h-4 w-4" /> }
+          : { text: `Đã đồng bộ ${lastSavedTime || 'gần đây'}`, className: 'v3-save-ok text-emerald-600', icon: <CheckCircleIcon className="h-4 w-4" /> };
 
   return (
     <div className={`flex min-h-[calc(100vh-4rem)] flex-col bg-white ${isFocusMode ? 'editor-focus-active' : ''}`}>
@@ -408,7 +409,7 @@ export const PortfolioEditorView: React.FC<PortfolioEditorViewProps> = ({ assign
             <span
               className={`inline-flex items-center gap-1.5 font-medium ${saveStatus.className}`}
               aria-live="polite"
-              title="Trạng thái lưu bài viết"
+              title={lastSaveError || 'Trạng thái lưu bài viết'}
             >
               {saveStatus.icon}
               <span className="hidden sm:inline">{saveStatus.text}</span>
