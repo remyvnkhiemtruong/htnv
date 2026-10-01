@@ -114,7 +114,7 @@ test('Hồ sơ cá nhân mở rộng được lưu server-side', () => {
   assert(read('src/components/layout/AppHeader.tsx').includes("method:'PATCH'"));
 });
 test('Portfolio version được khóa bất biến ở PostgreSQL', () => {
-  const migration = read('scripts/migrate-audit-hardening-20260911.sql');
+  const migration = read('scripts/migrations/20261002_academic_core_contracts.sql');
   assert(migration.includes('prevent_portfolio_version_mutation'));
   assert(migration.includes('BEFORE UPDATE OR DELETE ON portfolio_versions'));
 });
@@ -228,7 +228,7 @@ test('TC05: ai_complete_review xuất bản feedback AI cho học sinh ngay', ()
 test('TC06: teacher approved không nhân đôi feedback AI thành feedback giáo viên', () => {
   const workflow = read('api/_lib/academic-service.js');
   const code = workflow.slice(workflow.indexOf('async function teacherReviewAi'), workflow.indexOf('async function saveReflection'));
-  assert(code.includes("if (decision === 'approved') finalResponse = ''"), 'Approved phải giữ nguyên feedback AI');
+  assert(code.includes("const finalResponse = decision === 'revised' ? cleanTrimmed(input.finalResponse, 100000) : ''"), 'Approved/rejected không được tạo nội dung feedback giáo viên');
   assert(code.includes("if (decision === 'revised' && finalResponse)"), 'Chỉ revised mới tạo feedback giáo viên bổ sung');
 });
 
@@ -236,7 +236,8 @@ test('TC07: teacher revised tạo feedback giáo viên riêng có provenance', (
   const workflow = read('api/_lib/academic-service.js');
   const code = workflow.slice(workflow.indexOf('async function teacherReviewAi'), workflow.indexOf('async function saveReflection'));
   assert(code.includes("decision === 'revised' && finalResponse"), 'Phải có nhánh revised');
-  assert(code.includes('source_ai_review_id'), 'Feedback bổ sung phải liên kết nguồn AI');
+  assert(code.includes("source: 'teacher_revision_of_ai'"), 'Feedback bổ sung phải lưu provenance bản sửa');
+  assert(code.includes('sourceAiReviewId: reviewId'), 'Feedback bổ sung phải liên kết review AI nguồn');
   assert(code.includes("'teacher'"), 'Feedback bổ sung phải có author_role=teacher');
 });
 
