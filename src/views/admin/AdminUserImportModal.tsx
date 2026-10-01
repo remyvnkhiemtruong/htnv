@@ -110,7 +110,7 @@ export const AdminUserImportModal: React.FC<{
       onClose={close}
       title="Nhập tài khoản hàng loạt"
       description="Hỗ trợ CSV/TSV và XLSX. Hệ thống kiểm tra dữ liệu trước, chỉ tạo các dòng hợp lệ."
-      maxWidth="3xl"
+      maxWidth="4xl"
       footer={
         <div className="flex w-full items-center justify-between gap-3">
           <Button size="sm" variant="ghost" onClick={downloadUserImportTemplate} leftIcon={<ArrowDownTrayIcon className="h-4 w-4" />}>
