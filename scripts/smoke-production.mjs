@@ -46,7 +46,7 @@ try {
 
   const dedicated = healthBody?.security?.dedicatedJwtSecret === true;
   record(
-    'dedicated JWT_SECRET is configured',
+    'dedicated JWT_SECRET deployment policy',
     dedicated || !requireDedicatedSecret,
     dedicated ? 'environment' : 'compatibility fallback still active'
   );
