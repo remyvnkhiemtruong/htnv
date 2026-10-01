@@ -151,7 +151,7 @@ Các bảng trọng yếu gồm `app_users`, `classes`, `class_members`, `litera
 Production cần:
 
 - `DATABASE_URL`
-- `JWT_SECRET` — nên cấu hình riêng cho Production/Preview, tối thiểu 32 ký tự. Trong giai đoạn chuyển tiếp, backend còn giữ compatibility fallback domain-separated từ protected runtime seed để không làm gián đoạn đăng nhập; `/api/health` báo rõ nguồn khóa đang dùng. Fallback này phải được loại bỏ sau khi Vercel có dedicated secret.
+- `JWT_SECRET` — bắt buộc cho Production/Preview, tối thiểu 32 ký tự. Backend fail-closed nếu thiếu biến này; không còn fallback khóa ký JWT từ database. `/api/health` phải báo `jwtSecretSource: "environment"` và `dedicatedJwtSecret: true`.
 
 Không commit secrets/mật khẩu vào repository.
 

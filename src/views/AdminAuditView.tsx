@@ -293,6 +293,7 @@ export const AdminAuditView: React.FC<AdminAuditViewProps> = ({ onNavigate: _onN
   const openAssign = (options?: { user?: AdminUser; classItem?: AdminClass }) => {
     const user = options?.user;
     const classItem = options?.classItem;
+    if (options) setSelectedIds(new Set());
     setAssignUserId(user?.id || '');
     setAssignSearch(user?.email || '');
     setAssignRole(user?.role === 'teacher' ? 'teacher' : 'student');
@@ -617,7 +618,15 @@ export const AdminAuditView: React.FC<AdminAuditViewProps> = ({ onNavigate: _onN
             <Input label="Email *" type="email" value={newEmail} onChange={e => setNewEmail(e.target.value)} />
             <div>
               <label className="mb-1 block text-xs font-medium text-slate-700">Vai trò</label>
-              <select className="w-full rounded-md border border-slate-300 p-2 text-sm" value={newRole} onChange={e => setNewRole(e.target.value as UserRole)}>
+              <select
+                className="w-full rounded-md border border-slate-300 p-2 text-sm"
+                value={newRole}
+                onChange={e => {
+                  const role = e.target.value as UserRole;
+                  setNewRole(role);
+                  if (!['student','teacher'].includes(role)) setNewClassCode('');
+                }}
+              >
                 {roles.map(role => <option key={role} value={role}>{labels[role]}</option>)}
               </select>
             </div>

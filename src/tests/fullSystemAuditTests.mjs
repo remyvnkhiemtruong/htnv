@@ -12,15 +12,15 @@ const test = async (name, fn) => {
   }
 };
 
-await test('FSA01: JWT signing prefers dedicated JWT_SECRET and keeps a bounded compatibility fallback', () => {
+await test('FSA01: JWT signing requires dedicated JWT_SECRET and has no database fallback', () => {
   const source = read('api/auth/auth.js');
   assert(source.includes('authSecretConfigured'), 'Missing JWT readiness helper');
-  assert(source.includes('JWT_SECRET_NOT_CONFIGURED'), 'JWT must fail closed if neither secret source is usable');
-  assert(source.includes('process.env.JWT_SECRET'), 'JWT signing must prefer the dedicated environment secret');
-  assert(source.includes("config_key='student_roster_seed_v1'"), 'Compatibility fallback must use the protected runtime seed');
-  assert(source.includes('hoc-tot-ngu-van:jwt-signing:v1'), 'Fallback key must remain domain separated');
+  assert(source.includes('JWT_SECRET_NOT_CONFIGURED'), 'JWT must fail closed when the environment secret is missing');
+  assert(source.includes('process.env.JWT_SECRET'), 'JWT signing must use the dedicated environment secret');
+  assert(!source.includes("config_key='student_roster_seed_v1'"), 'JWT signing must not read a database fallback seed');
+  assert(!source.includes('hoc-tot-ngu-van:jwt-signing:v1'), 'Legacy domain-separated fallback must be removed');
   assert(!source.includes('databaseUrl()'), 'Auth module must reuse the shared database pool');
-  assert(source.includes('getPool'), 'Auth module must reuse the shared database pool');
+  assert(source.includes('getPool'), 'Auth module must reuse the shared database pool for user/session reads');
   assert(source.includes('decodedHeader?.alg !== "HS256"'), 'JWT header algorithm must be validated');
 });
 
@@ -231,6 +231,12 @@ await test('FSA21: drawer focus lifecycle is stable while editing admin forms', 
   assert(source.includes('onCloseRef.current()'), 'Drawer Escape handler must use stable ref');
   assert(source.includes('}, [isOpen]);'), 'Drawer focus lifecycle must only restart when opened/closed');
   assert(!source.includes('}, [isOpen, onClose]);'), 'Inline close callbacks must not reset drawer focus');
+});
+
+await test('FSA22: class drawer assignment cannot inherit stale bulk user selection', () => {
+  const source = read('src/views/AdminAuditView.tsx');
+  assert(source.includes('if (options) setSelectedIds(new Set())'), 'Explicit single/class assignment must clear bulk selection');
+  assert(source.includes("if (!['student','teacher'].includes(role)) setNewClassCode('')"), 'Changing a new user to a non-class role must clear class selection');
 });
 
 const failed = results.filter(result => !result.ok);
