@@ -4,6 +4,7 @@ import { authenticate, send } from "../auth/auth.js";
 import { getAcademicSnapshot } from "../_lib/academic-service.js";
 import { normalizeAcademicSnapshot } from "../_lib/content-compat.js";
 import { getStudentOverview, getStudentWorkspace } from "../_lib/student-resources.js";
+import { getTeacherLiteratureCatalog, getTeacherOverview, getTeacherWorkspace } from "../_lib/teacher-resources.js";
 
 export default async function handler(req: any, res: any) {
   const startedAt = Date.now();
@@ -43,6 +44,36 @@ export default async function handler(req: any, res: any) {
       const dataMs = Date.now() - dataStartedAt;
       res.setHeader("Server-Timing", `auth;dur=${authMs}, data;dur=${dataMs}, total;dur=${Date.now() - startedAt}`);
       return send(res, 200, { workspace, requestId });
+    }
+
+    if (scope === "teacher-overview") {
+      if (user.role !== "teacher") return send(res, 403, { code: "FORBIDDEN" });
+      const overview = await getTeacherOverview(user);
+      const dataMs = Date.now() - dataStartedAt;
+      res.setHeader("Server-Timing", `auth;dur=${authMs}, data;dur=${dataMs}, total;dur=${Date.now() - startedAt}`);
+      return send(res, 200, { overview, requestId });
+    }
+
+    if (scope === "teacher-workspace") {
+      if (user.role !== "teacher") return send(res, 403, { code: "FORBIDDEN" });
+      const assignmentRaw = Array.isArray(req.query?.assignmentId) ? req.query.assignmentId[0] : req.query?.assignmentId;
+      const studentRaw = Array.isArray(req.query?.studentId) ? req.query.studentId[0] : req.query?.studentId;
+      const assignmentId = String(assignmentRaw || "").trim().slice(0, 200);
+      const studentId = String(studentRaw || "").trim().slice(0, 80);
+      if (!assignmentId) return send(res, 400, { code: "ASSIGNMENT_REQUIRED", message: "Thiếu mã nhiệm vụ." });
+      if (!studentId) return send(res, 400, { code: "STUDENT_REQUIRED", message: "Thiếu mã học sinh." });
+      const workspace = await getTeacherWorkspace(user, assignmentId, studentId);
+      const dataMs = Date.now() - dataStartedAt;
+      res.setHeader("Server-Timing", `auth;dur=${authMs}, data;dur=${dataMs}, total;dur=${Date.now() - startedAt}`);
+      return send(res, 200, { workspace, requestId });
+    }
+
+    if (scope === "teacher-literature") {
+      if (user.role !== "teacher") return send(res, 403, { code: "FORBIDDEN" });
+      const literatureTexts = await getTeacherLiteratureCatalog(user);
+      const dataMs = Date.now() - dataStartedAt;
+      res.setHeader("Server-Timing", `auth;dur=${authMs}, data;dur=${dataMs}, total;dur=${Date.now() - startedAt}`);
+      return send(res, 200, { literatureTexts, requestId });
     }
 
     const snapshot = normalizeAcademicSnapshot(await getAcademicSnapshot(user));
