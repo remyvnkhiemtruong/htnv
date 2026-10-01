@@ -165,9 +165,12 @@ export const PortfolioProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     setDataError(null);
     setIsLoading(false);
 
-    if (currentUser.id) void refreshAcademicData();
+    // Students use scoped TanStack Query resources instead of the legacy full snapshot.
+    // Teacher/admin/research workflows remain on the compatibility snapshot until their
+    // resource migrations are completed.
+    if (currentUser.id && currentUser.role !== 'student') void refreshAcademicData();
     return () => snapshotControllerRef.current?.abort();
-  }, [currentUser.id, refreshAcademicData, resetSessionState]);
+  }, [currentUser.id, currentUser.role, refreshAcademicData, resetSessionState]);
 
   const getPortfolioForStudentAndAssignment = useCallback(
     (studentId: string, assignmentId: string) => getPortfolio(

@@ -1,6 +1,6 @@
 /// <reference types="node" />
 import { academicHealth } from './_lib/academic-v3.js';
-import { authSecretConfigured } from './auth/auth.js';
+import { authSecretStatus } from './auth/auth.js';
 
 const HEALTH_CACHE_MS = 30_000;
 let healthCache: { at: number; value: Awaited<ReturnType<typeof academicHealth>> } | null = null;
@@ -17,9 +17,9 @@ export default async function handler(req: any, res: any) {
   const startedAt = Date.now();
   res.setHeader('Cache-Control', 'no-store');
   try {
-    const [counts, jwtSecretConfigured] = await Promise.all([
+    const [counts, jwtSecretStatus] = await Promise.all([
       cachedAcademicHealth(),
-      authSecretConfigured()
+      authSecretStatus()
     ]);
     res.setHeader('Server-Timing', `db;dur=${counts.dbRoundTripMs || 0}, total;dur=${Date.now() - startedAt}`);
     return res.status(200).json({
@@ -31,7 +31,9 @@ export default async function handler(req: any, res: any) {
       aiFeedbackMode: 'manual-chatgpt-response-visible-to-student',
       region: process.env.VERCEL_REGION || 'unknown',
       security: {
-        jwtSecretConfigured
+        jwtSecretConfigured: jwtSecretStatus.configured,
+        jwtSecretSource: jwtSecretStatus.source,
+        dedicatedJwtSecret: jwtSecretStatus.source === 'environment'
       },
       counts: {
         assignments: counts.assignments,

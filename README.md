@@ -128,7 +128,9 @@ Mật khẩu không được lưu trong repository. Admin có thể tạo/reset 
 - `GET/PATCH /api/auth/me` — session/hồ sơ
 - `POST /api/auth/logout`
 - `POST /api/auth/change-password`
-- `GET /api/academic/snapshot` — snapshot theo RBAC
+- `GET /api/student/overview` — dữ liệu tổng quan chỉ của học sinh đang đăng nhập; không tải body các version cũ
+- `GET /api/student/workspace?assignmentId=...` — đúng một workspace bài viết, gồm draft/version/feedback/rubric liên quan
+- `GET /api/academic/snapshot` — compatibility snapshot theo RBAC cho các phân hệ chưa migrate
 - `POST /api/academic/action` — draft/version/feedback/rubric/assignment/AI/reflection
 - `GET /api/admin/users` — admin-only
 - `POST /api/admin/manage` — admin-only
@@ -147,7 +149,7 @@ Các bảng trọng yếu gồm `app_users`, `classes`, `class_members`, `litera
 Production cần:
 
 - `DATABASE_URL`
-- `JWT_SECRET` — bắt buộc, tối thiểu 32 ký tự; backend không suy ra khóa ký JWT từ dữ liệu trong database.
+- `JWT_SECRET` — nên cấu hình riêng cho Production/Preview, tối thiểu 32 ký tự. Trong giai đoạn chuyển tiếp, backend còn giữ compatibility fallback domain-separated từ protected runtime seed để không làm gián đoạn đăng nhập; `/api/health` báo rõ nguồn khóa đang dùng. Fallback này phải được loại bỏ sau khi Vercel có dedicated secret.
 
 Không commit secrets/mật khẩu vào repository.
 
@@ -165,6 +167,14 @@ npm run build
 ```
 
 Build chạy regression/invariant tests, TypeScript, lint và Vite build. Dự án giữ tối đa 12 Vercel Functions.
+
+Smoke test production:
+
+```bash
+npm run smoke:production
+```
+
+Có thể đặt `REQUIRE_DEDICATED_JWT_SECRET=true` để smoke test thất bại nếu production vẫn đang dùng compatibility fallback. Hai URL student resource được rewrite vào function academic hiện có để không tăng function count trên Vercel Hobby.
 
 ## Nguyên tắc production
 

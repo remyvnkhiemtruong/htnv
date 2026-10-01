@@ -4,6 +4,7 @@ import { academicVersionsOf, deriveStudentWorkflow } from '../app/workflow/workf
 import { WorkflowProgress } from '../components/workflow/WorkflowProgress';
 import { Badge, Button } from '../components/ui';
 import { usePortfolio } from '../contexts/PortfolioContext';
+import { useStudentOverviewQuery } from '../app/queries/studentAcademicQueries';
 
 const statusLabel: Record<string, string> = {
   drafting: 'Đang làm',
@@ -20,7 +21,14 @@ const statusLabel: Record<string, string> = {
 
 export const PortfolioListV2: React.FC<{ onNavigate: (view: string, params?: any) => void }> = ({ onNavigate }) => {
   const user = useAuthStore(s => s.currentUser);
-  const { assignments, portfolios, feedbacks, rubricSubmissions, reflections } = usePortfolio();
+  const compatibility = usePortfolio();
+  const overviewQuery = useStudentOverviewQuery(user.role === 'student' && Boolean(user.id));
+  const overview = overviewQuery.data;
+  const assignments = user.role === 'student' ? (overview?.assignments || []) : compatibility.assignments;
+  const portfolios = user.role === 'student' ? (overview?.portfolios || {}) : compatibility.portfolios;
+  const feedbacks = user.role === 'student' ? (overview?.feedbacks || []) : compatibility.feedbacks;
+  const rubricSubmissions = user.role === 'student' ? (overview?.rubricSubmissions || []) : compatibility.rubricSubmissions;
+  const reflections = user.role === 'student' ? (overview?.reflections || []) : compatibility.reflections;
   const reflectionIds = reflections.filter(r => r.studentId === user.id).map(r => r.versionId);
   const allPortfolios = Object.values(portfolios);
 
@@ -93,6 +101,22 @@ export const PortfolioListV2: React.FC<{ onNavigate: (view: string, params?: any
             })}
           </div>
         )}
+      </div>
+    );
+  }
+
+  if (overviewQuery.isLoading && assignments.length === 0) {
+    return <div className="py-12 text-center text-sm text-slate-500">Đang tải hồ sơ…</div>;
+  }
+
+  if (overviewQuery.isError && assignments.length === 0) {
+    return (
+      <div className="mx-auto max-w-2xl space-y-3 py-12 text-center">
+        <h2 className="text-base font-semibold text-slate-900">Không thể tải hồ sơ</h2>
+        <p className="text-sm text-slate-500">
+          {overviewQuery.error instanceof Error ? overviewQuery.error.message : 'Vui lòng thử lại.'}
+        </p>
+        <Button variant="primary" onClick={() => void overviewQuery.refetch()}>Thử lại</Button>
       </div>
     );
   }

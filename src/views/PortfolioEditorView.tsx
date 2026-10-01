@@ -1,9 +1,14 @@
 import React, { useEffect, useMemo, useState } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import { useAuthStore } from '../app/store/useAuthStore';
 import { usePortfolioStore } from '../app/store/usePortfolioStore';
 import { deriveStudentWorkflow } from '../app/workflow/workflowState';
 import { useNotificationStore } from '../app/store/useNotificationStore';
-import { usePortfolio } from '../contexts/PortfolioContext';
+import {
+  studentAcademicKeys,
+  useStudentAcademicAction,
+  useStudentWorkspaceQuery
+} from '../app/queries/studentAcademicQueries';
 import { POETIC_AXES } from '../data/seedData';
 import type { EvidenceQuote, PoeticAxisId } from '../types';
 import { Badge, Button, SkeletonEditor } from '../components/ui';
@@ -55,21 +60,33 @@ const emptyReflection = {
 
 export const PortfolioEditorView: React.FC<PortfolioEditorViewProps> = ({ assignmentId, onNavigate }) => {
   const currentUser = useAuthStore(state => state.currentUser);
+  const queryClient = useQueryClient();
+  const workspaceQuery = useStudentWorkspaceQuery(
+    assignmentId,
+    currentUser.role === 'student' && Boolean(currentUser.id)
+  );
+  const studentAction = useStudentAcademicAction(assignmentId);
+  const workspace = workspaceQuery.data;
+  const feedbacks = workspace?.feedbacks || [];
+  const reflections = workspace?.reflections || [];
+  const rubricSubmissions = workspace?.rubricSubmissions || [];
+  const isLoading = workspaceQuery.isLoading;
+  const dataError = workspaceQuery.error instanceof Error ? workspaceQuery.error.message : null;
   const {
-    assignments,
-    literatureTexts,
-    feedbacks,
     portfolios,
-    reflections,
-    rubricSubmissions,
-    saveReflection,
-    resolveFeedback,
-    isLoading,
-    dataError,
-    refreshAcademicData
-  } = usePortfolio();
-  const { updateDraft, manualSaveDraft, createSnapshot, autosaveStatus, lastSavedTime } = usePortfolioStore();
+    hydratePortfolios,
+    updateDraft,
+    manualSaveDraft,
+    createSnapshot,
+    autosaveStatus,
+    lastSavedTime
+  } = usePortfolioStore();
   const { addToast } = useNotificationStore();
+
+  useEffect(() => {
+    if (!workspace?.portfolio) return;
+    hydratePortfolios({ [workspace.portfolio.id]: workspace.portfolio });
+  }, [hydratePortfolios, workspace?.portfolio]);
 
   const [activeAxisId, setActiveAxisId] = useState<PoeticAxisId>('plot_situation');
   const [isSubmitModalOpen, setIsSubmitModalOpen] = useState(false);
@@ -96,10 +113,10 @@ export const PortfolioEditorView: React.FC<PortfolioEditorViewProps> = ({ assign
     lg: 'text-lg leading-8 sm:text-base'
   }[fontSizeLevel];
 
-  const assignment = assignments.find(item => item.id === assignmentId);
+  const assignment = workspace?.assignment;
   const portfolioKey = assignment && currentUser.id ? `port-${currentUser.id}-${assignment.id}` : '';
-  const portfolio = portfolioKey ? portfolios[portfolioKey] : undefined;
-  const literatureText = assignment ? literatureTexts.find(item => item.id === assignment.textId) : undefined;
+  const portfolio = portfolioKey ? (portfolios[portfolioKey] || workspace?.portfolio) : workspace?.portfolio;
+  const literatureText = workspace?.literatureText || undefined;
   const primaryTextAvailable = Boolean(literatureText?.fullContent?.trim() || literatureText?.excerpt?.trim());
   const predictionQuestions = (assignment?.predictionTemplate?.questions || []).filter(question => Boolean(question?.trim()));
   const predictionPrompt = assignment?.predictionTemplate?.prompt?.trim() || '';
@@ -185,7 +202,10 @@ export const PortfolioEditorView: React.FC<PortfolioEditorViewProps> = ({ assign
       linkedFeedbackIds: data.linkedFeedbackIds
     });
     if (!ok) throw new Error('CREATE_VERSION_FAILED');
-    await refreshAcademicData();
+    await Promise.all([
+      workspaceQuery.refetch(),
+      queryClient.invalidateQueries({ queryKey: studentAcademicKeys.overview() })
+    ]);
     addToast({ type: 'success', title: `Đã nộp ${nextVersion}`, message: isPredictionMode ? 'V0 đã được khóa làm mốc dự đoán trước đọc.' : 'Bài viết đã được gửi vào hàng đợi phản hồi AI.' });
   };
 
@@ -197,7 +217,12 @@ export const PortfolioEditorView: React.FC<PortfolioEditorViewProps> = ({ assign
     }
     setIsSavingReflection(true);
     try {
-      await saveReflection(assignment.id, latestRevision.id, reflectionForm);
+      await studentAction.mutateAsync({
+        action: 'save_reflection',
+        assignmentId: assignment.id,
+        versionId: latestRevision.id,
+        reflection: reflectionForm
+      });
       setReflectionForm(emptyReflection);
       addToast({ type: 'success', title: 'Đã lưu REF1', message: 'Đã lưu tự phản tư cho phiên bản này.' });
     } catch (error: unknown) {
@@ -335,7 +360,7 @@ export const PortfolioEditorView: React.FC<PortfolioEditorViewProps> = ({ assign
     return <SkeletonEditor />;
   }
   if (dataError && !assignment) {
-    return <StatePanel title="Không thể tải dữ liệu" message={dataError} actionLabel="Thử lại" onAction={() => void refreshAcademicData()} />;
+    return <StatePanel title="Không thể tải dữ liệu" message={dataError} actionLabel="Thử lại" onAction={() => void workspaceQuery.refetch()} />;
   }
   if (!currentUser.id) {
     return <StatePanel title="Phiên đăng nhập hết hạn" message="Vui lòng đăng nhập lại để tiếp tục viết bài." actionLabel="Đăng nhập" onAction={() => onNavigate('dashboard')} />;
@@ -344,7 +369,7 @@ export const PortfolioEditorView: React.FC<PortfolioEditorViewProps> = ({ assign
     return <StatePanel title="Không tìm thấy nhiệm vụ" message="Nhiệm vụ này không tồn tại hoặc bạn chưa được phân công." actionLabel="Xem danh sách nhiệm vụ" onAction={() => onNavigate('assignment-list')} />;
   }
   if (!portfolio) {
-    return <StatePanel title="Chưa có hồ sơ cho nhiệm vụ này" message="Hồ sơ học tập của bạn đang được tạo. Hãy tải lại dữ liệu." actionLabel="Tải lại dữ liệu" onAction={() => void refreshAcademicData()} />;
+    return <StatePanel title="Chưa có hồ sơ cho nhiệm vụ này" message="Hồ sơ học tập của bạn đang được tạo. Hãy tải lại dữ liệu." actionLabel="Tải lại dữ liệu" onAction={() => void workspaceQuery.refetch()} />;
   }
 
   const saveStatus = autosaveStatus === 'saving'
@@ -1025,7 +1050,14 @@ export const PortfolioEditorView: React.FC<PortfolioEditorViewProps> = ({ assign
                             </div>
                             <button
                               type="button"
-                              onClick={() => void resolveFeedback(item.id)}
+                              onClick={() => {
+                                void studentAction.mutateAsync({ action: 'resolve_feedback', feedbackId: item.id })
+                                  .catch((error: unknown) => addToast({
+                                    type: 'error',
+                                    title: 'Không thể cập nhật góp ý',
+                                    message: error instanceof Error ? error.message : 'Vui lòng thử lại.'
+                                  }));
+                              }}
                               className={`flex items-center gap-1 rounded px-2 py-0.5 text-xs font-medium transition-colors ${
                                 item.resolved
                                   ? 'bg-emerald-100 text-emerald-800 font-bold'

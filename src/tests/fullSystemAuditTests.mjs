@@ -24,10 +24,12 @@ await test('FSA01: JWT signing prefers dedicated JWT_SECRET and keeps a bounded 
   assert(source.includes('decodedHeader?.alg !== "HS256"'), 'JWT header algorithm must be validated');
 });
 
-await test('FSA02: health exposes only JWT readiness, never a secret value', () => {
+await test('FSA02: health exposes JWT readiness source but never a secret value', () => {
   const source = read('api/health.ts');
-  assert(source.includes('authSecretConfigured()'));
+  assert(source.includes('authSecretStatus()'));
   assert(source.includes('jwtSecretConfigured'));
+  assert(source.includes('jwtSecretSource'));
+  assert(source.includes('dedicatedJwtSecret'));
   assert(!source.includes('process.env.JWT_SECRET'));
 });
 
@@ -108,6 +110,63 @@ await test('FSA10: admin user management persists detailed profiles and class as
   for (const token of ['newProfile', 'newClassCode', 'Hồ sơ người dùng', 'Mã học sinh', 'Tổ / bộ môn / đơn vị']) {
     assert(view.includes(token), `Admin UI missing detailed user token: ${token}`);
   }
+});
+
+await test('FSA11: student sessions no longer eagerly download the legacy academic snapshot', () => {
+  const provider = read('src/contexts/PortfolioContext.tsx');
+  assert(provider.includes("currentUser.role !== 'student'"), 'Student sessions must skip the legacy eager snapshot');
+  const editor = read('src/views/PortfolioEditorView.tsx');
+  assert(editor.includes('useStudentWorkspaceQuery'), 'Editor must use the scoped workspace query');
+  assert(!editor.includes('/api/academic/snapshot'), 'Editor must not call the mega snapshot directly');
+  assert(!editor.includes('refreshAcademicData'), 'Editor must not refresh the legacy mega snapshot');
+});
+
+await test('FSA12: student resource APIs are scoped to the authenticated student and one assignment when requested', () => {
+  const source = read('api/_lib/student-resources.js');
+  for (const token of [
+    "user?.role !== 'student'",
+    'p.student_id=$1',
+    "a.status='published'",
+    'a.public_id=$2',
+    'loadVersions(pool, portfolioIds, false)',
+    'loadVersions(pool, [row.portfolio_id], true)'
+  ]) assert(source.includes(token), `Missing student resource scope: ${token}`);
+  assert(source.includes('p.id portfolio_id, p.student_id'), 'Student identity must be selected explicitly for stable portfolio keys');
+});
+
+await test('FSA13: TanStack Query owns student overview/workspace server state', () => {
+  const queries = read('src/app/queries/studentAcademicQueries.ts');
+  for (const token of [
+    "['student-academic', 'overview']",
+    "['student-academic', 'workspace', assignmentId]",
+    "'/api/student/overview'",
+    '/api/student/workspace?assignmentId=',
+    "refetchOnMount: 'always'",
+    'invalidateQueries'
+  ]) assert(queries.includes(token), `Missing student query behavior: ${token}`);
+  const dashboard = read('src/views/v2/StudentDashboardV2.tsx');
+  const list = read('src/views/AssignmentListView.tsx');
+  assert(dashboard.includes('useStudentOverviewQuery'), 'Student dashboard must use overview query');
+  assert(list.includes('useStudentOverviewQuery'), 'Student assignment list must use overview query');
+});
+
+await test('FSA14: overview payload omits historical version bodies while workspace includes them', () => {
+  const source = read('api/_lib/student-resources.js');
+  assert(source.includes('loadVersions(pool, portfolioIds, false)'), 'Overview must omit version content');
+  assert(source.includes('loadVersions(pool, [row.portfolio_id], true)'), 'Workspace must include version content for diff/editor');
+  assert(source.includes("includeContent ? 'v.content_json' : 'NULL::jsonb AS content_json'"), 'Version content selection must be explicit');
+});
+
+await test('FSA15: student resource URLs reuse the existing snapshot function on Hobby deployments', () => {
+  const config = JSON.parse(read('vercel.json'));
+  const rewrites = config.rewrites || [];
+  const overview = rewrites.find(item => item.source === '/api/student/overview');
+  const workspace = rewrites.find(item => item.source === '/api/student/workspace');
+  assert(overview?.destination === '/api/academic/snapshot?scope=student-overview', 'Student overview rewrite is missing');
+  assert(workspace?.destination === '/api/academic/snapshot?scope=student-workspace', 'Student workspace rewrite is missing');
+  const gateway = read('api/academic/snapshot.ts');
+  assert(gateway.includes('scope === "student-overview"'), 'Snapshot gateway must dispatch student overview');
+  assert(gateway.includes('scope === "student-workspace"'), 'Snapshot gateway must dispatch student workspace');
 });
 
 const failed = results.filter(result => !result.ok);
