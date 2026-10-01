@@ -32,7 +32,7 @@ interface CommandItem {
 export const CommandPalette: React.FC<CommandPaletteProps> = ({ isOpen, onClose, onNavigate }) => {
   const currentUser = useAuthStore(state => state.currentUser);
   const compatibility = usePortfolio();
-  const overviewQuery = useStudentOverviewQuery(currentUser.role === 'student' && Boolean(currentUser.id));
+  const overviewQuery = useStudentOverviewQuery(isOpen && currentUser.role === 'student' && Boolean(currentUser.id));
   const assignments = currentUser.role === 'student' ? (overviewQuery.data?.assignments || []) : compatibility.assignments;
   const literatureTexts = currentUser.role === 'student' ? (overviewQuery.data?.literatureTexts || []) : compatibility.literatureTexts;
   const [query, setQuery] = useState('');
