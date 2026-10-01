@@ -46,13 +46,19 @@ async function jwtSecret() {
   return jwtSecretPromise;
 }
 
-export async function authSecretConfigured() {
+export async function authSecretStatus() {
+  const envValue = String(process.env.JWT_SECRET || "");
+  if (envValue.length >= 32) return { configured: true, source: "environment" };
   try {
     const value = await jwtSecret();
-    return value.length >= 32;
+    return { configured: value.length >= 32, source: value.length >= 32 ? "compatibility" : "missing" };
   } catch {
-    return false;
+    return { configured: false, source: "missing" };
   }
+}
+
+export async function authSecretConfigured() {
+  return (await authSecretStatus()).configured;
 }
 
 async function sign(payload) {
