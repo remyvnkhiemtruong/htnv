@@ -31,8 +31,8 @@ export const StudentAnalyticsView: React.FC<StudentAnalyticsViewProps> = ({ stud
   const currentUser = useAuthStore(state => state.currentUser);
   const compatibility = usePortfolio();
   const isStudent = currentUser.role === 'student';
-  const overviewQuery = useStudentOverviewQuery(isStudent && Boolean(currentUser.id) && !assignmentId);
-  const workspaceQuery = useStudentWorkspaceQuery(assignmentId, isStudent && Boolean(currentUser.id) && Boolean(assignmentId));
+  const overviewQuery = useStudentOverviewQuery(currentUser.id, isStudent && Boolean(currentUser.id) && !assignmentId);
+  const workspaceQuery = useStudentWorkspaceQuery(currentUser.id, assignmentId, isStudent && Boolean(currentUser.id) && Boolean(assignmentId));
   const studentWorkspace = workspaceQuery.data;
   const studentOverview = overviewQuery.data;
 
