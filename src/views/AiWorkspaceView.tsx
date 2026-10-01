@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { Alert, Badge, Button, PageHeader } from '../components/ui';
 import { useAuthStore } from '../app/store/useAuthStore';
+import { useTeacherOverviewQuery, useTeacherWorkspaceQuery } from '../app/queries/teacherAcademicQueries';
 import type { AcademicSnapshot, AiReviewRequest, PoeticAxisId } from '../types';
 import {
   ArrowPathIcon,
@@ -37,6 +38,7 @@ async function postAction(payload: unknown) {
 export const AiWorkspaceView: React.FC = () => {
   const currentUser = useAuthStore(state => state.currentUser);
   const canPublish = currentUser.role === 'ai';
+  const isTeacher = currentUser.role === 'teacher';
   const [snapshot, setSnapshot] = useState<AcademicSnapshot | null>(null);
   const [selectedId, setSelectedId] = useState('');
   const [response, setResponse] = useState('');
@@ -47,18 +49,41 @@ export const AiWorkspaceView: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [copiedPrompt, setCopiedPrompt] = useState(false);
 
-  const refresh = useCallback(async () => {
+  const {
+    data: teacherOverview,
+    error: teacherOverviewError,
+    isLoading: teacherOverviewLoading,
+    refetch: refetchTeacherOverview
+  } = useTeacherOverviewQuery(currentUser.id, isTeacher && Boolean(currentUser.id));
+
+  const refreshCompatibility = useCallback(async () => {
     const r = await fetch('/api/academic/snapshot', { credentials: 'include', cache: 'no-store' });
     const d = await r.json();
     if (!r.ok) throw new Error(d.message || 'Không thể tải hàng đợi');
     setSnapshot(d.snapshot);
   }, []);
 
-  useEffect(() => {
-    void refresh().catch(e => setMessage({ type: 'error', text: e.message }));
-  }, [refresh]);
+  const refreshOverview = useCallback(async () => {
+    if (isTeacher) {
+      const result = await refetchTeacherOverview();
+      if (result.error) throw result.error;
+      return;
+    }
+    await refreshCompatibility();
+  }, [isTeacher, refetchTeacherOverview, refreshCompatibility]);
 
-  const reviews = useMemo<AiReviewRequest[]>(() => snapshot?.aiReviews || [], [snapshot]);
+  useEffect(() => {
+    if (isTeacher) {
+      if (teacherOverviewError instanceof Error) setMessage({ type: 'error', text: teacherOverviewError.message });
+      return;
+    }
+    void refreshCompatibility().catch(e => setMessage({ type: 'error', text: e.message }));
+  }, [isTeacher, refreshCompatibility, teacherOverviewError]);
+
+  const reviews = useMemo<AiReviewRequest[]>(
+    () => isTeacher ? (teacherOverview?.aiReviews || []) : (snapshot?.aiReviews || []),
+    [isTeacher, snapshot, teacherOverview]
+  );
   const pendingCount = reviews.filter(x => x.status !== 'completed').length;
   const completedCount = reviews.filter(x => x.status === 'completed').length;
 
@@ -81,13 +106,51 @@ export const AiWorkspaceView: React.FC = () => {
     if (!selected && selectedId) setSelectedId('');
   }, [selected, selectedId]);
 
+  const teacherWorkspaceQuery = useTeacherWorkspaceQuery(
+    currentUser.id,
+    selected?.assignment_id || '',
+    selected?.student_id || '',
+    isTeacher && Boolean(selected)
+  );
+  const teacherWorkspace = teacherWorkspaceQuery.data;
+  const detailedSelected = isTeacher
+    ? (teacherWorkspace?.aiReviews.find(item => item.id === selected?.id) || selected)
+    : selected;
+
+  useEffect(() => {
+    if (!isTeacher || !detailedSelected) return;
+    setResponse(detailedSelected.response || '');
+  }, [detailedSelected?.id, detailedSelected?.response, isTeacher]);
+
+  const refresh = useCallback(async () => {
+    if (isTeacher) {
+      const tasks: Promise<unknown>[] = [refreshOverview()];
+      if (selected) tasks.push(teacherWorkspaceQuery.refetch());
+      await Promise.all(tasks);
+      return;
+    }
+    await refreshOverview();
+  }, [isTeacher, refreshOverview, selected, teacherWorkspaceQuery]);
+
   const portfolioKey = selected ? `port-${selected.student_id}-${selected.assignment_id}` : '';
-  const currentPortfolio = snapshot?.portfolios?.[portfolioKey];
+  const currentPortfolio = isTeacher ? teacherWorkspace?.portfolio : snapshot?.portfolios?.[portfolioKey];
   const currentVersion = currentPortfolio?.versions?.find(v => v.versionNumber === selected?.version_number);
-  const assignment = snapshot?.assignments?.find(a => a.id === selected?.assignment_id);
-  const literatureText = snapshot?.literatureTexts?.find(t => t.id === assignment?.textId);
-  const rubric = assignment ? (snapshot?.rubrics?.[assignment.rubricId] || snapshot?.rubric) : snapshot?.rubric;
-  const integrityError = Boolean(selected && (!currentPortfolio || !currentVersion));
+  const assignment = isTeacher
+    ? teacherWorkspace?.assignment
+    : snapshot?.assignments?.find(a => a.id === selected?.assignment_id);
+  const literatureText = isTeacher
+    ? teacherWorkspace?.literatureText || undefined
+    : snapshot?.literatureTexts?.find(t => t.id === assignment?.textId);
+  const rubric = isTeacher
+    ? teacherWorkspace?.rubric
+    : assignment
+      ? (snapshot?.rubrics?.[assignment.rubricId] || snapshot?.rubric)
+      : snapshot?.rubric;
+  const integrityError = Boolean(
+    selected &&
+    !(isTeacher && teacherWorkspaceQuery.isLoading) &&
+    (!currentPortfolio || !currentVersion)
+  );
 
   const copyFullStudentContextForChatGPT = async () => {
     if (!selected || !currentVersion || !canPublish) return;
@@ -108,7 +171,7 @@ export const AiWorkspaceView: React.FC = () => {
     const promptText = `Bạn là trợ lý học tập môn Ngữ văn theo phương pháp 6 trục thi pháp.
 Nhiệm vụ: ${assignment?.title || ''}
 Ngữ liệu: ${literatureText?.title || ''} (${literatureText?.author || ''})
-Yêu cầu: ${selected.prompt || assignment?.prompt || ''}
+Yêu cầu: ${detailedSelected?.prompt || assignment?.prompt || ''}
 
 BÀI LÀM CỦA HỌC SINH (${selected.student_name} - Phiên bản ${selected.version_number}):
 ${essayParts}
@@ -193,6 +256,15 @@ Hãy đưa ra nhận xét sư phạm mang tính gợi mở, phân tích cụ th�
       </div>
 
       {message && <Alert type={message.type} title={message.type === 'success' ? 'Thành công' : 'Có lỗi'}>{message.text}</Alert>}
+      {isTeacher && teacherOverviewLoading && reviews.length === 0 && (
+        <Alert type="info" title="Đang tải hàng đợi">Đang tải danh sách phản hồi AI trong phạm vi lớp được phân công.</Alert>
+      )}
+      {isTeacher && selected && teacherWorkspaceQuery.isLoading && !teacherWorkspace && (
+        <Alert type="info" title="Đang tải bài">Đang tải đúng phiên bản bất biến của học sinh đang chọn.</Alert>
+      )}
+      {isTeacher && teacherWorkspaceQuery.error && !teacherWorkspace && (
+        <Alert type="error" title="Không thể tải bài">{teacherWorkspaceQuery.error instanceof Error ? teacherWorkspaceQuery.error.message : 'Không thể tải workspace giáo viên.'}</Alert>
+      )}
       {integrityError && (
         <Alert type="error" title="Không thể mở bản đã nộp">
           Không tìm thấy phiên bản đã nộp của bài này. Không thể gửi phản hồi.
@@ -319,9 +391,9 @@ Hãy đưa ra nhận xét sư phạm mang tính gợi mở, phân tích cụ th�
                 )}
               </div>
 
-              {selected.prompt && (
+              {detailedSelected?.prompt && (
                 <div className="mt-4 rounded-lg border-l-3 border-sky-400 bg-sky-50/70 p-3.5 text-xs leading-relaxed text-slate-700">
-                  <strong className="text-sky-950 font-semibold">Yêu cầu:</strong> {selected.prompt}
+                  <strong className="text-sky-950 font-semibold">Yêu cầu:</strong> {detailedSelected?.prompt}
                 </div>
               )}
 

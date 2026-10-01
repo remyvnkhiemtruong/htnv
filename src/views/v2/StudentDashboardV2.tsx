@@ -38,7 +38,7 @@ const MetricTile: React.FC<MetricTileProps> = ({ label, value, note, tone = 'def
 
 export const StudentDashboardView: React.FC<{ onNavigate: (view: string, params?: any) => void }> = ({ onNavigate }) => {
   const user = useAuthStore(s => s.currentUser);
-  const overviewQuery = useStudentOverviewQuery(user.role === 'student' && Boolean(user.id));
+  const overviewQuery = useStudentOverviewQuery(user.id, user.role === 'student' && Boolean(user.id));
   const overview = overviewQuery.data;
   const assignments = overview?.assignments || [];
   const portfolios = overview?.portfolios || {};

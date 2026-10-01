@@ -224,14 +224,14 @@ export function App() {
   return (
     <AppErrorBoundary>
       <BrowserRouter>
-        <AuthProvider>
-          <PortfolioProvider>
-            <AppProviders>
+        <AppProviders>
+          <AuthProvider>
+            <PortfolioProvider>
               <SeasonalMouseExperience />
               <AppContent />
-            </AppProviders>
-          </PortfolioProvider>
-        </AuthProvider>
+            </PortfolioProvider>
+          </AuthProvider>
+        </AppProviders>
       </BrowserRouter>
     </AppErrorBoundary>
   );

@@ -1,5 +1,5 @@
 /// <reference types="node" />
-import { academicHealth } from './_lib/academic-v3.js';
+import { academicHealth } from './_lib/academic-core.js';
 import { authSecretStatus } from './auth/auth.js';
 
 const HEALTH_CACHE_MS = 30_000;

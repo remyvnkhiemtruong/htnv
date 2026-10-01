@@ -35,7 +35,7 @@ const loadReadIds = (userId: string) => {
 export const NotificationCenter: React.FC<NotificationCenterProps> = ({ onNavigate }) => {
   const currentUser = useAuthStore(state => state.currentUser);
   const { portfolios, aiReviews, rubricSubmissions } = usePortfolio();
-  const studentOverview = useStudentOverviewQuery(currentUser.role === 'student' && Boolean(currentUser.id));
+  const studentOverview = useStudentOverviewQuery(currentUser.id, currentUser.role === 'student' && Boolean(currentUser.id));
   const [open, setOpen] = useState(false);
   const [readIds, setReadIds] = useState<Set<string>>(() => loadReadIds(currentUser.id));
 

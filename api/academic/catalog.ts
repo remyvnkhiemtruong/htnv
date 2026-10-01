@@ -1,7 +1,7 @@
 /// <reference types="node" />
 import { randomUUID } from 'node:crypto';
 import { assertSameOrigin, authenticate, body, send } from '../auth/auth.js';
-import { createRubricVersion, saveLiteratureRevision } from '../_lib/academic-v3.js';
+import { createRubricVersion, saveLiteratureRevision } from '../_lib/academic-core.js';
 
 const AXES = ['plot_situation', 'character_detail', 'narrator_pov', 'space_time', 'language_tone_symbol', 'form_argument'];
 const LEVEL_LABELS: Record<number, string> = { 1: 'Chưa đạt', 2: 'Đạt', 3: 'Khá', 4: 'Xuất sắc' };

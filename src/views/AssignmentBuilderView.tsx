@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { usePortfolio } from '../contexts/PortfolioContext';
-import type { AcademicClass, PoeticAxisId } from '../types';
+import type { PoeticAxisId } from '../types';
 import { Alert, Badge, Button } from '../components/ui';
 import { POETIC_AXES } from '../data/seedData';
 import {
@@ -32,10 +32,9 @@ const STEPS = [
 ];
 
 export const AssignmentBuilderView: React.FC<Props> = ({ onNavigate }) => {
-  const { literatureTexts, rubric, rubrics, assignments, refreshAcademicData } = usePortfolio();
+  const { literatureTexts, rubric, rubrics, assignments, classes, refreshAcademicData } = usePortfolio();
   const texts = useMemo(() => literatureTexts.filter(t => t.isLatest !== false), [literatureTexts]);
   const rubricOptions = useMemo(() => Object.values(rubrics || {}), [rubrics]);
-  const [classes, setClasses] = useState<AcademicClass[]>([]);
   const [step, setStep] = useState(1);
   const [form, setForm] = useState({
     title: '',
@@ -54,20 +53,13 @@ export const AssignmentBuilderView: React.FC<Props> = ({ onNavigate }) => {
   const [message, setMessage] = useState('');
 
   useEffect(() => {
-    void fetch('/api/academic/snapshot', { credentials: 'include', cache: 'no-store' })
-      .then(r => r.json())
-      .then(d => {
-        const cs = d.snapshot?.classes || [];
-        setClasses(cs);
-        setForm(f => ({
-          ...f,
-          classId: cs.some((c: AcademicClass) => c.code === f.classId) ? f.classId : cs[0]?.code || '',
-          textId: texts.some(t => t.id === f.textId) ? f.textId : texts[0]?.id || '',
-          rubricId: rubricOptions.some(r => r.id === f.rubricId) ? f.rubricId : rubricOptions[0]?.id || ''
-        }));
-      })
-      .catch(() => {});
-  }, [texts, rubricOptions]);
+    setForm(current => ({
+      ...current,
+      classId: classes.some(item => item.code === current.classId) ? current.classId : classes[0]?.code || '',
+      textId: texts.some(item => item.id === current.textId) ? current.textId : texts[0]?.id || '',
+      rubricId: rubricOptions.some(item => item.id === current.rubricId) ? current.rubricId : rubricOptions[0]?.id || ''
+    }));
+  }, [classes, texts, rubricOptions]);
 
   useEffect(() => {
     if (!form.textId) return;

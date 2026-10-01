@@ -60,6 +60,15 @@ try {
   const workspace = await request('/api/student/workspace?assignmentId=smoke-invalid');
   record('student workspace requires authentication', workspace.status === 401, `HTTP ${workspace.status}`);
 
+  const teacherOverview = await request('/api/teacher/overview');
+  record('teacher overview requires authentication', teacherOverview.status === 401, `HTTP ${teacherOverview.status}`);
+
+  const teacherWorkspace = await request('/api/teacher/workspace?assignmentId=smoke-invalid&studentId=00000000-0000-4000-8000-000000000000');
+  record('teacher workspace requires authentication', teacherWorkspace.status === 401, `HTTP ${teacherWorkspace.status}`);
+
+  const teacherLiterature = await request('/api/teacher/literature');
+  record('teacher literature requires authentication', teacherLiterature.status === 401, `HTTP ${teacherLiterature.status}`);
+
   if (email && password) {
     const login = await request('/api/auth/login', {
       method: 'POST',
@@ -86,6 +95,33 @@ try {
           studentOverview.status === 200 && Array.isArray(body?.overview?.assignments),
           `HTTP ${studentOverview.status}`
         );
+      }
+
+      if (sessionBody?.user?.role === 'teacher') {
+        const scopedOverview = await request('/api/teacher/overview', { headers: { Cookie: cookie } });
+        const body = await json(scopedOverview);
+        record(
+          'authenticated teacher overview succeeds',
+          scopedOverview.status === 200 && Array.isArray(body?.overview?.assignments),
+          `HTTP ${scopedOverview.status}`
+        );
+
+        const firstPortfolio = body?.overview?.portfolios
+          ? Object.values(body.overview.portfolios)[0]
+          : null;
+        if (firstPortfolio?.assignmentId && firstPortfolio?.studentId) {
+          const params = new URLSearchParams({
+            assignmentId: firstPortfolio.assignmentId,
+            studentId: firstPortfolio.studentId
+          });
+          const scopedWorkspace = await request(`/api/teacher/workspace?${params.toString()}`, { headers: { Cookie: cookie } });
+          const workspaceBody = await json(scopedWorkspace);
+          record(
+            'authenticated teacher workspace succeeds',
+            scopedWorkspace.status === 200 && workspaceBody?.workspace?.portfolio?.studentId === firstPortfolio.studentId,
+            `HTTP ${scopedWorkspace.status}`
+          );
+        }
       }
     } else if (login.status === 200) {
       record('login returns session cookie', false, 'missing Set-Cookie');

@@ -132,7 +132,10 @@ Mật khẩu không được lưu trong repository. Admin có thể tạo/reset 
 - `POST /api/auth/change-password`
 - `GET /api/student/overview` — dữ liệu tổng quan chỉ của học sinh đang đăng nhập; không tải body các version cũ
 - `GET /api/student/workspace?assignmentId=...` — đúng một workspace bài viết, gồm draft/version/feedback/rubric liên quan
-- `GET /api/academic/snapshot` — compatibility snapshot theo RBAC cho các phân hệ chưa migrate
+- `GET /api/teacher/overview` — hàng đợi/lớp/nhiệm vụ của giáo viên, chỉ tải metadata version và không tải nội dung bài
+- `GET /api/teacher/workspace?assignmentId=...&studentId=...` — đúng một hồ sơ cần review, gồm immutable version bodies, feedback, AI review, REF1 và rubric
+- `GET /api/teacher/literature` — kho revision ngữ liệu đầy đủ dành cho màn hình quản lí ngữ liệu
+- `GET /api/academic/snapshot` — compatibility snapshot theo RBAC cho peer/researcher/admin/AI và các bề mặt chưa migrate
 - `POST /api/academic/action` — draft/version/feedback/rubric/assignment/AI/reflection
 - `GET /api/admin/users?scope=users|classes|class-members|audit|stats` — admin-only, phân trang/filter server-side
 - `POST /api/admin/manage` — create/update user, class membership, bulk status/class assignment, import preview/execute
@@ -145,6 +148,17 @@ Mật khẩu không được lưu trong repository. Admin có thể tạo/reset 
 - Teacher Review Inbox ưu tiên bài cần giáo viên xem, góp ý AI đang chờ và bài đã có REF1 chờ Rubric; hỗ trợ tìm kiếm và lọc.
 - Notification Center trên header tổng hợp phản hồi chưa xử lý/Rubric cho học sinh và AI/Rubric/teacher action cho giáo viên. Trạng thái đã đọc chỉ là preference UI lưu cục bộ theo user, không thay đổi trạng thái học thuật.
 - Batch 3 không thêm Vercel Function và không cần migration schema mới; `feedbacks.anchor_json` đã tồn tại.
+
+## Architecture & Performance — Batch 4
+
+- Backend học thuật dùng hai module chuẩn: `academic-core.js` cho nghiệp vụ lõi và `academic-service.js` cho workflow. Chuỗi implementation cũ `academic.js → academic-v2.js → academic-v3.js → academic-workflow-v4.js` đã được loại khỏi runtime và repository.
+- Student và Teacher server state dùng TanStack Query với query key gắn `userId`, tránh tái sử dụng cache của phiên đăng nhập trước.
+- Teacher overview chỉ trả metadata cần cho dashboard/inbox/analytics tổng quan. Nội dung `portfolio_versions.content_json` chỉ được lấy khi giáo viên mở đúng học sinh+nhiệm vụ.
+- Teacher Review, Version Diff, tiến độ học sinh và chế độ giáo viên trong AI Workspace đều lấy exact workspace thay vì dựa vào mega snapshot.
+- Toàn văn ngữ liệu chỉ tải khi mở màn hình quản lí ngữ liệu; dashboard giáo viên chỉ nhận bản tóm tắt revision.
+- Các URL `/api/student/*` và `/api/teacher/*` được rewrite vào function học thuật hiện có, nên không tăng số Vercel Functions.
+- Compatibility snapshot vẫn được giữ cho peer/researcher/admin/AI ở những bề mặt chưa migrate; không còn là đường tải mặc định cho Student/Teacher.
+- Schema provenance được quản lí bằng migration tường minh. Batch 4 có migration bổ sung FK `version_feedback_links.feedback_id → feedbacks.id`; migration này phải đi qua quy trình Neon branch/validation trước khi áp dụng production.
 
 ## PostgreSQL
 
@@ -185,7 +199,7 @@ Smoke test production:
 npm run smoke:production
 ```
 
-Có thể đặt `REQUIRE_DEDICATED_JWT_SECRET=true` để smoke test thất bại nếu production vẫn đang dùng compatibility fallback. Hai URL student resource được rewrite vào function academic hiện có để không tăng function count trên Vercel Hobby.
+Có thể đặt `REQUIRE_DEDICATED_JWT_SECRET=true` để smoke test thất bại nếu production vẫn đang dùng compatibility fallback. Các URL student/teacher resource được rewrite vào function academic hiện có để không tăng function count trên Vercel Hobby.
 
 ## Import tài khoản quản trị
 

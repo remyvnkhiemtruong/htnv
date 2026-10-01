@@ -43,6 +43,18 @@
       "destination": "/api/academic/snapshot?scope=student-workspace"
     },
     {
+      "source": "/api/teacher/overview",
+      "destination": "/api/academic/snapshot?scope=teacher-overview"
+    },
+    {
+      "source": "/api/teacher/workspace",
+      "destination": "/api/academic/snapshot?scope=teacher-workspace"
+    },
+    {
+      "source": "/api/teacher/literature",
+      "destination": "/api/academic/snapshot?scope=teacher-literature"
+    },
+    {
       "source": "/((?!api(?:/|$)).*)",
       "destination": "/index.html"
     }

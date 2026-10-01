@@ -114,9 +114,9 @@ test('Hồ sơ cá nhân mở rộng được lưu server-side', () => {
   assert(read('src/components/layout/AppHeader.tsx').includes("method:'PATCH'"));
 });
 test('Portfolio version được khóa bất biến ở PostgreSQL', () => {
-  const academic = read('api/_lib/academic.js');
-  assert(academic.includes('prevent_portfolio_version_mutation'));
-  assert(academic.includes('BEFORE UPDATE OR DELETE ON portfolio_versions'));
+  const migration = read('scripts/migrations/20261002_academic_core_contracts.sql');
+  assert(migration.includes('prevent_portfolio_version_mutation'));
+  assert(migration.includes('BEFORE UPDATE OR DELETE ON portfolio_versions'));
 });
 test('PostgreSQL connection ép TLS verify-full', () => {
   assert(read('api/_lib/db.js').includes('sslmode=verify-full'));
@@ -182,115 +182,102 @@ test('Không còn simulated API service cũ', () => {
 // -------------------------------------------------------------
 
 test('TC01: autosave update draft, không tạo version mới, không tạo ai request', () => {
-  const academic = read('api/_lib/academic.js');
-  assert(academic.includes('action === "save_draft"'), 'Thiếu handler save_draft');
-  const startIndex = academic.indexOf('action === "save_draft"');
-  const endIndex = academic.indexOf('action === "create_version"');
+  const academic = read('api/_lib/academic-core.js');
+  const startIndex = academic.indexOf('async function saveDraft');
+  const endIndex = academic.indexOf('async function createVersion');
   const saveDraftCode = academic.slice(startIndex, endIndex);
-  assert(saveDraftCode.includes('portfolio_drafts'), 'save_draft phải lưu vào portfolio_drafts');
-  assert(!saveDraftCode.includes('INSERT INTO portfolio_versions'), 'save_draft không được tạo record trong portfolio_versions');
-  assert(!saveDraftCode.includes('INSERT INTO ai_review_requests'), 'save_draft không được tạo record trong ai_review_requests');
+  assert(saveDraftCode.includes('portfolio_drafts'), 'saveDraft phải lưu vào portfolio_drafts');
+  assert(!saveDraftCode.includes('INSERT INTO portfolio_versions'), 'saveDraft không được tạo immutable version');
+  assert(!saveDraftCode.includes('INSERT INTO ai_review_requests'), 'saveDraft không được tạo AI review');
 });
 
 test('TC02: submit version tạo đúng 1 immutable version, sequence tăng đúng 1', () => {
-  const academic = read('api/_lib/academic.js');
-  assert(academic.includes('action === "create_version"'), 'Thiếu handler create_version');
-  const startIndex = academic.indexOf('action === "create_version"');
-  const endIndex = academic.indexOf('action === "ai_complete_review"');
+  const academic = read('api/_lib/academic-core.js');
+  const startIndex = academic.indexOf('async function createVersion');
+  const endIndex = academic.indexOf('async function aiCompleteReview');
   const code = academic.slice(startIndex, endIndex);
-  assert(code.includes('sequence_no'), 'create_version phải tính sequence_no');
-  assert(code.includes('sequence_no DESC'), 'create_version phải đọc sequence_no cao nhất từ server-side');
-  assert(code.includes('nextSeq = prevVersion ? (Number(prevVersion.sequence_no) || 0) + 1 : 1'), 'sequence_no phải tăng đúng 1');
-  assert(code.includes('content_checksum'), 'create_version phải tính content_checksum');
-  assert(code.includes('INSERT INTO portfolio_versions'), 'create_version phải insert vào portfolio_versions');
+  assert(code.includes('ORDER BY sequence_no DESC'), 'createVersion phải đọc sequence_no cao nhất');
+  assert(code.includes('nextSeq = prev ? Number(prev.sequence_no || 0) + 1 : 1'), 'sequence_no phải tăng đúng 1');
+  assert(code.includes('content_checksum'), 'createVersion phải tính checksum');
+  assert(code.includes('INSERT INTO portfolio_versions'), 'createVersion phải insert immutable version');
 });
 
 test('TC03: submit version tự động tạo đúng 1 ai_review_requests status=pending', () => {
-  const academic = read('api/_lib/academic.js');
-  const startIndex = academic.indexOf('action === "create_version"');
-  const endIndex = academic.indexOf('action === "ai_complete_review"');
-  const code = academic.slice(startIndex, endIndex);
-  assert(code.includes('INSERT INTO ai_review_requests'), 'create_version phải tạo ai_review_requests');
-  assert(code.includes("'submitted_waiting_ai'"), 'portfolio status phải chuyển thành submitted_waiting_ai');
+  const academic = read('api/_lib/academic-core.js');
+  const code = academic.slice(academic.indexOf('async function createVersion'), academic.indexOf('async function aiCompleteReview'));
+  assert(code.includes('INSERT INTO ai_review_requests'), 'createVersion phải tạo ai_review_requests');
+  assert(code.includes("'submitted_waiting_ai'"), 'portfolio status phải chuyển submitted_waiting_ai');
 });
 
 test('TC04: retry submit cùng submission_key trả về version cũ, không nhân đôi', () => {
-  const academic = read('api/_lib/academic.js');
-  const startIndex = academic.indexOf('action === "create_version"');
-  const endIndex = academic.indexOf('action === "ai_complete_review"');
-  const code = academic.slice(startIndex, endIndex);
-  assert(code.includes('submission_key = $2'), 'create_version phải kiểm tra submission_key để đảm bảo idempotency');
-  assert(code.includes('isIdempotentRetry: true'), 'Nếu trùng submission_key, trả về version đã tạo không nhân đôi');
+  const academic = read('api/_lib/academic-core.js');
+  const code = academic.slice(academic.indexOf('async function createVersion'), academic.indexOf('async function aiCompleteReview'));
+  assert(code.includes('submission_key=$2'), 'createVersion phải kiểm tra submission_key');
+  assert(code.includes('isIdempotentRetry: true'), 'Retry cùng key phải trả version đã tạo');
 });
 
-test('TC05: ai_complete_review chỉ lưu proposal, không tạo feedback cho học sinh', () => {
-  const academic = read('api/_lib/academic.js');
-  const startIndex = academic.indexOf('action === "ai_complete_review"');
-  const endIndex = academic.indexOf('action === "teacher_review_ai"');
-  const code = academic.slice(startIndex, endIndex);
-  assert(!code.includes('INSERT INTO feedbacks'), 'ai_complete_review tuyệt đối không được tạo feedback trực tiếp cho học sinh');
-  assert(code.includes("teacher_review_status = 'pending'"), 'ai_complete_review phải đặt teacher_review_status = pending');
-  assert(code.includes("'ai_proposed_waiting_teacher'"), 'portfolio status phải chuyển sang ai_proposed_waiting_teacher');
+test('TC05: ai_complete_review xuất bản feedback AI cho học sinh ngay', () => {
+  const workflow = read('api/_lib/academic-service.js');
+  const code = workflow.slice(workflow.indexOf('async function aiCompleteReview'), workflow.indexOf('async function teacherReviewAi'));
+  assert(code.includes('INSERT INTO feedbacks'), 'AI complete phải tạo feedback hiển thị cho học sinh');
+  assert(code.includes("'ai'"), 'Feedback phải giữ author_role=ai');
+  assert(code.includes("teacher_review_status='pending'"), 'Giáo viên vẫn có hàng đợi kiểm tra');
+  assert(code.includes('visibleToStudent: true'), 'Kết quả phải được đánh dấu hiển thị cho học sinh');
 });
 
-test('TC06: teacher duyệt approved tạo feedback author_role=teacher', () => {
-  const academic = read('api/_lib/academic.js');
-  const startIndex = academic.indexOf('action === "teacher_review_ai"');
-  const endIndex = academic.indexOf('action === "add_feedback"');
-  const code = academic.slice(startIndex, endIndex);
-  assert(code.includes('decision === "approved"'), 'Phải có logic decision approved');
-  assert(code.includes('INSERT INTO feedbacks'), 'Phải insert vào feedbacks');
-  assert(code.includes("'teacher'"), 'Feedback được tạo phải có author_role là teacher');
+test('TC06: teacher approved không nhân đôi feedback AI thành feedback giáo viên', () => {
+  const workflow = read('api/_lib/academic-service.js');
+  const code = workflow.slice(workflow.indexOf('async function teacherReviewAi'), workflow.indexOf('async function saveReflection'));
+  assert(code.includes("const finalResponse = decision === 'revised' ? cleanTrimmed(input.finalResponse, 100000) : ''"), 'Approved/rejected không được tạo nội dung feedback giáo viên');
+  assert(code.includes("if (decision === 'revised' && finalResponse)"), 'Chỉ revised mới tạo feedback giáo viên bổ sung');
 });
 
-test('TC07: teacher duyệt revised với text sửa tạo feedback đúng text đã sửa', () => {
-  const academic = read('api/_lib/academic.js');
-  const startIndex = academic.indexOf('action === "teacher_review_ai"');
-  const endIndex = academic.indexOf('action === "add_feedback"');
-  const code = academic.slice(startIndex, endIndex);
-  assert(code.includes('decision === "revised"'), 'Phải có logic decision revised');
-  assert(code.includes('finalResponse'), 'Phải lưu final_response đã sửa');
+test('TC07: teacher revised tạo feedback giáo viên riêng có provenance', () => {
+  const workflow = read('api/_lib/academic-service.js');
+  const code = workflow.slice(workflow.indexOf('async function teacherReviewAi'), workflow.indexOf('async function saveReflection'));
+  assert(code.includes("decision === 'revised' && finalResponse"), 'Phải có nhánh revised');
+  assert(code.includes("source: 'teacher_revision_of_ai'"), 'Feedback bổ sung phải lưu provenance bản sửa');
+  assert(code.includes('sourceAiReviewId: reviewId'), 'Feedback bổ sung phải liên kết review AI nguồn');
+  assert(code.includes("'teacher'"), 'Feedback bổ sung phải có author_role=teacher');
 });
 
-test('TC08: teacher rejected không gửi text AI cho học sinh', () => {
-  const academic = read('api/_lib/academic.js');
-  const startIndex = academic.indexOf('action === "teacher_review_ai"');
-  const endIndex = academic.indexOf('action === "add_feedback"');
-  const code = academic.slice(startIndex, endIndex);
-  assert(code.includes('decision === "rejected"'), 'Phải có logic decision rejected');
-  assert(code.includes('if (finalResponse)'), 'Chỉ insert feedback khi finalResponse có nội dung, rejected để trống');
+test('TC08: teacher rejected không xóa feedback AI đã công bố', () => {
+  const workflow = read('api/_lib/academic-service.js');
+  const code = workflow.slice(workflow.indexOf('async function teacherReviewAi'), workflow.indexOf('async function saveReflection'));
+  assert(code.includes("decision === 'revised' && finalResponse"), 'Rejected không đi qua nhánh tạo bản sửa');
+  assert(!code.includes('DELETE FROM feedbacks'), 'Rejected không được xóa feedback AI đã gửi');
+  assert(code.includes("status='feedback_received'"), 'Workflow phải thoát trạng thái chờ duyệt');
 });
 
-test('TC09: học sinh chỉ xem được feedback của chính mình', () => {
-  const academic = read('api/_lib/academic.js');
-  assert(academic.includes('WHERE p.student_id = $1'), 'Snapshot học sinh phải giới hạn WHERE p.student_id = $1');
+test('TC09: học sinh chỉ xem feedback của chính mình', () => {
+  const student = read('api/_lib/student-resources.js');
+  assert(student.includes('WHERE p.student_id=$1'), 'Student resource phải scope theo authenticated user');
 });
 
-test('TC10: học sinh không xem được ai_review_requests', () => {
-  const academic = read('api/_lib/academic.js');
-  assert(academic.includes('role === "student"'), 'Có rẽ nhánh role student');
-  const startIndex = academic.indexOf('role === "student"');
-  const endIndex = academic.indexOf('role === "peer"');
-  const studentCode = academic.slice(startIndex, endIndex);
-  assert(studentCode.includes('aiReviewsQuery = { rows: [] }'), 'Học sinh không được nhận danh sách ai_review_requests');
+test('TC10: student resource không trả ai_review_requests', () => {
+  const student = read('api/_lib/student-resources.js');
+  const overview = student.slice(student.indexOf('export async function getStudentOverview'), student.indexOf('export async function getStudentWorkspace'));
+  assert(!overview.includes('aiReviews:'), 'Student overview không được trả ai_review_requests');
 });
 
 test('TC11: giáo viên chỉ thấy lớp được phân công', () => {
-  const academic = read('api/_lib/academic.js');
-  assert(academic.includes("JOIN class_members cm ON cm.class_id = c.id AND cm.user_id = $1 AND cm.member_role = 'teacher'"), 'Giáo viên chỉ thấy lớp mà mình là giáo viên phụ trách');
+  const teacher = read('api/_lib/teacher-resources.js');
+  assert(teacher.includes("mine.user_id=$1 AND mine.member_role='teacher'"), 'Teacher overview phải scope theo class membership');
 });
 
-test('TC12: giáo viên không thấy assignment/portfolio của lớp khác', () => {
-  const academic = read('api/_lib/academic.js');
-  assert(academic.includes('WHERE a.class_id = ANY($1::uuid[])'), 'Giáo viên chỉ thấy portfolio thuộc các lớp được phân công');
+test('TC12: teacher workspace không thấy assignment lớp khác', () => {
+  const teacher = read('api/_lib/teacher-resources.js');
+  const workspace = teacher.slice(teacher.indexOf('export async function getTeacherWorkspace'), teacher.indexOf('export async function getTeacherLiteratureCatalog'));
+  assert(workspace.includes("mine.user_id=$1 AND mine.member_role='teacher'"), 'Teacher workspace phải xác thực lớp trước khi lấy portfolio');
+  assert(workspace.includes('WHERE a.public_id=$2'), 'Teacher workspace phải khóa đúng assignment');
 });
 
-test('TC13: researcher snapshot không chứa student id/name/email/phone/class code thật', () => {
-  const academic = read('api/_lib/academic.js');
-  assert(academic.includes('role === "researcher"'), 'Có kiểm tra role researcher');
-  assert(academic.includes('researcherPseudonym('), 'Researcher snapshot phải dùng researcherPseudonym');
-  assert(academic.includes('anonymizeCohort('), 'Researcher snapshot phải dùng anonymizeCohort');
-  assert(academic.includes('usersQuery = { rows: [] }'), 'Researcher snapshot không được trả về danh sách tài khoản người dùng');
+test('TC13: researcher snapshot không chứa PII học sinh', () => {
+  const academic = read('api/_lib/academic-core.js');
+  assert(academic.includes("const researcher = role === 'researcher'"), 'Có nhánh researcher');
+  assert(academic.includes("pseudonym('HS', row.student_id)"), 'Researcher phải dùng pseudonym học sinh');
+  assert(academic.includes("pseudonym('COHORT', row.class_code)"), 'Researcher phải ẩn danh lớp/cohort');
+  assert(academic.includes("if (role === 'admin')"), 'Danh sách user thật chỉ được dựng cho admin');
 });
 
 test('TC14: pseudonym researcher là stable qua nhiều lần query', () => {
@@ -305,18 +292,20 @@ test('TC14: pseudonym researcher là stable qua nhiều lần query', () => {
 });
 
 test('TC15: peer chỉ thấy bài được gán', () => {
-  const academic = read('api/_lib/academic.js');
-  assert(academic.includes('JOIN peer_review_assignments pra ON pra.assignment_id = p.assignment_id AND pra.student_id = p.student_id AND pra.reviewer_id = $1'), 'Peer chỉ thấy bài có trong peer_review_assignments');
+  const academic = read('api/_lib/academic-core.js');
+  assert(academic.includes('async function exactPeerScope'), 'Phải có exact peer scope');
+  assert(academic.includes('pra.reviewer_id=$1'), 'Peer scope phải khóa theo reviewer');
+  assert(academic.includes('v.id=pra.version_id AND v.portfolio_id=p.id'), 'Peer phải gắn đúng immutable version');
 });
 
 test('TC16: peer không thấy bài ngoài phạm vi', () => {
-  const academic = read('api/_lib/academic.js');
-  assert(academic.includes('PEER_ASSIGNMENT_FORBIDDEN'), 'Peer đánh giá ngoài phạm vi phải bị từ chối với PEER_ASSIGNMENT_FORBIDDEN');
+  const academic = read('api/_lib/academic-core.js');
+  assert(academic.includes('PEER_ASSIGNMENT_FORBIDDEN'), 'Peer ngoài phạm vi phải bị từ chối');
 });
 
-test('TC17: student submit rubric cho học sinh khác bị 403', () => {
-  const academic = read('api/_lib/academic.js');
-  assert(academic.includes('FORBIDDEN_STUDENT_RUBRIC'), 'Học sinh chấm bài học sinh khác phải bị chặn với FORBIDDEN_STUDENT_RUBRIC');
+test('TC17: student submit rubric luôn khóa studentId về chính tài khoản', () => {
+  const academic = read('api/_lib/academic-core.js');
+  assert(academic.includes("const targetStudentId = user.role === 'student' ? user.id : cleanTrimmed(input.studentId, 80)"), 'Student rubric phải bỏ qua studentId khác do client gửi');
 });
 
 test('TC18: teacher review reset rubric score khi đổi học sinh', () => {
@@ -343,19 +332,19 @@ test('TC20: text diff phát hiện đúng added/deleted/unchanged trên tiếng 
 });
 
 test('TC21: V0 prediction stage lưu đúng stage=prediction và tự động vào AI queue', () => {
-  const academic = read('api/_lib/academic.js');
-  assert(academic.includes('stage === "prediction"'), 'Có hỗ trợ stage=prediction');
+  const academic = read('api/_lib/academic-core.js');
+  assert(academic.includes("requestedStage === 'prediction'"), 'Có hỗ trợ stage=prediction');
   const modal = read('src/components/versioning/CreateVersionModal.tsx');
   assert(modal.includes("'prediction'"), 'CreateVersionModal có hỗ trợ stage prediction');
 });
 
 test('TC22: V2+ submit yêu cầu bắt buộc revision_reason', () => {
-  const academic = read('api/_lib/academic.js');
+  const academic = read('api/_lib/academic-core.js');
   assert(academic.includes('REVISION_REASON_REQUIRED'), 'V2+ thiếu revision_reason phải báo lỗi REVISION_REASON_REQUIRED');
 });
 
 test('TC23: submit version lưu đúng confidence 1–5', () => {
-  const academic = read('api/_lib/academic.js');
+  const academic = read('api/_lib/academic-core.js');
   assert(academic.includes('INVALID_CONFIDENCE'), 'Confidence ngoài khoảng 1-5 phải báo INVALID_CONFIDENCE');
 });
 

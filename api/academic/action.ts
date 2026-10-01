@@ -1,7 +1,7 @@
 /// <reference types="node" />
 import { randomUUID } from "node:crypto";
 import { authenticate, body, send } from "../auth/auth.js";
-import { academicAction } from "../_lib/academic-workflow-v4.js";
+import { academicAction } from "../_lib/academic-service.js";
 import { normalizeAcademicActionInput } from "../_lib/content-compat.js";
 
 const AXES = ["plot_situation", "character_detail", "narrator_pov", "space_time", "language_tone_symbol", "form_argument"];

@@ -1,7 +1,7 @@
 /// <reference types="node" />
 import { randomBytes, scryptSync } from 'node:crypto';
 import { assertSameOrigin, authenticate, body, send } from '../auth/auth.js';
-import { emptyDraft } from '../_lib/academic-v3.js';
+import { emptyDraft } from '../_lib/academic-core.js';
 import { getPool } from '../_lib/db.js';
 
 const allowedRoles = ['student', 'teacher', 'peer', 'researcher', 'admin', 'ai'];

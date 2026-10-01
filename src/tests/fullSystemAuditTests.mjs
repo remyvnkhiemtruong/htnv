@@ -112,9 +112,9 @@ await test('FSA10: admin user management persists detailed profiles and class as
   }
 });
 
-await test('FSA11: student sessions no longer eagerly download the legacy academic snapshot', () => {
+await test('FSA11: student and teacher sessions no longer eagerly download the legacy academic snapshot', () => {
   const provider = read('src/contexts/PortfolioContext.tsx');
-  assert(provider.includes("currentUser.role !== 'student'"), 'Student sessions must skip the legacy eager snapshot');
+  assert(provider.includes("!['student', 'teacher'].includes(currentUser.role)"), 'Student and teacher sessions must skip the legacy eager snapshot');
   const editor = read('src/views/PortfolioEditorView.tsx');
   assert(editor.includes('useStudentWorkspaceQuery'), 'Editor must use the scoped workspace query');
   assert(!editor.includes('/api/academic/snapshot'), 'Editor must not call the mega snapshot directly');
@@ -137,8 +137,8 @@ await test('FSA12: student resource APIs are scoped to the authenticated student
 await test('FSA13: TanStack Query owns student overview/workspace server state', () => {
   const queries = read('src/app/queries/studentAcademicQueries.ts');
   for (const token of [
-    "['student-academic', 'overview']",
-    "['student-academic', 'workspace', assignmentId]",
+    "['student-academic', userId, 'overview']",
+    "['student-academic', userId, 'workspace', assignmentId]",
     "'/api/student/overview'",
     '/api/student/workspace?assignmentId=',
     "refetchOnMount: 'always'",
@@ -269,7 +269,7 @@ await test('FSA24: student draft recovery uses IndexedDB and explicit offline/co
 
 await test('FSA25: anchored feedback stores immutable text range context and can reopen it', () => {
   const types = read('src/types/index.ts');
-  const api = read('api/_lib/academic-v3.js');
+  const api = read('api/_lib/academic-core.js');
   const student = read('api/_lib/student-resources.js');
   const review = read('src/views/TeacherReviewView.tsx');
   const editor = read('src/views/PortfolioEditorView.tsx');
@@ -305,6 +305,89 @@ await test('FSA27: teacher dashboard uses a searchable prioritized review inbox'
   for (const token of ["'priority'", "'ai'", "'rubric'", "'all'", 'setSearch', 'priority: 1', "onNavigate('teacher-review'"]) {
     assert(inbox.includes(token), `Teacher review inbox behavior missing: ${token}`);
   }
+});
+
+await test('FSA28: teacher overview and workspace are scoped resources without a new Vercel function', () => {
+  const config = JSON.parse(read('vercel.json'));
+  const rewrites = config.rewrites || [];
+  const overview = rewrites.find(item => item.source === '/api/teacher/overview');
+  const workspace = rewrites.find(item => item.source === '/api/teacher/workspace');
+  const literature = rewrites.find(item => item.source === '/api/teacher/literature');
+  assert(overview?.destination === '/api/academic/snapshot?scope=teacher-overview');
+  assert(workspace?.destination === '/api/academic/snapshot?scope=teacher-workspace');
+  assert(literature?.destination === '/api/academic/snapshot?scope=teacher-literature');
+  const gateway = read('api/academic/snapshot.ts');
+  for (const scope of ['teacher-overview','teacher-workspace','teacher-literature']) {
+    assert(gateway.includes(`scope === "${scope}"`), `Missing teacher gateway scope: ${scope}`);
+  }
+});
+
+await test('FSA29: teacher overview omits version bodies and exact workspace restores them', () => {
+  const resource = read('api/_lib/teacher-resources.js');
+  assert(resource.includes('mapVersion(row, false)'), 'Teacher overview must omit content_json bodies');
+  assert(resource.includes('mapVersion(row, true)'), 'Teacher workspace must include immutable version bodies');
+  assert(resource.includes("mine.user_id=$1 AND mine.member_role='teacher'"), 'Teacher resources must be class scoped');
+  assert(resource.includes('WHERE a.public_id=$2'), 'Workspace must resolve one assignment');
+  assert(resource.includes('p.student_id=$2'), 'Workspace must resolve one student');
+});
+
+await test('FSA30: teacher server state uses user-isolated TanStack Query keys', () => {
+  const queries = read('src/app/queries/teacherAcademicQueries.ts');
+  for (const token of [
+    "['teacher-academic', userId, 'overview']",
+    "['teacher-academic', userId, 'workspace', assignmentId, studentId]",
+    "['teacher-academic', userId, 'literature']",
+    "'/api/teacher/overview'",
+    "'/api/teacher/literature'",
+    'invalidateQueries'
+  ]) assert(queries.includes(token), `Missing teacher query behavior: ${token}`);
+  const studentQueries = read('src/app/queries/studentAcademicQueries.ts');
+  assert(studentQueries.includes("['student-academic', userId, 'overview']"), 'Student overview cache must be user isolated');
+  assert(studentQueries.includes("['student-academic', userId, 'workspace', assignmentId]"), 'Student workspace cache must be user isolated');
+});
+
+await test('FSA31: teacher detail screens fetch one exact workspace instead of version bodies from overview', () => {
+  const review = read('src/views/TeacherReviewView.tsx');
+  const diff = read('src/views/VersionDiffView.tsx');
+  const analytics = read('src/views/StudentAnalyticsView.tsx');
+  const ai = read('src/views/AiWorkspaceView.tsx');
+  for (const [name, source] of [['review',review],['diff',diff],['analytics',analytics],['ai',ai]]) {
+    assert(source.includes('useTeacherWorkspaceQuery'), `${name} must request exact teacher workspace`);
+  }
+});
+
+await test('FSA32: assignment builder consumes scoped class overview instead of mega snapshot', () => {
+  const builder = read('src/views/AssignmentBuilderView.tsx');
+  assert(builder.includes('classes, refreshAcademicData'), 'Assignment builder must consume classes from scoped teacher context');
+  assert(!builder.includes("fetch('/api/academic/snapshot'"), 'Assignment builder must not fetch mega snapshot');
+});
+
+await test('FSA33: runtime academic imports point only at canonical core/service modules', () => {
+  const runtimeFiles = [
+    'api/academic/action.ts',
+    'api/academic/snapshot.ts',
+    'api/academic/catalog.ts',
+    'api/health.ts',
+    'api/admin/manage.ts'
+  ];
+  for (const path of runtimeFiles) {
+    const source = read(path);
+    assert(!source.includes('academic-v2.js'), `${path} still imports v2`);
+    assert(!source.includes('academic-v3.js'), `${path} still imports v3`);
+    assert(!source.includes('academic-workflow-v4.js'), `${path} still imports workflow-v4`);
+  }
+  assert(read('api/academic/action.ts').includes('academic-service.js'));
+  assert(read('api/academic/snapshot.ts').includes('academic-service.js'));
+  assert(read('api/health.ts').includes('academic-core.js'));
+});
+
+await test('FSA34: retired academic implementation files are removed', () => {
+  for (const path of [
+    'api/_lib/academic.js',
+    'api/_lib/academic-v2.js',
+    'api/_lib/academic-v3.js',
+    'api/_lib/academic-workflow-v4.js'
+  ]) assert(!fs.existsSync(path), `Retired academic implementation still exists: ${path}`);
 });
 
 const failed = results.filter(result => !result.ok);
