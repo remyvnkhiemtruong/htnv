@@ -1,21 +1,7 @@
 import { createHmac, randomBytes, scryptSync, timingSafeEqual } from "node:crypto";
-import { databaseUrl } from "../_lib/db.js";
+import { getPool } from "../_lib/db.js";
 
-let poolPromise;
 let schemaPromise;
-let jwtSecretPromise;
-
-async function pool() {
-  if (!poolPromise) {
-    poolPromise = import("pg").then(({ Pool }) => new Pool({
-      connectionString: databaseUrl(),
-      max: 3,
-      idleTimeoutMillis: 10000,
-      connectionTimeoutMillis: 10000
-    }));
-  }
-  return poolPromise;
-}
 
 function passwordHash(password, salt = randomBytes(16).toString("hex")) {
   return `${salt}:${scryptSync(password, salt, 64).toString("hex")}`;
@@ -35,22 +21,8 @@ function b64(value) {
 
 async function jwtSecret() {
   const envValue = String(process.env.JWT_SECRET || "");
-  if (envValue.length >= 32) return envValue;
-  if (!jwtSecretPromise) {
-    jwtSecretPromise = (async () => {
-      const db = await pool();
-      const result = await db.query("SELECT config_value FROM app_runtime_config WHERE config_key='student_roster_seed_v1' LIMIT 1");
-      const rootSeed = String(result.rows[0]?.config_value || "");
-      if (rootSeed.length < 32) throw new Error("JWT_SECRET_NOT_CONFIGURED");
-      return createHmac("sha256", rootSeed)
-        .update("hoc-tot-ngu-van:jwt-signing:v1")
-        .digest("hex");
-    })().catch(error => {
-      jwtSecretPromise = undefined;
-      throw error;
-    });
-  }
-  return jwtSecretPromise;
+  if (envValue.length < 32) throw new Error("JWT_SECRET_NOT_CONFIGURED");
+  return envValue;
 }
 
 export async function authSecretConfigured() {
@@ -169,7 +141,7 @@ export function assertSameOrigin(req) {
 export async function ensureSchema() {
   if (!schemaPromise) {
     schemaPromise = (async () => {
-      const db = await pool();
+      const db = await getPool();
       const result = await db.query(`
         SELECT
           to_regclass('public.app_users') IS NOT NULL AS users_ok,
@@ -193,7 +165,7 @@ export async function ensureSchema() {
 
 export async function checkRateLimit(key, limit = 10, windowSeconds = 900) {
   await ensureSchema();
-  const db = await pool();
+  const db = await getPool();
   const client = await db.connect();
   const boundedKey = cleanText(key, 500);
   try {
@@ -221,7 +193,7 @@ export async function checkRateLimit(key, limit = 10, windowSeconds = 900) {
 
 export async function login(email, password) {
   await ensureSchema();
-  const db = await pool();
+  const db = await getPool();
   const cleanEmail = cleanText(email, 240).toLowerCase();
   const result = await db.query(
     "SELECT id,password_hash,account_status FROM app_users WHERE email=$1",
@@ -237,7 +209,7 @@ export async function login(email, password) {
 
 export async function changePassword(userId, newPassword, currentPassword = "") {
   await ensureSchema();
-  const db = await pool();
+  const db = await getPool();
   const current = await db.query(
     "SELECT password_hash,must_change_password,account_status FROM app_users WHERE id=$1",
     [userId]
@@ -258,7 +230,7 @@ export async function changePassword(userId, newPassword, currentPassword = "") 
 
 export async function updateProfile(userId, input) {
   await ensureSchema();
-  const db = await pool();
+  const db = await getPool();
   const name = cleanText(input?.name, 120);
   if (name.length < 2) throw new Error("INVALID_NAME");
   const profile = sanitizeProfile(input?.profile || {});
@@ -273,7 +245,7 @@ export async function updateProfile(userId, input) {
 
 export async function setTemporaryPassword(userId, newPassword) {
   await ensureSchema();
-  const db = await pool();
+  const db = await getPool();
   const result = await db.query(`
     UPDATE app_users SET password_hash=$2,must_change_password=true,updated_at=now()
     WHERE id=$1 RETURNING id
@@ -283,10 +255,19 @@ export async function setTemporaryPassword(userId, newPassword) {
 
 export async function listUsers() {
   await ensureSchema();
-  const db = await pool();
+  const db = await getPool();
   const result = await db.query(`
-    SELECT id,email,name,role,account_status,must_change_password,created_at,last_login,profile_json
-    FROM app_users ORDER BY created_at DESC,email ASC
+    SELECT
+      u.id,u.email,u.name,u.role,u.account_status,u.must_change_password,u.created_at,u.last_login,u.profile_json,
+      COALESCE(cls.class_name, '') AS class_name
+    FROM app_users u
+    LEFT JOIN LATERAL (
+      SELECT string_agg(DISTINCT c.code, ', ' ORDER BY c.code) AS class_name
+      FROM class_members cm
+      JOIN classes c ON c.id=cm.class_id
+      WHERE cm.user_id=u.id
+    ) cls ON true
+    ORDER BY u.created_at DESC,u.email ASC
   `);
   return result.rows;
 }
@@ -299,7 +280,7 @@ export async function authenticate(req, options = {}) {
   const payload = await verifyPayload(cookieToken(req));
   if (!payload?.user?.id) return null;
   await ensureSchema();
-  const db = await pool();
+  const db = await getPool();
   const row = await loadFullUser(db, payload.user.id);
   if (!row || row.account_status !== "active") return null;
   if (row.must_change_password && options.allowPasswordChangeRequired !== true) return null;
