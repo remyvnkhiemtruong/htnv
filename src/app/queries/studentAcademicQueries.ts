@@ -90,7 +90,8 @@ export function useStudentWorkspaceQuery(assignmentId: string, enabled = true) {
       );
       return data.workspace;
     },
-    staleTime: 30_000
+    staleTime: 0,
+    refetchOnMount: 'always'
   });
 }
 
@@ -110,15 +111,3 @@ export function useStudentAcademicAction(assignmentId?: string) {
   });
 }
 
-export async function invalidateStudentAcademicData(
-  queryClient: ReturnType<typeof useQueryClient>,
-  assignmentId?: string
-) {
-  const invalidations: Promise<unknown>[] = [
-    queryClient.invalidateQueries({ queryKey: studentAcademicKeys.overview() })
-  ];
-  if (assignmentId) {
-    invalidations.push(queryClient.invalidateQueries({ queryKey: studentAcademicKeys.workspace(assignmentId) }));
-  }
-  await Promise.all(invalidations);
-}
