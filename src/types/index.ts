@@ -106,6 +106,16 @@ export interface PortfolioVersion {
   isSubmitted: boolean;
 }
 
+export interface FeedbackAnchor {
+  type: 'text-range' | 'axis';
+  axisId: PoeticAxisId;
+  start?: number;
+  end?: number;
+  exact?: string;
+  prefix?: string;
+  suffix?: string;
+}
+
 export interface FeedbackItem {
   id: string;
   assignmentId: string;
@@ -123,6 +133,7 @@ export interface FeedbackItem {
   resolvedAt?: string | null;
   resolvedByVersionId?: string | null;
   sourceAiReviewId?: string | null;
+  anchor?: FeedbackAnchor | null;
 }
 
 export interface RubricLevel {
