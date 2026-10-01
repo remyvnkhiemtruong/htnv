@@ -1,5 +1,7 @@
 import React, { useMemo } from 'react';
 import { usePortfolio } from '../contexts/PortfolioContext';
+import { useAuthStore } from '../app/store/useAuthStore';
+import { useStudentOverviewQuery, useStudentWorkspaceQuery } from '../app/queries/studentAcademicQueries';
 import { academicVersionsOf } from '../app/workflow/workflowState';
 import type { PoeticAxisId } from '../types';
 import { Badge, Button } from '../components/ui';
@@ -26,7 +28,31 @@ const labels: Record<PoeticAxisId, string> = {
 };
 
 export const StudentAnalyticsView: React.FC<StudentAnalyticsViewProps> = ({ studentId, assignmentId, onNavigate }) => {
-  const { portfolios, feedbacks, rubricSubmissions, rubrics, assignments } = usePortfolio();
+  const currentUser = useAuthStore(state => state.currentUser);
+  const compatibility = usePortfolio();
+  const isStudent = currentUser.role === 'student';
+  const overviewQuery = useStudentOverviewQuery(isStudent && Boolean(currentUser.id) && !assignmentId);
+  const workspaceQuery = useStudentWorkspaceQuery(assignmentId, isStudent && Boolean(currentUser.id) && Boolean(assignmentId));
+  const studentWorkspace = workspaceQuery.data;
+  const studentOverview = overviewQuery.data;
+
+  const assignments = isStudent
+    ? (assignmentId ? (studentWorkspace?.assignment ? [studentWorkspace.assignment] : []) : (studentOverview?.assignments || []))
+    : compatibility.assignments;
+  const portfolios = isStudent
+    ? (assignmentId && studentWorkspace?.portfolio
+      ? { [studentWorkspace.portfolio.id]: studentWorkspace.portfolio }
+      : (studentOverview?.portfolios || {}))
+    : compatibility.portfolios;
+  const feedbacks = isStudent
+    ? (assignmentId ? (studentWorkspace?.feedbacks || []) : (studentOverview?.feedbacks || []))
+    : compatibility.feedbacks;
+  const rubricSubmissions = isStudent
+    ? (assignmentId ? (studentWorkspace?.rubricSubmissions || []) : (studentOverview?.rubricSubmissions || []))
+    : compatibility.rubricSubmissions;
+  const rubrics = isStudent
+    ? (studentWorkspace?.rubric?.id ? { [studentWorkspace.rubric.id]: studentWorkspace.rubric } : {})
+    : compatibility.rubrics;
 
   const overviewAssignments = useMemo(() => assignments.map(item => {
     const itemPortfolio = portfolios[`port-${studentId}-${item.id}`];
@@ -93,6 +119,27 @@ export const StudentAnalyticsView: React.FC<StudentAnalyticsViewProps> = ({ stud
   });
   const weakest = axisRows.filter(row => typeof row.last === 'number' && Number.isFinite(row.last)).sort((a, b) => Number(a.last) - Number(b.last))[0];
   const resolved = studentFeedback.filter(item => item.resolved).length;
+
+  const activeStudentQuery = assignmentId ? workspaceQuery : overviewQuery;
+  if (isStudent && activeStudentQuery.isLoading && assignments.length === 0) {
+    return (
+      <div className="mx-auto mt-16 max-w-md space-y-3 p-6 text-center">
+        <h2 className="text-base font-semibold text-slate-900">Đang tải tiến độ</h2>
+        <p className="text-sm text-slate-500">Đang lấy dữ liệu của riêng hồ sơ này…</p>
+      </div>
+    );
+  }
+  if (isStudent && activeStudentQuery.isError && assignments.length === 0) {
+    return (
+      <div className="mx-auto mt-16 max-w-md space-y-3 p-6 text-center">
+        <h2 className="text-base font-semibold text-slate-900">Không thể tải tiến độ</h2>
+        <p className="text-sm text-slate-500">
+          {activeStudentQuery.error instanceof Error ? activeStudentQuery.error.message : 'Vui lòng thử lại.'}
+        </p>
+        <Button size="sm" variant="primary" onClick={() => void activeStudentQuery.refetch()}>Thử lại</Button>
+      </div>
+    );
+  }
 
   if (!assignmentId) {
     return (
