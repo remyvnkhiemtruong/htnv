@@ -257,8 +257,17 @@ export async function listUsers() {
   await ensureSchema();
   const db = await getPool();
   const result = await db.query(`
-    SELECT id,email,name,role,account_status,must_change_password,created_at,last_login,profile_json
-    FROM app_users ORDER BY created_at DESC,email ASC
+    SELECT
+      u.id,u.email,u.name,u.role,u.account_status,u.must_change_password,u.created_at,u.last_login,u.profile_json,
+      COALESCE(cls.class_name, '') AS class_name
+    FROM app_users u
+    LEFT JOIN LATERAL (
+      SELECT string_agg(DISTINCT c.code, ', ' ORDER BY c.code) AS class_name
+      FROM class_members cm
+      JOIN classes c ON c.id=cm.class_id
+      WHERE cm.user_id=u.id
+    ) cls ON true
+    ORDER BY u.created_at DESC,u.email ASC
   `);
   return result.rows;
 }
