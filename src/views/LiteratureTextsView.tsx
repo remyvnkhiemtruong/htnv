@@ -1,6 +1,7 @@
 import React, { useMemo, useState } from 'react';
 import { usePortfolio } from '../contexts/PortfolioContext';
 import { useAuthStore } from '../app/store/useAuthStore';
+import { useTeacherLiteratureQuery } from '../app/queries/teacherAcademicQueries';
 import type { LiteratureText } from '../types';
 import { Alert, Badge, Button, FilterBar, Input, Modal } from '../components/ui';
 import { ArrowLeftIcon, PlusIcon, EyeIcon } from '@heroicons/react/24/outline';
@@ -22,8 +23,13 @@ async function saveCatalog(payload: unknown) {
 }
 
 export const LiteratureTextsView: React.FC<LiteratureTextsViewProps> = ({ onNavigate }) => {
-  const { literatureTexts, refreshAcademicData, isLoading } = usePortfolio();
+  const compatibility = usePortfolio();
   const currentUser = useAuthStore(state => state.currentUser);
+  const isTeacher = currentUser.role === 'teacher';
+  const teacherLiteratureQuery = useTeacherLiteratureQuery(currentUser.id, isTeacher && Boolean(currentUser.id));
+  const literatureTexts = isTeacher ? (teacherLiteratureQuery.data || []) : compatibility.literatureTexts;
+  const refreshAcademicData = compatibility.refreshAcademicData;
+  const isLoading = isTeacher ? teacherLiteratureQuery.isLoading : compatibility.isLoading;
   const canEdit = currentUser.role === 'teacher' || currentUser.role === 'admin';
   const currentTexts = useMemo(() => literatureTexts.filter(text => text.isLatest !== false), [literatureTexts]);
   const [search, setSearch] = useState('');
@@ -99,7 +105,11 @@ export const LiteratureTextsView: React.FC<LiteratureTextsViewProps> = ({ onNavi
       });
       setOpen(false);
       resetForm();
-      await refreshAcademicData();
+      if (isTeacher) {
+        await Promise.all([teacherLiteratureQuery.refetch(), refreshAcademicData()]);
+      } else {
+        await refreshAcademicData();
+      }
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : 'Không thể lưu tác phẩm.');
     } finally {
@@ -134,7 +144,9 @@ export const LiteratureTextsView: React.FC<LiteratureTextsViewProps> = ({ onNavi
         )}
       </div>
 
-      {error && <Alert type="error" title="Lỗi">{error}</Alert>}
+      {(error || (isTeacher && teacherLiteratureQuery.error instanceof Error)) && (
+        <Alert type="error" title="Lỗi">{error || (teacherLiteratureQuery.error instanceof Error ? teacherLiteratureQuery.error.message : '')}</Alert>
+      )}
 
       <FilterBar
         searchQuery={search}
