@@ -418,10 +418,7 @@ await test('FSA37: Neon provenance FK has a runner-safe standalone migration', (
   assert(migration.includes('version_feedback_links_feedback_fk'));
   assert(migration.includes('REFERENCES feedbacks(id)'));
   assert(migration.includes('VALIDATE CONSTRAINT version_feedback_links_feedback_fk'));
-  assert(!migration.includes('DO 
-console.log(`${results.length - failed.length}/${results.length} full-system audit regression tests passed.`);
-if (failed.length) process.exit(1);
-), 'Standalone FK migration must avoid procedural blocks');
+  assert(!migration.includes('DO ' + '$'), 'Standalone FK migration must avoid procedural blocks');
   assert(!migration.includes('CREATE OR REPLACE FUNCTION'), 'Standalone FK migration must stay runner-safe');
 });
 
