@@ -136,8 +136,8 @@ await test('PA11: core UI copy avoids obvious AI-generated jargon', () => {
 });
 
 await test('PA12: closed assignments are hidden from students and reject writes server-side', () => {
-  const academic = read('api/_lib/academic-v3.js');
-  const workflow = read('api/_lib/academic-workflow-v4.js');
+  const academic = read('api/_lib/academic-core.js');
+  const workflow = read('api/_lib/academic-service.js');
   const action = read('api/academic/action.ts');
   assert(academic.includes("WHERE p.student_id=$1 AND a.status='published'"));
   assert(academic.match(/assignment_status !== 'published'/g)?.length >= 2);
@@ -147,7 +147,7 @@ await test('PA12: closed assignments are hidden from students and reject writes 
 });
 
 await test('PA13: V0 hides assigned reading content until prediction is submitted', () => {
-  const academic = read('api/_lib/academic-v3.js');
+  const academic = read('api/_lib/academic-core.js');
   const editor = read('src/views/PortfolioEditorView.tsx');
   assert(academic.includes("v.stage='prediction'"));
   assert(academic.includes("synopsis: locked ? '' : row.synopsis"));
@@ -287,7 +287,7 @@ await test('PA23: student progress has a real assignment selector and excludes V
 
 await test('PA24: AI workspace is writable only by the dedicated AI role', () => {
   const workspace = read('src/views/AiWorkspaceView.tsx');
-  const academic = read('api/_lib/academic-v3.js');
+  const academic = read('api/_lib/academic-core.js');
   assert(workspace.includes("const canPublish = currentUser.role === 'ai'"));
   assert(workspace.includes('disabled={!canPublish}'));
   assert(workspace.includes('{canPublish ? ('));
@@ -296,7 +296,7 @@ await test('PA24: AI workspace is writable only by the dedicated AI role', () =>
 });
 
 await test('PA25: admin cannot mutate student assessment state through academic actions', () => {
-  const academic = read('api/_lib/academic-v3.js');
+  const academic = read('api/_lib/academic-core.js');
   const review = read('src/views/TeacherReviewView.tsx');
   assert(academic.includes("if (!['teacher','peer'].includes(user.role)) throw new Error('FORBIDDEN')"));
   assert(academic.includes("if (user.role !== 'student') throw new Error('FORBIDDEN')"));
@@ -306,7 +306,7 @@ await test('PA25: admin cannot mutate student assessment state through academic 
 });
 
 await test('PA26: empty portfolios never surface a fake active submission version', () => {
-  const academic = read('api/_lib/academic-v3.js');
+  const academic = read('api/_lib/academic-core.js');
   const admin = read('api/admin/manage.ts');
   assert(academic.includes("currentActiveVersion: versions.length ? row.active_version : 'Bản nháp'"));
   assert(academic.includes("INSERT INTO portfolios(assignment_id,student_id,active_version)"));
@@ -315,15 +315,15 @@ await test('PA26: empty portfolios never surface a fake active submission versio
 });
 
 await test('PA27: peer and AI queues use stable anonymous labels instead of identical placeholders', () => {
-  const academic = read('api/_lib/academic-v3.js');
+  const academic = read('api/_lib/academic-core.js');
   assert(academic.includes("studentName: researcher || peerOrAi ? studentId : row.student_name"));
   assert(academic.includes("student_name: role === 'ai' ? pseudonym('SUB', row.student_id) : row.student_name"));
   assert(!academic.includes("peerOrAi ? 'Bài được phân công'"));
 });
 
 await test('PA28: multiple AI accounts cannot complete the same review as if they owned it', () => {
-  const academic = read('api/_lib/academic-v3.js');
-  const workflow = read('api/_lib/academic-workflow-v4.js');
+  const academic = read('api/_lib/academic-core.js');
+  const workflow = read('api/_lib/academic-service.js');
   assert(academic.includes("(ar.reviewer_id IS NULL OR ar.reviewer_id=$1)"));
   assert(workflow.includes("async function aiClaimReview"));
   assert(workflow.includes("'AI_CLAIM_REVIEW'"));
