@@ -30,6 +30,11 @@ export default async function handler(req: any, res: any) {
       academicData: 'postgresql',
       aiFeedbackMode: 'manual-chatgpt-response-visible-to-student',
       region: process.env.VERCEL_REGION || 'unknown',
+      release: {
+        commitSha: process.env.VERCEL_GIT_COMMIT_SHA || 'local',
+        commitRef: process.env.VERCEL_GIT_COMMIT_REF || 'local',
+        environment: process.env.VERCEL_ENV || process.env.NODE_ENV || 'unknown'
+      },
       security: {
         jwtSecretConfigured: jwtSecretStatus.configured,
         jwtSecretSource: jwtSecretStatus.source,
