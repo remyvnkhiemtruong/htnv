@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useAuthStore } from '../app/store/useAuthStore';
 import { usePortfolio } from '../contexts/PortfolioContext';
+import { useStudentWorkspaceQuery } from '../app/queries/studentAcademicQueries';
 import { POETIC_AXES } from '../data/seedData';
 import type { PortfolioVersion, PoeticAxisId } from '../types';
 import { computeAxisDiff, type DiffSegment } from '../utils/diffEngine';
@@ -38,8 +39,27 @@ export const VersionDiffView: React.FC<VersionDiffViewProps> = ({
   onNavigate
 }) => {
   const currentUser = useAuthStore(state => state.currentUser);
-  const { assignments, portfolios, feedbacks, isLoading, dataError, refreshAcademicData } = usePortfolio();
+  const compatibility = usePortfolio();
   const isStudent = currentUser.role === 'student';
+  const workspaceQuery = useStudentWorkspaceQuery(
+    assignmentId,
+    isStudent && Boolean(currentUser.id) && Boolean(assignmentId)
+  );
+  const studentWorkspace = workspaceQuery.data;
+  const assignments = isStudent
+    ? (studentWorkspace?.assignment ? [studentWorkspace.assignment] : [])
+    : compatibility.assignments;
+  const portfolios = isStudent && studentWorkspace?.portfolio
+    ? { [studentWorkspace.portfolio.id]: studentWorkspace.portfolio }
+    : compatibility.portfolios;
+  const feedbacks = isStudent ? (studentWorkspace?.feedbacks || []) : compatibility.feedbacks;
+  const isLoading = isStudent ? workspaceQuery.isLoading : compatibility.isLoading;
+  const dataError = isStudent
+    ? (workspaceQuery.error instanceof Error ? workspaceQuery.error.message : null)
+    : compatibility.dataError;
+  const refreshData = () => isStudent
+    ? workspaceQuery.refetch().then(() => undefined)
+    : compatibility.refreshAcademicData();
   const [selectedStudentId, setSelectedStudentId] = useState(isStudent ? currentUser.id : (initialStudentId || ''));
   const [selectedV1, setSelectedV1] = useState(v1Number || '');
   const [selectedV2, setSelectedV2] = useState(v2Number || '');
@@ -106,7 +126,7 @@ export const VersionDiffView: React.FC<VersionDiffViewProps> = ({
   }, [diffByAxis]);
 
   if (isLoading && !assignment) return <StatePanel loading title="Đang mở bản so sánh" message="Đang đối chiếu dữ liệu các phiên bản..." />;
-  if (dataError && !assignment) return <StatePanel title="Không thể tải dữ liệu" message={dataError} actionLabel="Thử lại" onAction={() => void refreshAcademicData()} />;
+  if (dataError && !assignment) return <StatePanel title="Không thể tải dữ liệu" message={dataError} actionLabel="Thử lại" onAction={() => void refreshData()} />;
   if (!assignment) return <StatePanel title="Không tìm thấy nhiệm vụ" message="Nhiệm vụ này không tồn tại hoặc bạn không còn quyền truy cập." actionLabel="Về danh sách nhiệm vụ" onAction={() => onNavigate('assignment-list')} />;
 
   if (!isStudent && !selectedStudentId) {
