@@ -209,7 +209,7 @@ export const PortfolioEditorView: React.FC<PortfolioEditorViewProps> = ({ assign
     if (!ok) throw new Error('CREATE_VERSION_FAILED');
     await Promise.all([
       workspaceQuery.refetch(),
-      queryClient.invalidateQueries({ queryKey: studentAcademicKeys.overview() })
+      queryClient.invalidateQueries({ queryKey: studentAcademicKeys.overview(currentUser.id) })
     ]);
     addToast({ type: 'success', title: `Đã nộp ${nextVersion}`, message: isPredictionMode ? 'V0 đã được khóa làm mốc dự đoán trước đọc.' : 'Bài viết đã được gửi vào hàng đợi phản hồi AI.' });
   };
