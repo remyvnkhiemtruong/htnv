@@ -18,7 +18,7 @@ const homeForRole = (role: string) =>
 export const AssignmentListView: React.FC<AssignmentListViewProps> = ({ onNavigate }) => {
   const user = useAuthStore(s => s.currentUser);
   const compatibility = usePortfolio();
-  const overviewQuery = useStudentOverviewQuery(user.role === 'student' && Boolean(user.id));
+  const overviewQuery = useStudentOverviewQuery(user.id, user.role === 'student' && Boolean(user.id));
   const studentOverview = overviewQuery.data;
   const assignments = user.role === 'student' ? (studentOverview?.assignments || []) : compatibility.assignments;
   const literatureTexts = user.role === 'student' ? (studentOverview?.literatureTexts || []) : compatibility.literatureTexts;
