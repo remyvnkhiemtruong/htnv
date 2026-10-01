@@ -12,13 +12,14 @@ const test = async (name, fn) => {
   }
 };
 
-await test('FSA01: JWT signing uses a dedicated domain-separated key and never DATABASE_URL', () => {
+await test('FSA01: JWT signing fails closed unless a dedicated JWT_SECRET is configured', () => {
   const source = read('api/auth/auth.js');
   assert(source.includes('authSecretConfigured'), 'Missing JWT readiness helper');
-  assert(source.includes('JWT_SECRET_NOT_CONFIGURED'), 'JWT must fail closed if neither dedicated source is usable');
-  assert(source.includes("config_key='student_roster_seed_v1'"), 'Missing protected runtime root fallback');
-  assert(source.includes('hoc-tot-ngu-van:jwt-signing:v1'), 'Fallback key must be domain separated');
-  assert(!source.includes('.update(databaseUrl())'), 'JWT must never derive its signing secret from DATABASE_URL');
+  assert(source.includes('JWT_SECRET_NOT_CONFIGURED'), 'JWT must fail closed when JWT_SECRET is missing or too short');
+  assert(source.includes('process.env.JWT_SECRET'), 'JWT signing must use the dedicated environment secret');
+  assert(!source.includes("config_key='student_roster_seed_v1'"), 'JWT must not derive its signing key from database application data');
+  assert(!source.includes('databaseUrl()'), 'Auth module must reuse the shared database pool');
+  assert(source.includes('getPool'), 'Auth module must reuse the shared database pool');
   assert(source.includes('decodedHeader?.alg !== "HS256"'), 'JWT header algorithm must be validated');
 });
 
@@ -87,6 +88,25 @@ await test('FSA08: class analytics never counts V0 prediction as submitted acade
   const source = read('src/views/ClassAnalyticsView.tsx');
   assert(source.includes("portfolio.versions.some(version => version.stage !== 'prediction')"));
   assert(source.includes('học sinh đã nộp V1+'));
+});
+
+await test('FSA09: modal focus trap does not reinitialize on every parent render', () => {
+  const source = read('src/components/ui/Modal.tsx');
+  assert(source.includes('const onCloseRef = useRef(onClose)'), 'Modal must keep the latest close callback in a ref');
+  assert(source.includes('onCloseRef.current()'), 'Escape handling must use the stable close ref');
+  assert(source.includes('}, [isOpen]);'), 'Modal focus lifecycle must only restart when open state changes');
+  assert(!source.includes('}, [isOpen, onClose]);'), 'Inline onClose callbacks must not reset focus while typing');
+});
+
+await test('FSA10: admin user management persists detailed profiles and class assignment', () => {
+  const api = read('api/admin/manage.ts');
+  const view = read('src/views/AdminAuditView.tsx');
+  for (const token of ['profile_json', 'classCode', 'studentCode', 'staffCode', 'department']) {
+    assert(api.includes(token), `Admin API missing detailed user token: ${token}`);
+  }
+  for (const token of ['newProfile', 'newClassCode', 'Hồ sơ người dùng', 'Mã học sinh', 'Tổ / bộ môn / đơn vị']) {
+    assert(view.includes(token), `Admin UI missing detailed user token: ${token}`);
+  }
 });
 
 const failed = results.filter(result => !result.ok);
