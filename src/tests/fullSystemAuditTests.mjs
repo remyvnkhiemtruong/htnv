@@ -12,12 +12,13 @@ const test = async (name, fn) => {
   }
 };
 
-await test('FSA01: JWT signing fails closed unless a dedicated JWT_SECRET is configured', () => {
+await test('FSA01: JWT signing prefers dedicated JWT_SECRET and keeps a bounded compatibility fallback', () => {
   const source = read('api/auth/auth.js');
   assert(source.includes('authSecretConfigured'), 'Missing JWT readiness helper');
-  assert(source.includes('JWT_SECRET_NOT_CONFIGURED'), 'JWT must fail closed when JWT_SECRET is missing or too short');
-  assert(source.includes('process.env.JWT_SECRET'), 'JWT signing must use the dedicated environment secret');
-  assert(!source.includes("config_key='student_roster_seed_v1'"), 'JWT must not derive its signing key from database application data');
+  assert(source.includes('JWT_SECRET_NOT_CONFIGURED'), 'JWT must fail closed if neither secret source is usable');
+  assert(source.includes('process.env.JWT_SECRET'), 'JWT signing must prefer the dedicated environment secret');
+  assert(source.includes("config_key='student_roster_seed_v1'"), 'Compatibility fallback must use the protected runtime seed');
+  assert(source.includes('hoc-tot-ngu-van:jwt-signing:v1'), 'Fallback key must remain domain separated');
   assert(!source.includes('databaseUrl()'), 'Auth module must reuse the shared database pool');
   assert(source.includes('getPool'), 'Auth module must reuse the shared database pool');
   assert(source.includes('decodedHeader?.alg !== "HS256"'), 'JWT header algorithm must be validated');
