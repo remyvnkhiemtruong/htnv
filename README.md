@@ -160,6 +160,14 @@ Mật khẩu không được lưu trong repository. Admin có thể tạo/reset 
 - Compatibility snapshot vẫn được giữ cho peer/researcher/admin/AI ở những bề mặt chưa migrate; không còn là đường tải mặc định cho Student/Teacher.
 - Schema provenance được quản lí bằng migration tường minh. Batch 4 có migration bổ sung FK `version_feedback_links.feedback_id → feedbacks.id`; migration này phải đi qua quy trình Neon branch/validation trước khi áp dụng production.
 
+## Release Safety — Batch 5
+
+- `/api/health` công bố an toàn commit SHA/ref/environment đang thực sự chạy trên Vercel; không công bố secret.
+- `scripts/wait-for-production.mjs` đợi production chạy đúng SHA vừa qua CI thay vì coi việc merge GitHub là đã deploy.
+- `scripts/smoke-production.mjs` có thể nhận `EXPECTED_GIT_SHA` để fail nếu domain production vẫn đang phục vụ bản cũ; đồng thời kiểm tra `no-store`, CSP chống framing và `nosniff`.
+- Workflow `.github/workflows/production-release.yml` chạy sau CI của `main`, chờ đúng commit lên production rồi mới chạy smoke. Nếu Vercel bị quota/build-rate-limit và production không tiến tới SHA mới, release gate sẽ đỏ thay vì báo thành công giả.
+- Migration provenance FK được tách thành `scripts/migrations/20261002_feedback_provenance_fk.sql` để tương thích Neon migration runner. Migration này vẫn phải được validate trên Neon branch và xác nhận trước khi áp dụng production.
+
 ## PostgreSQL
 
 Các bảng trọng yếu gồm `app_users`, `classes`, `class_members`, `literature_texts`, `literature_text_versions`, `rubrics`, `rubric_criteria`, `assignments`, `portfolios`, `portfolio_drafts`, `portfolio_versions`, `submission_idempotency_keys`, `feedbacks`, `ai_review_requests`, `student_reflections`, `rubric_submissions`, `peer_review_assignments`, `version_feedback_links`, `audit_logs`, `auth_rate_events`.
@@ -197,6 +205,12 @@ Smoke test production:
 
 ```bash
 npm run smoke:production
+```
+
+Xác minh production đang chạy đúng commit:
+
+```bash
+EXPECTED_GIT_SHA=<git-sha> REQUIRE_DEDICATED_JWT_SECRET=true npm run smoke:production
 ```
 
 Có thể đặt `REQUIRE_DEDICATED_JWT_SECRET=true` để smoke test thất bại nếu production vẫn đang dùng compatibility fallback. Các URL student/teacher resource được rewrite vào function academic hiện có để không tăng function count trên Vercel Hobby.
