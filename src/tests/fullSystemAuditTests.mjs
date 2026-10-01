@@ -239,6 +239,74 @@ await test('FSA22: class drawer assignment cannot inherit stale bulk user select
   assert(source.includes("if (!['student','teacher'].includes(role)) setNewClassCode('')"), 'Changing a new user to a non-class role must clear class selection');
 });
 
+await test('FSA23: React Router owns browser navigation without manual history listeners', () => {
+  const app = read('src/App.tsx');
+  const routes = read('src/app/router/routes.tsx');
+  for (const token of ['BrowserRouter', 'useLocation', 'useNavigate', 'routerNavigate']) {
+    assert(app.includes(token), `React Router integration missing: ${token}`);
+  }
+  assert(routes.includes('routeStateFromLocation'), 'Canonical route parser missing');
+  assert(routes.includes('hrefForView'), 'Canonical route href builder missing');
+  assert(!app.includes('window.history.pushState'), 'Manual pushState must be removed');
+  assert(!app.includes('window.history.replaceState'), 'Manual replaceState must be removed');
+  assert(!app.includes("addEventListener('popstate'"), 'Manual popstate listener must be removed');
+});
+
+await test('FSA24: student draft recovery uses IndexedDB and explicit offline/conflict states', () => {
+  const recovery = read('src/app/offline/draftRecovery.ts');
+  const store = read('src/app/store/usePortfolioStore.ts');
+  const editor = read('src/views/PortfolioEditorView.tsx');
+  for (const token of ["indexedDB.open", "STORE = 'drafts'", 'saveDraftRecovery', 'getDraftRecovery', 'clearDraftRecovery']) {
+    assert(recovery.includes(token), `Draft recovery missing: ${token}`);
+  }
+  assert(store.includes("'offline' | 'conflict'"), 'Autosave state must distinguish offline/conflict');
+  assert(store.includes("typed?.code === 'DRAFT_CONFLICT'"), 'Draft conflict must be surfaced explicitly');
+  assert(store.includes('persistRecovery(studentId, assignmentId'), 'Unsynced edits must be persisted locally');
+  assert(editor.includes("window.addEventListener('online'"), 'Editor must retry when connectivity returns');
+  assert(editor.includes("window.addEventListener('offline'"), 'Editor must expose offline state');
+  assert(editor.includes('getDraftRecovery'), 'Editor must offer recovery from IndexedDB');
+});
+
+await test('FSA25: anchored feedback stores immutable text range context and can reopen it', () => {
+  const types = read('src/types/index.ts');
+  const api = read('api/_lib/academic-v3.js');
+  const student = read('api/_lib/student-resources.js');
+  const review = read('src/views/TeacherReviewView.tsx');
+  const editor = read('src/views/PortfolioEditorView.tsx');
+  assert(types.includes('export interface FeedbackAnchor'), 'Feedback anchor type missing');
+  for (const token of ['anchor_json', "type: 'text-range'", 'prefix:', 'suffix:']) {
+    assert(api.includes(token), `Feedback backend anchor missing: ${token}`);
+  }
+  assert(student.includes('anchor: row.anchor_json || null'), 'Student resource must expose saved anchor');
+  assert(review.includes('selectedAnchor'), 'Teacher review must send selected anchor');
+  assert(review.includes('responseTextRef'), 'Text offsets must be relative to immutable review text');
+  assert(editor.includes('jumpToFeedbackAnchor'), 'Student editor must reopen anchored feedback');
+  assert(editor.includes('setSelectionRange'), 'Student editor must highlight anchored range when possible');
+});
+
+await test('FSA26: notification center derives real student and teacher events', () => {
+  const header = read('src/components/layout/AppHeader.tsx');
+  const center = read('src/components/notifications/NotificationCenter.tsx');
+  assert(header.includes('<NotificationCenter'), 'Header must render the notification center');
+  assert(!header.includes("message: 'Hiện chưa có thông báo mới.'"), 'Placeholder notification bell must be removed');
+  for (const token of [
+    "item => !item.resolved",
+    "item.evaluatorRole === 'teacher'",
+    "review.status === 'completed'",
+    "portfolio.status === 'waiting_official_rubric'",
+    'markAllRead'
+  ]) assert(center.includes(token), `Notification source missing: ${token}`);
+});
+
+await test('FSA27: teacher dashboard uses a searchable prioritized review inbox', () => {
+  const dashboard = read('src/views/TeacherDashboardView.tsx');
+  const inbox = read('src/components/teacher/TeacherReviewInbox.tsx');
+  assert(dashboard.includes('<TeacherReviewInbox'), 'Teacher dashboard must use review inbox');
+  for (const token of ["'priority'", "'ai'", "'rubric'", "'all'", 'setSearch', 'priority: 1', "onNavigate('teacher-review'"]) {
+    assert(inbox.includes(token), `Teacher review inbox behavior missing: ${token}`);
+  }
+});
+
 const failed = results.filter(result => !result.ok);
 console.log(`${results.length - failed.length}/${results.length} full-system audit regression tests passed.`);
 if (failed.length) process.exit(1);
