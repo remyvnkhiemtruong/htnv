@@ -104,7 +104,7 @@ async function loadStudentAssignmentRows(pool, userId, assignmentPublicId = '') 
   const result = await pool.query(`
     SELECT
       a.*, c.code class_code, r.public_id rubric_public_id, lt.public_id text_public_id,
-      p.id portfolio_id, p.status portfolio_status, p.active_version, p.updated_at portfolio_updated_at,
+      p.id portfolio_id, p.student_id, p.status portfolio_status, p.active_version, p.updated_at portfolio_updated_at,
       d.content_json draft_content_json, d.updated_at draft_updated_at, d.draft_revision,
       u.name student_name
     FROM portfolios p
