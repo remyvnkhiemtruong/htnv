@@ -157,6 +157,18 @@ await test('FSA14: overview payload omits historical version bodies while worksp
   assert(source.includes("includeContent ? 'v.content_json' : 'NULL::jsonb AS content_json'"), 'Version content selection must be explicit');
 });
 
+await test('FSA15: student resource URLs reuse the existing snapshot function on Hobby deployments', () => {
+  const config = JSON.parse(read('vercel.json'));
+  const rewrites = config.rewrites || [];
+  const overview = rewrites.find(item => item.source === '/api/student/overview');
+  const workspace = rewrites.find(item => item.source === '/api/student/workspace');
+  assert(overview?.destination === '/api/academic/snapshot?scope=student-overview', 'Student overview rewrite is missing');
+  assert(workspace?.destination === '/api/academic/snapshot?scope=student-workspace', 'Student workspace rewrite is missing');
+  const gateway = read('api/academic/snapshot.ts');
+  assert(gateway.includes('scope === "student-overview"'), 'Snapshot gateway must dispatch student overview');
+  assert(gateway.includes('scope === "student-workspace"'), 'Snapshot gateway must dispatch student workspace');
+});
+
 const failed = results.filter(result => !result.ok);
 console.log(`${results.length - failed.length}/${results.length} full-system audit regression tests passed.`);
 if (failed.length) process.exit(1);
