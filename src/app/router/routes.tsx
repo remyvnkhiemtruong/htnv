@@ -31,3 +31,22 @@ export const APP_ROUTES: Record<string, RouteDefinition> = {
   'admin-view': { id:'admin-view', path:'/admin/audit', title:'Quản trị hệ thống & Nhật ký', allowedRoles:['admin'] },
   'ai-workspace': { id:'ai-workspace', path:'/ai/workspace', title:'Phản hồi AI', allowedRoles:['ai','teacher','admin'] }
 };
+
+
+export const routeStateFromLocation = (pathname: string, search = '') => {
+  const route = Object.values(APP_ROUTES).find(item => item.path === pathname);
+  const query = new URLSearchParams(search);
+  const params: Record<string, string> = {};
+  query.forEach((value, key) => { params[key] = value; });
+  return { view: route?.id || 'not-found', params };
+};
+
+export const hrefForView = (view: string, params: Record<string, unknown> = {}) => {
+  const route = APP_ROUTES[view];
+  if (!route) return '';
+  const query = new URLSearchParams();
+  Object.entries(params).forEach(([key, value]) => {
+    if (value !== undefined && value !== null && value !== '') query.set(key, String(value));
+  });
+  return `${route.path}${query.size ? `?${query.toString()}` : ''}`;
+};
