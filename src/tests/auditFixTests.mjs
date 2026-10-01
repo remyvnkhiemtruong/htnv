@@ -110,7 +110,7 @@ await test('AF09: shared overlays and formerly pointer-only controls support key
 });
 
 await test('AF11: draft autosave uses optimistic revision checks to prevent stale overwrites', () => {
-  const academic = read('api/_lib/academic-v3.js');
+  const academic = read('api/_lib/academic-core.js');
   const store = read('src/app/store/usePortfolioStore.ts');
   const action = read('api/academic/action.ts');
   assert(academic.includes('SELECT draft_revision FROM portfolio_drafts WHERE portfolio_id=$1 FOR UPDATE'));
