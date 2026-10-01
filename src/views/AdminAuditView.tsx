@@ -13,7 +13,6 @@ import {
 } from '../components/ui';
 import type { UserRole } from '../types';
 import {
-  adminAction,
   adminKeys,
   type AdminClass,
   type AdminClassMember,
