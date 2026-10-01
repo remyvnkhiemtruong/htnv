@@ -11,6 +11,7 @@ import {
 } from '@heroicons/react/24/outline';
 import { useAuthStore } from '../../app/store/useAuthStore';
 import { usePortfolio } from '../../contexts/PortfolioContext';
+import { useStudentOverviewQuery } from '../../app/queries/studentAcademicQueries';
 
 interface CommandPaletteProps {
   isOpen: boolean;
@@ -30,7 +31,10 @@ interface CommandItem {
 
 export const CommandPalette: React.FC<CommandPaletteProps> = ({ isOpen, onClose, onNavigate }) => {
   const currentUser = useAuthStore(state => state.currentUser);
-  const { assignments, literatureTexts } = usePortfolio();
+  const compatibility = usePortfolio();
+  const overviewQuery = useStudentOverviewQuery(currentUser.role === 'student' && Boolean(currentUser.id));
+  const assignments = currentUser.role === 'student' ? (overviewQuery.data?.assignments || []) : compatibility.assignments;
+  const literatureTexts = currentUser.role === 'student' ? (overviewQuery.data?.literatureTexts || []) : compatibility.literatureTexts;
   const [query, setQuery] = useState('');
   const [selectedIndex, setSelectedIndex] = useState(0);
   const dialogRef = useRef<HTMLDivElement>(null);
