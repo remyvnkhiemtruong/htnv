@@ -89,7 +89,13 @@ export const PortfolioProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   const createSnapshot = usePortfolioStore(state => state.createSnapshot);
   const getPortfolio = usePortfolioStore(state => state.getPortfolio);
   const resetSessionState = usePortfolioStore(state => state.resetSessionState);
-  const teacherOverviewQuery = useTeacherOverviewQuery(
+  const {
+    data: teacherOverview,
+    error: teacherOverviewError,
+    isLoading: teacherOverviewLoading,
+    isFetching: teacherOverviewFetching,
+    refetch: refetchTeacherOverview
+  } = useTeacherOverviewQuery(
     currentUser.id,
     currentUser.role === 'teacher' && Boolean(currentUser.id)
   );
@@ -136,7 +142,7 @@ export const PortfolioProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       setIsLoading(true);
       setDataError(null);
       try {
-        const result = await teacherOverviewQuery.refetch();
+        const result = await refetchTeacherOverview();
         if (result.data && activeUserIdRef.current === requestedUserId) {
           applySnapshot(result.data as AcademicSnapshot);
         }
@@ -173,7 +179,7 @@ export const PortfolioProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     } finally {
       if (requestEpoch === snapshotEpochRef.current && activeUserIdRef.current === requestedUserId) setIsLoading(false);
     }
-  }, [applySnapshot, currentUser.id, currentUser.role, teacherOverviewQuery]);
+  }, [applySnapshot, currentUser.id, currentUser.role, refetchTeacherOverview]);
 
   useEffect(() => {
     snapshotControllerRef.current?.abort();
@@ -201,16 +207,16 @@ export const PortfolioProvider: React.FC<{ children: React.ReactNode }> = ({ chi
 
   useEffect(() => {
     if (currentUser.role !== 'teacher') return;
-    setIsLoading(teacherOverviewQuery.isLoading || teacherOverviewQuery.isFetching);
-    setDataError(teacherOverviewQuery.error instanceof Error ? teacherOverviewQuery.error.message : null);
-    if (teacherOverviewQuery.data) applySnapshot(teacherOverviewQuery.data as AcademicSnapshot);
+    setIsLoading(teacherOverviewLoading || teacherOverviewFetching);
+    setDataError(teacherOverviewError instanceof Error ? teacherOverviewError.message : null);
+    if (teacherOverview) applySnapshot(teacherOverview as AcademicSnapshot);
   }, [
     applySnapshot,
     currentUser.role,
-    teacherOverviewQuery.data,
-    teacherOverviewQuery.error,
-    teacherOverviewQuery.isFetching,
-    teacherOverviewQuery.isLoading
+    teacherOverview,
+    teacherOverviewError,
+    teacherOverviewFetching,
+    teacherOverviewLoading
   ]);
 
   const getPortfolioForStudentAndAssignment = useCallback(
