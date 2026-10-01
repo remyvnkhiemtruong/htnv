@@ -2,6 +2,7 @@ import { createHmac, randomBytes, scryptSync, timingSafeEqual } from "node:crypt
 import { getPool } from "../_lib/db.js";
 
 let schemaPromise;
+let jwtSecretPromise;
 
 function passwordHash(password, salt = randomBytes(16).toString("hex")) {
   return `${salt}:${scryptSync(password, salt, 64).toString("hex")}`;
@@ -21,8 +22,28 @@ function b64(value) {
 
 async function jwtSecret() {
   const envValue = String(process.env.JWT_SECRET || "");
-  if (envValue.length < 32) throw new Error("JWT_SECRET_NOT_CONFIGURED");
-  return envValue;
+  if (envValue.length >= 32) return envValue;
+
+  // Compatibility fallback: keep production available until a dedicated
+  // JWT_SECRET is configured in Vercel. Uses the existing protected root seed
+  // but keeps key material domain-separated from every other use.
+  if (!jwtSecretPromise) {
+    jwtSecretPromise = (async () => {
+      const db = await getPool();
+      const result = await db.query(
+        "SELECT config_value FROM app_runtime_config WHERE config_key='student_roster_seed_v1' LIMIT 1"
+      );
+      const rootSeed = String(result.rows[0]?.config_value || "");
+      if (rootSeed.length < 32) throw new Error("JWT_SECRET_NOT_CONFIGURED");
+      return createHmac("sha256", rootSeed)
+        .update("hoc-tot-ngu-van:jwt-signing:v1")
+        .digest("hex");
+    })().catch(error => {
+      jwtSecretPromise = undefined;
+      throw error;
+    });
+  }
+  return jwtSecretPromise;
 }
 
 export async function authSecretConfigured() {
