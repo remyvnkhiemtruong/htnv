@@ -285,7 +285,7 @@ export const PortfolioEditorView: React.FC<PortfolioEditorViewProps> = ({ assign
     setActiveAxisId(item.axisId);
     setMobileTab('write');
     const exact = item.anchor?.exact || item.selectedSnippet || '';
-    window.setTimeout(() => {
+    window.requestAnimationFrame(() => {
       const textarea = analysisTextareaRef.current;
       if (!textarea) return;
       const text = textarea.value || '';
