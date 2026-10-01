@@ -22,7 +22,7 @@ const statusLabel: Record<string, string> = {
 export const PortfolioListV2: React.FC<{ onNavigate: (view: string, params?: any) => void }> = ({ onNavigate }) => {
   const user = useAuthStore(s => s.currentUser);
   const compatibility = usePortfolio();
-  const overviewQuery = useStudentOverviewQuery(user.role === 'student' && Boolean(user.id));
+  const overviewQuery = useStudentOverviewQuery(user.id, user.role === 'student' && Boolean(user.id));
   const overview = overviewQuery.data;
   const assignments = user.role === 'student' ? (overview?.assignments || []) : compatibility.assignments;
   const portfolios = user.role === 'student' ? (overview?.portfolios || {}) : compatibility.portfolios;
