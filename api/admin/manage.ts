@@ -562,7 +562,7 @@ export default async function handler(req: any, res: any) {
 
       const existingEmails = new Set(existingEmailRows.rows.map((row: any) => String(row.email).toLowerCase()));
       const existingCodes = new Set(existingCodeRows.rows.flatMap((row: any) => [row.student_code, row.staff_code]).filter(Boolean));
-      const classMap = new Map(classRows.rows.map((row: any) => [row.code, row.id]));
+      const classMap = new Map<string, string>(classRows.rows.map((row: any) => [String(row.code), String(row.id)] as [string, string]));
       const seenEmails = new Set<string>();
       const seenCodes = new Set<string>();
 
