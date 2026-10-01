@@ -82,7 +82,7 @@ await test('PA07: three-tier view hierarchy is role-derived and mutation routes 
 
 await test('PA08: assignment builder only keeps and submits a rubric from the hydrated catalog', () => {
   const source = read('src/views/AssignmentBuilderView.tsx');
-  assert(source.includes('rubricOptions.some(r => r.id === f.rubricId) ? f.rubricId'));
+  assert(source.includes('rubricId: rubricOptions.some(item => item.id === current.rubricId) ? current.rubricId : rubricOptions[0]?.id || \'\''));
   assert(source.includes('!rubricOptions.some(option => option.id === form.rubricId)'));
   assert(!source.includes("rubricId: f.rubricId || rubricOptions[0]?.id || rubric.id || ''"));
 });
