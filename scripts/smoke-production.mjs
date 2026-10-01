@@ -14,7 +14,7 @@ async function request(path, init = {}) {
   const timeout = setTimeout(() => controller.abort(), 15_000);
   try {
     return await fetch(`${baseUrl}${path}`, {
-      redirect: 'manual',
+      redirect: 'follow',
       ...init,
       signal: controller.signal,
       headers: {

@@ -169,6 +169,13 @@ await test('FSA15: student resource URLs reuse the existing snapshot function on
   assert(gateway.includes('scope === "student-workspace"'), 'Snapshot gateway must dispatch student workspace');
 });
 
+await test('FSA16: production smoke follows the canonical domain redirect', () => {
+  const source = read('scripts/smoke-production.mjs');
+  assert(source.includes("redirect: 'follow'"), 'Smoke checks must follow htnv.io.vn -> www.htnv.io.vn');
+  assert(source.includes('/api/student/overview'), 'Smoke checks must cover the scoped student resource');
+  assert(source.includes('/api/student/workspace?assignmentId=smoke-invalid'), 'Smoke checks must cover the student workspace resource');
+});
+
 const failed = results.filter(result => !result.ok);
 console.log(`${results.length - failed.length}/${results.length} full-system audit regression tests passed.`);
 if (failed.length) process.exit(1);
