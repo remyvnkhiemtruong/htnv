@@ -108,11 +108,13 @@ Mật khẩu không được lưu trong repository. Admin có thể tạo/reset 
 
 ### Admin
 
-- Tạo tài khoản và mật khẩu tạm
-- Đổi role / khóa / mở tài khoản
-- Reset mật khẩu
-- Tạo lớp và gán thành viên
-- Audit log
+- Danh sách tài khoản phân trang phía máy chủ, tìm kiếm theo tên/email/mã học sinh/SĐT, lọc theo vai trò, trạng thái và lớp
+- Hồ sơ chi tiết dạng drawer: thông tin cá nhân, vai trò, trạng thái, lớp và mật khẩu tạm
+- Tạo tài khoản đơn lẻ hoặc import hàng loạt từ CSV/TSV/XLSX; luôn preview/validate trước khi ghi
+- Bulk mở khóa/khóa tài khoản và bulk gán lớp, có chặn tự khóa admin
+- Quản lý lớp theo năm học, số học sinh/giáo viên/nhiệm vụ và danh sách thành viên
+- Gỡ thành viên chỉ khi không làm mất lịch sử bài nộp; học sinh đã có version được bảo vệ
+- Audit log phân trang, tìm kiếm và lọc theo thao tác/đối tượng
 
 ### Nghiên cứu
 
@@ -132,8 +134,8 @@ Mật khẩu không được lưu trong repository. Admin có thể tạo/reset 
 - `GET /api/student/workspace?assignmentId=...` — đúng một workspace bài viết, gồm draft/version/feedback/rubric liên quan
 - `GET /api/academic/snapshot` — compatibility snapshot theo RBAC cho các phân hệ chưa migrate
 - `POST /api/academic/action` — draft/version/feedback/rubric/assignment/AI/reflection
-- `GET /api/admin/users` — admin-only
-- `POST /api/admin/manage` — admin-only
+- `GET /api/admin/users?scope=users|classes|class-members|audit|stats` — admin-only, phân trang/filter server-side
+- `POST /api/admin/manage` — create/update user, class membership, bulk status/class assignment, import preview/execute
 
 ## PostgreSQL
 
@@ -175,6 +177,16 @@ npm run smoke:production
 ```
 
 Có thể đặt `REQUIRE_DEDICATED_JWT_SECRET=true` để smoke test thất bại nếu production vẫn đang dùng compatibility fallback. Hai URL student resource được rewrite vào function academic hiện có để không tăng function count trên Vercel Hobby.
+
+## Import tài khoản quản trị
+
+Admin có thể nhập `.xlsx`, `.csv`, `.tsv` với các cột: Họ và tên, Email, Vai trò, Lớp, Số điện thoại, Ngày sinh, Trường, Năm học, Khối, Mã học sinh, Mã cán bộ, Tổ/Bộ môn.
+
+- Tối đa 300 dòng mỗi lần.
+- File được đọc ở trình duyệt; XLSX dùng parser ZIP/XML nội bộ, không thêm runtime dependency.
+- Backend luôn chạy dry-run preview trước: email/mã trùng, lớp không tồn tại, vai trò không hợp lệ.
+- Khi thực thi, chỉ dòng ready được tạo; mật khẩu tạm chỉ trả về một lần trong kết quả import.
+- Import học sinh vào lớp sẽ tự tạo portfolio/draft cho các nhiệm vụ đã publish.
 
 ## Nguyên tắc production
 
