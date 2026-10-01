@@ -10,7 +10,7 @@ Nền tảng học tập Ngữ văn THPT hỗ trợ đọc hiểu theo 6 trục 
 - **Xác thực:** cookie HttpOnly + JWT + RBAC; tài khoản do nhà trường/quản trị viên cấp, không có đăng ký công khai
 - **AI hiện tại:** không gọi API trả phí. Tài khoản AI mở đúng bài/đúng version, người vận hành copy response từ ChatGPT và dán vào. Khi bấm gửi, học sinh thấy góp ý AI ngay.
 - **Điểm chính thức:** chỉ giáo viên chấm Rubric; máy chủ tính điểm từ rubric gắn đúng assignment.
-- **Production:** https://cvt-khkt2627.vercel.app
+- **Production:** https://htnv.io.vn
 
 Tên sản phẩm chính thức là **Học tốt Ngữ Văn**. Slug GitHub/Vercel được giữ để không làm gián đoạn hạ tầng.
 
@@ -147,7 +147,7 @@ Các bảng trọng yếu gồm `app_users`, `classes`, `class_members`, `litera
 Production cần:
 
 - `DATABASE_URL`
-- `JWT_SECRET`
+- `JWT_SECRET` — bắt buộc, tối thiểu 32 ký tự; backend không suy ra khóa ký JWT từ dữ liệu trong database.
 
 Không commit secrets/mật khẩu vào repository.
 
