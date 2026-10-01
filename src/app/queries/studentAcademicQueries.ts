@@ -45,8 +45,8 @@ export interface StudentWorkspace {
 
 export const studentAcademicKeys = {
   all: ['student-academic'] as const,
-  overview: () => ['student-academic', 'overview'] as const,
-  workspace: (assignmentId: string) => ['student-academic', 'workspace', assignmentId] as const
+  overview: (userId: string) => ['student-academic', userId, 'overview'] as const,
+  workspace: (userId: string, assignmentId: string) => ['student-academic', userId, 'workspace', assignmentId] as const
 };
 
 async function getJson<T>(url: string): Promise<T> {
@@ -68,9 +68,9 @@ export async function postAcademicAction(payload: unknown) {
   return data;
 }
 
-export function useStudentOverviewQuery(enabled = true) {
+export function useStudentOverviewQuery(userId: string, enabled = true) {
   return useQuery({
-    queryKey: studentAcademicKeys.overview(),
+    queryKey: studentAcademicKeys.overview(userId),
     enabled,
     queryFn: async () => {
       const data = await getJson<{ overview: StudentAcademicOverview }>('/api/student/overview');
@@ -80,9 +80,9 @@ export function useStudentOverviewQuery(enabled = true) {
   });
 }
 
-export function useStudentWorkspaceQuery(assignmentId: string, enabled = true) {
+export function useStudentWorkspaceQuery(userId: string, assignmentId: string, enabled = true) {
   return useQuery({
-    queryKey: studentAcademicKeys.workspace(assignmentId),
+    queryKey: studentAcademicKeys.workspace(userId, assignmentId),
     enabled: enabled && Boolean(assignmentId),
     queryFn: async () => {
       const data = await getJson<{ workspace: StudentWorkspace }>(
@@ -95,16 +95,16 @@ export function useStudentWorkspaceQuery(assignmentId: string, enabled = true) {
   });
 }
 
-export function useStudentAcademicAction(assignmentId?: string) {
+export function useStudentAcademicAction(userId: string, assignmentId?: string) {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: postAcademicAction,
     onSuccess: async () => {
       const invalidations: Promise<unknown>[] = [
-        queryClient.invalidateQueries({ queryKey: studentAcademicKeys.overview() })
+        queryClient.invalidateQueries({ queryKey: studentAcademicKeys.overview(userId) })
       ];
       if (assignmentId) {
-        invalidations.push(queryClient.invalidateQueries({ queryKey: studentAcademicKeys.workspace(assignmentId) }));
+        invalidations.push(queryClient.invalidateQueries({ queryKey: studentAcademicKeys.workspace(userId, assignmentId) }));
       }
       await Promise.all(invalidations);
     }
