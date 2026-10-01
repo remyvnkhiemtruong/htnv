@@ -269,7 +269,7 @@ await test('FSA24: student draft recovery uses IndexedDB and explicit offline/co
 
 await test('FSA25: anchored feedback stores immutable text range context and can reopen it', () => {
   const types = read('src/types/index.ts');
-  const api = read('api/_lib/academic-v3.js');
+  const api = read('api/_lib/academic-core.js');
   const student = read('api/_lib/student-resources.js');
   const review = read('src/views/TeacherReviewView.tsx');
   const editor = read('src/views/PortfolioEditorView.tsx');
