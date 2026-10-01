@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useAuthStore } from '../app/store/useAuthStore';
 import { useNotificationStore } from '../app/store/useNotificationStore';
+import { useTeacherWorkspaceQuery } from '../app/queries/teacherAcademicQueries';
 import { usePortfolio } from '../contexts/PortfolioContext';
 import { POETIC_AXES } from '../data/seedData';
 import type { FeedbackAnchor, PoeticAxisId, RubricMatrix } from '../types';
@@ -54,12 +55,12 @@ export const TeacherReviewView: React.FC<TeacherReviewViewProps> = ({
     assignments,
     literatureTexts,
     portfolios,
-    feedbacks,
+    feedbacks: overviewFeedbacks,
     rubric,
     rubrics,
-    rubricSubmissions,
-    aiReviews,
-    reflections,
+    rubricSubmissions: overviewRubricSubmissions,
+    aiReviews: overviewAiReviews,
+    reflections: overviewReflections,
     isLoading,
     dataError,
     addAnchoredFeedback,
@@ -106,10 +107,46 @@ export const TeacherReviewView: React.FC<TeacherReviewViewProps> = ({
     if (currentIndex >= queue.length) setCurrentIndex(0);
   }, [queue, studentId, currentIndex]);
 
-  const currentPortfolio = requestedStudentMissing ? undefined : queue[currentIndex];
-  const assignment = currentPortfolio ? assignments.find(item => item.id === currentPortfolio.assignmentId) : undefined;
-  const literatureText = assignment ? literatureTexts.find(item => item.id === assignment.textId) : undefined;
-  const activeRubric: RubricMatrix = assignment ? (rubrics[assignment.rubricId] || rubric) : rubric;
+  const currentPortfolioSummary = requestedStudentMissing ? undefined : queue[currentIndex];
+  const isTeacher = currentUser.role === 'teacher';
+  const teacherWorkspaceQuery = useTeacherWorkspaceQuery(
+    currentUser.id,
+    currentPortfolioSummary?.assignmentId || '',
+    currentPortfolioSummary?.studentId || '',
+    isTeacher && Boolean(currentUser.id) && Boolean(currentPortfolioSummary)
+  );
+  const teacherWorkspace = teacherWorkspaceQuery.data;
+  const currentPortfolio = isTeacher ? teacherWorkspace?.portfolio : currentPortfolioSummary;
+  const assignment = isTeacher
+    ? teacherWorkspace?.assignment
+    : currentPortfolio
+      ? assignments.find(item => item.id === currentPortfolio.assignmentId)
+      : undefined;
+  const literatureText = isTeacher
+    ? teacherWorkspace?.literatureText || undefined
+    : assignment
+      ? literatureTexts.find(item => item.id === assignment.textId)
+      : undefined;
+  const activeRubric: RubricMatrix = isTeacher
+    ? (teacherWorkspace?.rubric || rubric)
+    : assignment
+      ? (rubrics[assignment.rubricId] || rubric)
+      : rubric;
+  const feedbacks = isTeacher ? (teacherWorkspace?.feedbacks || []) : overviewFeedbacks;
+  const rubricSubmissions = isTeacher ? (teacherWorkspace?.rubricSubmissions || []) : overviewRubricSubmissions;
+  const aiReviews = isTeacher ? (teacherWorkspace?.aiReviews || []) : overviewAiReviews;
+  const reflections = isTeacher ? (teacherWorkspace?.reflections || []) : overviewReflections;
+
+  const refreshReviewData = async () => {
+    if (isTeacher) {
+      await Promise.all([
+        refreshAcademicData(),
+        teacherWorkspaceQuery.refetch().then(() => undefined)
+      ]);
+      return;
+    }
+    await refreshAcademicData();
+  };
 
   const latestVersionNumber = currentPortfolio?.versions[currentPortfolio.versions.length - 1]?.versionNumber || '';
   useEffect(() => {
@@ -210,7 +247,7 @@ export const TeacherReviewView: React.FC<TeacherReviewViewProps> = ({
     if (!matchQuery) return false;
 
     if (filterState === 'all') return true;
-    const hasRubric = rubricSubmissions.some(r =>
+    const hasRubric = overviewRubricSubmissions.some(r =>
       r.studentId === item.studentId &&
       r.assignmentId === item.assignmentId &&
       r.evaluatorRole === evaluatorRole
@@ -218,10 +255,10 @@ export const TeacherReviewView: React.FC<TeacherReviewViewProps> = ({
     if (filterState === 'graded') return hasRubric;
     if (filterState === 'pending') return !hasRubric;
     return true;
-  }), [queue, searchQuery, filterState, rubricSubmissions, evaluatorRole]);
+  }), [queue, searchQuery, filterState, overviewRubricSubmissions, evaluatorRole]);
 
-  const visibleQueueIndex = currentPortfolio
-    ? filteredQueue.findIndex(item => item.id === currentPortfolio.id)
+  const visibleQueueIndex = currentPortfolioSummary
+    ? filteredQueue.findIndex(item => item.id === currentPortfolioSummary.id)
     : -1;
 
   useEffect(() => {
@@ -271,8 +308,10 @@ export const TeacherReviewView: React.FC<TeacherReviewViewProps> = ({
   if (assignmentId && queue.length === 0) return <StatePanel title="Chưa có bài đã nộp" message="Nhiệm vụ này chưa có phiên bản nào thuộc phạm vi bạn được phép chấm." actionLabel="Về trang chính" onAction={() => onNavigate(reviewHome)} />;
   if (requestedStudentMissing) return <StatePanel title="Không tìm thấy bài của học sinh" message="Học sinh được yêu cầu không có bài thuộc phạm vi bạn được phép chấm." actionLabel="Về trang chính" onAction={() => onNavigate(reviewHome)} />;
   if (!queue.length) return <StatePanel title="Chưa có bài để chấm" message="Khi học sinh nộp phiên bản, bài sẽ xuất hiện tại đây." actionLabel="Về trang chính" onAction={() => onNavigate(reviewHome)} />;
-  if (!currentPortfolio || !assignment) return <StatePanel title="Dữ liệu chưa hoàn chỉnh" message="Hồ sơ không còn liên kết với nhiệm vụ hợp lệ." actionLabel="Tải lại" onAction={() => void refreshAcademicData()} />;
-  if (!selectedSnapshot || integrityError) return <StatePanel title="Không tìm thấy phiên bản đã nộp" message="Không thể chấm bằng bản nháp thay thế. Hãy tải lại dữ liệu hoặc chọn một phiên bản hợp lệ." actionLabel="Tải lại" onAction={() => void refreshAcademicData()} />;
+  if (isTeacher && currentPortfolioSummary && teacherWorkspaceQuery.isLoading && !teacherWorkspace) return <StatePanel loading title="Đang mở bài chấm" message="Đang tải đúng phiên bản và phản hồi của học sinh..." />;
+  if (isTeacher && teacherWorkspaceQuery.error && !teacherWorkspace) return <StatePanel title="Không thể tải bài chấm" message={teacherWorkspaceQuery.error instanceof Error ? teacherWorkspaceQuery.error.message : 'Không thể tải workspace giáo viên.'} actionLabel="Thử lại" onAction={() => void refreshReviewData()} />;
+  if (!currentPortfolio || !assignment) return <StatePanel title="Dữ liệu chưa hoàn chỉnh" message="Hồ sơ không còn liên kết với nhiệm vụ hợp lệ." actionLabel="Tải lại" onAction={() => void refreshReviewData()} />;
+  if (!selectedSnapshot || integrityError) return <StatePanel title="Không tìm thấy phiên bản đã nộp" message="Không thể chấm bằng bản nháp thay thế. Hãy tải lại dữ liệu hoặc chọn một phiên bản hợp lệ." actionLabel="Tải lại" onAction={() => void refreshReviewData()} />;
 
   const createFeedback = async () => {
     if (isAdminReadOnly) return;
@@ -296,6 +335,7 @@ export const TeacherReviewView: React.FC<TeacherReviewViewProps> = ({
         authorName: currentUser.name,
         authorRole: evaluatorRole
       });
+      if (isTeacher) await teacherWorkspaceQuery.refetch();
       setFeedbackText('');
       setSelectedText(''); setSelectedAnchor(null);
       addToast({ type: 'success', title: 'Đã lưu phản hồi', message: 'Nhận xét đã được lưu cho đúng phiên bản.' });
@@ -332,6 +372,7 @@ export const TeacherReviewView: React.FC<TeacherReviewViewProps> = ({
         totalScore,
         maxScore
       });
+      if (isTeacher) await teacherWorkspaceQuery.refetch();
       const canonicalTotal = result.totalScore ?? totalScore;
       const canonicalMax = result.maxScore ?? maxScore;
       addToast({ type: 'success', title: 'Đã lưu điểm rubric', message: `Đã lưu điểm ${canonicalTotal}/${canonicalMax}.` });
@@ -362,7 +403,7 @@ export const TeacherReviewView: React.FC<TeacherReviewViewProps> = ({
       });
       const data = await response.json().catch(() => ({}));
       if (!response.ok) throw new Error(data.message || data.code || 'Không thể cập nhật góp ý AI');
-      await refreshAcademicData();
+      await refreshReviewData();
       addToast({
         type: 'success',
         title: decision === 'revised' ? 'Đã lưu bổ sung của giáo viên' : 'Đã cập nhật góp ý AI',
