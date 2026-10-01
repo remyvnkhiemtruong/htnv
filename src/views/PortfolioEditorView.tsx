@@ -298,7 +298,7 @@ export const PortfolioEditorView: React.FC<PortfolioEditorViewProps> = ({ assign
       textarea.focus();
       if (start >= 0 && end > start) textarea.setSelectionRange(start, end);
       textarea.scrollIntoView({ block: 'center', behavior: 'smooth' });
-    }, 0);
+    });
   };
 
   const handleTextSelection = () => {
