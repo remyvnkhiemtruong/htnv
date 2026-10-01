@@ -1,5 +1,6 @@
 const baseUrl = String(process.env.BASE_URL || 'https://htnv.io.vn').replace(/\/$/, '');
 const requireDedicatedSecret = String(process.env.REQUIRE_DEDICATED_JWT_SECRET || '').toLowerCase() === 'true';
+const expectedGitSha = String(process.env.EXPECTED_GIT_SHA || '').trim();
 const email = String(process.env.SMOKE_TEST_EMAIL || '').trim();
 const password = String(process.env.SMOKE_TEST_PASSWORD || '');
 
@@ -38,6 +39,34 @@ try {
   const health = await request('/api/health');
   const healthBody = await json(health);
   record('health endpoint responds', health.status === 200 && healthBody?.ok === true, `HTTP ${health.status}`);
+  record(
+    'health endpoint is private no-store',
+    String(health.headers.get('cache-control') || '').toLowerCase().includes('no-store'),
+    String(health.headers.get('cache-control') || 'missing')
+  );
+
+  const releaseSha = String(healthBody?.release?.commitSha || '');
+  if (expectedGitSha) {
+    const matchesExpectedCommit =
+      releaseSha === expectedGitSha ||
+      (releaseSha.length >= 7 && expectedGitSha.startsWith(releaseSha)) ||
+      (expectedGitSha.length >= 7 && releaseSha.startsWith(expectedGitSha));
+    record(
+      'production release commit matches expected SHA',
+      matchesExpectedCommit,
+      `expected ${expectedGitSha.slice(0, 12)}, got ${releaseSha ? releaseSha.slice(0, 12) : 'missing'}`
+    );
+  } else {
+    console.log(`ℹ release SHA check skipped; deployed commit is ${releaseSha || 'not exposed'}`);
+  }
+
+  const csp = String(health.headers.get('content-security-policy') || '');
+  record('CSP blocks framing', csp.includes("frame-ancestors 'none'"), csp ? 'configured' : 'missing');
+  record(
+    'content type sniffing is disabled',
+    String(health.headers.get('x-content-type-options') || '').toLowerCase() === 'nosniff',
+    String(health.headers.get('x-content-type-options') || 'missing')
+  );
   record(
     'JWT signing source is available',
     healthBody?.security?.jwtSecretConfigured === true,
