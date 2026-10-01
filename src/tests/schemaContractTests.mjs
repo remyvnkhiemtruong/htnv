@@ -69,6 +69,13 @@ await test('SC05: version-to-feedback provenance FK is an explicit migration', (
   assert(provenance.includes('REFERENCES feedbacks(id)'));
 });
 
+await test('SC06: immutable portfolio versions are established by explicit migration', () => {
+  const contracts = read('scripts/migrations/20261002_academic_core_contracts.sql');
+  assert(contracts.includes('CREATE OR REPLACE FUNCTION prevent_portfolio_version_mutation'));
+  assert(contracts.includes('BEFORE UPDATE OR DELETE ON portfolio_versions'));
+  assert(contracts.includes('CREATE TRIGGER portfolio_versions_immutable_update'));
+});
+
 const failed = results.filter(result => !result.ok);
 console.log(`${results.length - failed.length}/${results.length} schema contract tests passed.`);
 if (failed.length) process.exit(1);
