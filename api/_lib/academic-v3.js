@@ -597,7 +597,8 @@ export async function getAcademicSnapshot(user) {
         resolved: Boolean(row.resolved),
         resolvedAt: row.resolved_at || null,
         resolvedByVersionId: researcher ? null : (row.resolved_by_version_id || null),
-        sourceAiReviewId: researcher ? null : (row.source_ai_review_id || null)
+        sourceAiReviewId: researcher ? null : (row.source_ai_review_id || null),
+        anchor: researcher ? null : (row.anchor_json || null)
       };
     });
   }
@@ -1037,10 +1038,24 @@ async function addFeedback(user, input, req) {
       if (!exact.rows.length) throw new Error('VERSION_NOT_FOUND');
     }
     const authorRole = user.role;
+    const rawAnchor = input.anchor && typeof input.anchor === 'object' && !Array.isArray(input.anchor) ? input.anchor : null;
+    const start = Number(rawAnchor?.start);
+    const end = Number(rawAnchor?.end);
+    const anchor = rawAnchor && rawAnchor.type === 'text-range' && Number.isInteger(start) && Number.isInteger(end) && start >= 0 && end > start
+      ? {
+          type: 'text-range',
+          axisId,
+          start,
+          end,
+          exact: cleanText(rawAnchor.exact || input.selectedSnippet, 5000),
+          prefix: cleanText(rawAnchor.prefix, 240),
+          suffix: cleanText(rawAnchor.suffix, 240)
+        }
+      : { type: 'axis', axisId };
     const inserted = await client.query(`
-      INSERT INTO feedbacks(portfolio_id,version_id,axis_id,selected_snippet,comment,author_id,author_role)
-      VALUES($1,$2,$3,$4,$5,$6,$7) RETURNING id,created_at
-    `, [portfolio.id, versionId, axisId, cleanText(input.selectedSnippet, 5000), comment, user.id, authorRole]);
+      INSERT INTO feedbacks(portfolio_id,version_id,axis_id,selected_snippet,comment,author_id,author_role,anchor_json)
+      VALUES($1,$2,$3,$4,$5,$6,$7,$8::jsonb) RETURNING id,created_at
+    `, [portfolio.id, versionId, axisId, cleanText(input.selectedSnippet, 5000), comment, user.id, authorRole, JSON.stringify(anchor)]);
     await client.query(`UPDATE portfolios SET status='feedback_received',updated_at=now() WHERE id=$1`, [portfolio.id]);
     if (peerAssignmentId) await client.query(`UPDATE peer_review_assignments SET status='completed',completed_at=now() WHERE id=$1`, [peerAssignmentId]);
     await audit(client, user, 'ADD_FEEDBACK', 'portfolio', portfolio.id, { feedbackId: inserted.rows[0].id, versionId, axisId }, req);
