@@ -1,5 +1,5 @@
 import fs from 'node:fs';
-import { stableStringify, checksumContent } from '../../api/_lib/academic-v2.js';
+import { stableStringify, checksumContent } from '../../api/_lib/academic-core.js';
 
 const results = [];
 const read = path => fs.readFileSync(path, 'utf8');
@@ -54,14 +54,14 @@ await test('H06: thay một dẫn chứng nested làm checksum thay đổi', () 
 });
 
 await test('H07: create_version tách sequence_no khỏi số phiên bản sư phạm V0/V1/V2', () => {
-  const source = read('api/_lib/academic-v2.js');
+  const source = read('api/_lib/academic-core.js');
   assert(source.includes("stage <> 'prediction'"), 'Phải đếm riêng các version không phải prediction');
   assert(source.includes("isPrediction ? 'v0.0' : `v${nonPredictionCount + 1}.0`"), 'Display version phải dùng nonPredictionCount');
   assert(source.includes('nextSeq = prevVersion ? Number(prevVersion.sequence_no || 0) + 1 : 1'), 'sequence_no vẫn phải tăng độc lập');
 });
 
 await test('H08: mỗi create_version tạo AI request trong cùng service transaction', () => {
-  const source = read('api/_lib/academic-v2.js');
+  const source = read('api/_lib/academic-core.js');
   const start = source.indexOf('async function createVersion');
   const end = source.indexOf('async function teacherReviewAi');
   const block = source.slice(start, end);
@@ -72,19 +72,19 @@ await test('H08: mỗi create_version tạo AI request trong cùng service trans
 });
 
 await test('H09: teacher AI finalization có idempotency và unique provenance', () => {
-  const source = read('api/_lib/academic-v2.js');
+  const source = read('api/_lib/academic-core.js');
   assert(source.includes('idx_feedbacks_ai_review_unique'), 'Thiếu unique index source_ai_review_id');
   assert(source.includes("row.teacher_review_status !== 'pending'"), 'Teacher finalize phải kiểm trạng thái pending');
   assert(source.includes('isIdempotentRetry: true'), 'Retry finalization phải trả idempotent result');
 });
 
 await test('H10: reject AI không làm workflow kẹt ở trạng thái chờ duyệt', () => {
-  const source = read('api/_lib/academic-v2.js');
+  const source = read('api/_lib/academic-core.js');
   assert(source.includes("'teacher_feedback_needed'"), 'Thiếu trạng thái teacher_feedback_needed');
 });
 
 await test('H11: rubric score được tính ở server theo rubric assignment', () => {
-  const source = read('api/_lib/academic-v2.js');
+  const source = read('api/_lib/academic-core.js');
   const start = source.indexOf('async function submitRubric');
   const end = source.indexOf('async function assignPeerReview');
   const block = source.slice(start, end);
@@ -95,16 +95,16 @@ await test('H11: rubric score được tính ở server theo rubric assignment',
 });
 
 await test('H12: linked feedback chỉ được lấy từ cùng portfolio', () => {
-  const source = read('api/_lib/academic-v2.js');
+  const source = read('api/_lib/academic-core.js');
   assert(source.includes('f.portfolio_id = $3'), 'Feedback link phải scope cùng portfolio');
   assert(source.includes('version_feedback_links_feedback_fk'), 'Thiếu FK feedback provenance');
 });
 
 await test('H13: snapshot cung cấp rubric map theo assignment rubricId', () => {
-  const service = read('api/_lib/academic-v2.js');
+  const service = read('api/_lib/academic-core.js');
   const context = read('src/contexts/PortfolioContext.tsx');
   const review = read('src/views/TeacherReviewView.tsx');
-  assert(service.includes('snapshot.rubrics = rubrics'), 'Backend chưa trả rubric map');
+  assert(service.includes('return { assignments, literatureTexts, rubric: primaryRubric, rubrics'), 'Backend chưa trả rubric map');
   assert(context.includes('rubrics: Record<string, RubricMatrix>'), 'Context chưa expose rubric map');
   assert(review.includes('rubrics[assignment.rubricId] || rubric'), 'Teacher review chưa chọn rubric theo assignment');
 });
