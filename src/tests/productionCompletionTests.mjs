@@ -45,9 +45,11 @@ await test('P08: sequence_no and pedagogical V0/V1/V2 are independent', () => {
   assert(academic.includes("stage<>'prediction'"));
 });
 await test('P09: create_version requires idempotency key', () => { assert(academic.includes('SUBMISSION_KEY_REQUIRED')); assert(academic.includes('submission_key=$2')); });
-await test('P10: version and AI request are created atomically', () => {
+await test('P10: V1 AI request is stage-aware and remains atomic with version creation', () => {
   const source=block(academic,'async function createVersion','async function aiCompleteReview');
-  for(const token of ["client.query('BEGIN')",'INSERT INTO portfolio_versions','INSERT INTO ai_review_requests',"client.query('COMMIT')"]) assert(source.includes(token),token);
+  for(const token of ["client.query('BEGIN')",'INSERT INTO portfolio_versions','configuredAiStages.includes(stage)','INSERT INTO ai_review_requests',"client.query('COMMIT')"]) assert(source.includes(token),token);
+  assert(source.includes("['initial']"));
+  assert(source.includes('aiReviewQueued: shouldQueueAiReview'));
 });
 await test('P11: manual AI response is published to the student immediately', () => {
   const source=block(workflow,'async function aiCompleteReview','async function teacherReviewAi');

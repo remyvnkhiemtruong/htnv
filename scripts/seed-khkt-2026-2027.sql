@@ -75,7 +75,7 @@ WHERE t.public_id IN ('vo-nhat','chi-pheo','xuan-toc-do-cuu-quoc','mua-la-rung-t
 ON CONFLICT(literature_text_id,version_no) DO NOTHING;
 
 WITH cfg AS (
- SELECT '{"predictionEnabled":true,"aiReviewRequired":true,"manualAiResponse":true,"aiFeedbackVisibleImmediately":true,"teacherFollowUpEnabled":true,"reflectionRequired":true,"officialRubricRequired":true}'::jsonb AS j
+ SELECT '{"predictionEnabled":true,"aiReviewRequired":true,"aiReviewStages":["initial"],"manualAiResponse":true,"aiFeedbackVisibleImmediately":true,"teacherFollowUpEnabled":true,"reflectionRequired":true,"officialRubricRequired":true}'::jsonb AS j
 ), data(public_id,text_public_id,title,difficulty,prompt,guiding_steps,ai_guidance,common_mistakes,reference_guide,prediction_template) AS (
  VALUES
  ('11a1-vo-nhat','vo-nhat','Hồ sơ đọc số: Vợ nhặt','Nâng cao',

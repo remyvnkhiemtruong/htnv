@@ -202,11 +202,14 @@ test('TC02: submit version tạo đúng 1 immutable version, sequence tăng đú
   assert(code.includes('INSERT INTO portfolio_versions'), 'createVersion phải insert immutable version');
 });
 
-test('TC03: submit version tự động tạo đúng 1 ai_review_requests status=pending', () => {
+test('TC03: mặc định chỉ V1/initial được đưa vào AI queue', () => {
   const academic = read('api/_lib/academic-core.js');
   const code = academic.slice(academic.indexOf('async function createVersion'), academic.indexOf('async function aiCompleteReview'));
-  assert(code.includes('INSERT INTO ai_review_requests'), 'createVersion phải tạo ai_review_requests');
-  assert(code.includes("'submitted_waiting_ai'"), 'portfolio status phải chuyển submitted_waiting_ai');
+  assert(code.includes("['initial']"), 'Mặc định AI review stages phải chỉ gồm initial');
+  assert(code.includes('configuredAiStages.includes(stage)'), 'AI queue phải phụ thuộc stage cấu hình');
+  assert(code.includes('INSERT INTO ai_review_requests'), 'V1 vẫn phải có khả năng tạo ai_review_requests');
+  assert(code.includes("'drafting'"), 'V0 không có AI phải quay về drafting');
+  assert(code.includes("'feedback_received'"), 'V2 không có AI phải đi tiếp REF1 thay vì chờ AI');
 });
 
 test('TC04: retry submit cùng submission_key trả về version cũ, không nhân đôi', () => {
@@ -331,9 +334,10 @@ test('TC20: text diff phát hiện đúng added/deleted/unchanged trên tiếng 
   assert(hasUnchanged, 'Diff phải giữ nguyên phần chữ chung');
 });
 
-test('TC21: V0 prediction stage lưu đúng stage=prediction và tự động vào AI queue', () => {
+test('TC21: V0 prediction lưu đúng stage nhưng mặc định không vào AI queue', () => {
   const academic = read('api/_lib/academic-core.js');
   assert(academic.includes("requestedStage === 'prediction'"), 'Có hỗ trợ stage=prediction');
+  assert(academic.includes('configuredAiStages'), 'AI queue phải tách khỏi việc tạo V0/V2');
   const modal = read('src/components/versioning/CreateVersionModal.tsx');
   assert(modal.includes("'prediction'"), 'CreateVersionModal có hỗ trợ stage prediction');
 });
