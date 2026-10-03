@@ -110,6 +110,19 @@ async function audit(client, user, action, targetType, targetId, afterJson = nul
   ]);
 }
 
+export async function markPortfolioFeedbackReceived(client, portfolioId) {
+  const updated = await client.query(`
+    UPDATE portfolios
+    SET status='feedback_received', updated_at=now()
+    WHERE id=$1
+      AND status NOT IN ('waiting_official_rubric','completed')
+    RETURNING status
+  `, [portfolioId]);
+  if (updated.rows[0]?.status) return updated.rows[0].status;
+  const existing = await client.query('SELECT status FROM portfolios WHERE id=$1 LIMIT 1', [portfolioId]);
+  return existing.rows[0]?.status || null;
+}
+
 async function capabilities() {
   if (!capabilitiesPromise) {
     capabilitiesPromise = (async () => {
@@ -933,10 +946,10 @@ async function aiCompleteReview(user, input, req) {
       VALUES($1,$2,$3,$4,$5,$6,'ai')
       RETURNING id
     `, [row.portfolio_id, row.version_id, axisId, cleanText(input.selectedSnippet, 5000), response, user.id]);
-    await client.query(`UPDATE portfolios SET status='feedback_received',updated_at=now() WHERE id=$1`, [row.portfolio_id]);
+    const portfolioStatus = await markPortfolioFeedbackReceived(client, row.portfolio_id);
     await audit(client, user, 'AI_PUBLISH_FEEDBACK', 'ai_review', reviewId, { feedbackId: feedback.rows[0].id, visibleToStudent: true }, req);
     await client.query('COMMIT');
-    return { ok: true, feedbackId: feedback.rows[0].id, visibleToStudent: true };
+    return { ok: true, feedbackId: feedback.rows[0].id, visibleToStudent: true, portfolioStatus };
   } catch (error) {
     await client.query('ROLLBACK');
     throw error;
@@ -996,13 +1009,11 @@ async function teacherReviewAi(user, input, req) {
         const existing = await client.query('SELECT id FROM feedbacks WHERE source_ai_review_id=$1 LIMIT 1', [reviewId]);
         feedbackId = existing.rows[0]?.id || null;
       }
-      await client.query(`UPDATE portfolios SET status='feedback_received',updated_at=now() WHERE id=$1`, [row.portfolio_id]);
-    } else {
-      await client.query(`UPDATE portfolios SET status='feedback_received',updated_at=now() WHERE id=$1`, [row.portfolio_id]);
     }
+    const portfolioStatus = await markPortfolioFeedbackReceived(client, row.portfolio_id);
     await audit(client, user, 'TEACHER_FINALIZE_AI_REVIEW', 'ai_review', reviewId, { decision, feedbackId, hasFinalResponse: Boolean(finalResponse) }, req);
     await client.query('COMMIT');
-    return { ok: true, decision, feedbackId, portfolioStatus: 'feedback_received' };
+    return { ok: true, decision, feedbackId, portfolioStatus };
   } catch (error) {
     await client.query('ROLLBACK');
     throw error;
@@ -1056,7 +1067,7 @@ async function addFeedback(user, input, req) {
       INSERT INTO feedbacks(portfolio_id,version_id,axis_id,selected_snippet,comment,author_id,author_role,anchor_json)
       VALUES($1,$2,$3,$4,$5,$6,$7,$8::jsonb) RETURNING id,created_at
     `, [portfolio.id, versionId, axisId, cleanText(input.selectedSnippet, 5000), comment, user.id, authorRole, JSON.stringify(anchor)]);
-    await client.query(`UPDATE portfolios SET status='feedback_received',updated_at=now() WHERE id=$1`, [portfolio.id]);
+    await markPortfolioFeedbackReceived(client, portfolio.id);
     if (peerAssignmentId) await client.query(`UPDATE peer_review_assignments SET status='completed',completed_at=now() WHERE id=$1`, [peerAssignmentId]);
     await audit(client, user, 'ADD_FEEDBACK', 'portfolio', portfolio.id, { feedbackId: inserted.rows[0].id, versionId, axisId }, req);
     await client.query('COMMIT');
@@ -1121,6 +1132,13 @@ async function submitRubric(user, input, req) {
       const exact = await client.query('SELECT 1 FROM portfolio_versions WHERE id=$1 AND portfolio_id=$2 LIMIT 1', [versionId, portfolio.id]);
       if (!exact.rows.length) throw new Error('VERSION_NOT_FOUND');
     }
+    if (user.role === 'teacher') {
+      const reflection = await client.query(
+        'SELECT 1 FROM student_reflections WHERE portfolio_id=$1 AND version_id=$2 LIMIT 1',
+        [portfolio.id, versionId]
+      );
+      if (!reflection.rows.length) throw new Error('REFLECTION_REQUIRED_BEFORE_OFFICIAL_RUBRIC');
+    }
     const criteriaResult = await client.query(`
       SELECT rc.public_id,rc.weight,rc.levels_json FROM assignments a
       JOIN rubric_criteria rc ON rc.rubric_id=a.rubric_id
@@ -1154,10 +1172,15 @@ async function submitRubric(user, input, req) {
                     total_score=EXCLUDED.total_score,max_score=EXCLUDED.max_score,submitted_at=now()
       RETURNING id,submitted_at
     `, [portfolio.id, versionId, user.id, evaluatorRole, normalized, cleanText(input.overallFeedback, 20000), totalScore, maxScore]);
+    let portfolioStatus = null;
+    if (user.role === 'teacher') {
+      await client.query("UPDATE portfolios SET status='completed', updated_at=now() WHERE id=$1", [portfolio.id]);
+      portfolioStatus = 'completed';
+    }
     if (peerAssignmentId) await client.query(`UPDATE peer_review_assignments SET status='completed',completed_at=now() WHERE id=$1`, [peerAssignmentId]);
-    await audit(client, user, 'SUBMIT_RUBRIC', 'portfolio', portfolio.id, { submissionId: inserted.rows[0].id, versionId, totalScore, maxScore }, req);
+    await audit(client, user, 'SUBMIT_RUBRIC', 'portfolio', portfolio.id, { submissionId: inserted.rows[0].id, versionId, totalScore, maxScore, portfolioStatus }, req);
     await client.query('COMMIT');
-    return { ok: true, id: inserted.rows[0].id, submittedAt: inserted.rows[0].submitted_at, totalScore, maxScore };
+    return { ok: true, id: inserted.rows[0].id, submittedAt: inserted.rows[0].submitted_at, totalScore, maxScore, ...(portfolioStatus ? { portfolioStatus } : {}) };
   } catch (error) {
     await client.query('ROLLBACK');
     throw error;

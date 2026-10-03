@@ -3,7 +3,8 @@ import {
   AXES,
   academicAction as academicActionV3,
   assertSameOrigin,
-  getAcademicSnapshot as getAcademicSnapshotV3
+  getAcademicSnapshot as getAcademicSnapshotV3,
+  markPortfolioFeedbackReceived
 } from './academic-core.js';
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
@@ -206,10 +207,10 @@ async function aiCompleteReview(user, input, req) {
       feedbackId = existing.rows[0]?.id || null;
     }
 
-    await client.query("UPDATE portfolios SET status='feedback_received', updated_at=now() WHERE id=$1", [row.portfolio_id]);
+    const portfolioStatus = await markPortfolioFeedbackReceived(client, row.portfolio_id);
     await audit(client, user, 'AI_PUBLISH_FEEDBACK', 'ai_review', reviewId, { feedbackId, axisId, visibleToStudent: true, teacherReviewAvailable: true }, req);
     await client.query('COMMIT');
-    return { ok: true, feedbackId, visibleToStudent: true, teacherReviewAvailable: true, portfolioStatus: 'feedback_received' };
+    return { ok: true, feedbackId, visibleToStudent: true, teacherReviewAvailable: true, portfolioStatus };
   } catch (error) {
     await client.query('ROLLBACK');
     throw error;
@@ -275,7 +276,7 @@ async function teacherReviewAi(user, input, req) {
       teacherFeedbackId = inserted.rows[0]?.id || null;
     }
 
-    await client.query("UPDATE portfolios SET status='feedback_received', updated_at=now() WHERE id=$1", [row.portfolio_id]);
+    const portfolioStatus = await markPortfolioFeedbackReceived(client, row.portfolio_id);
     await audit(client, user, 'TEACHER_REVIEW_AI_FEEDBACK', 'ai_review', reviewId, {
       decision,
       teacherFeedbackId,
@@ -283,7 +284,7 @@ async function teacherReviewAi(user, input, req) {
       teacherRevisionVisible: Boolean(teacherFeedbackId)
     }, req);
     await client.query('COMMIT');
-    return { ok: true, decision, feedbackId: teacherFeedbackId, portfolioStatus: 'feedback_received', aiFeedbackRemainsVisible: true };
+    return { ok: true, decision, feedbackId: teacherFeedbackId, portfolioStatus, aiFeedbackRemainsVisible: true };
   } catch (error) {
     await client.query('ROLLBACK');
     throw error;
@@ -364,17 +365,7 @@ async function submitRubricWithWorkflow(user, input, req) {
     if (!check.rows.length) throw new Error('REFLECTION_REQUIRED_BEFORE_OFFICIAL_RUBRIC');
   }
 
-  const result = await academicActionV3(user, input, req);
-  if (user.role === 'teacher' && result?.ok) {
-    const pool = await getPool();
-    await pool.query(`
-      UPDATE portfolios p
-      SET status='completed', updated_at=now()
-      FROM assignments a
-      WHERE p.assignment_id=a.id AND a.public_id=$1 AND p.student_id=$2
-    `, [cleanTrimmed(input.assignmentId, 200), cleanTrimmed(input.studentId, 80)]);
-  }
-  return result;
+  return academicActionV3(user, input, req);
 }
 
 export async function getAcademicSnapshot(user) {

@@ -51,7 +51,7 @@ await test('P10: version and AI request are created atomically', () => {
 });
 await test('P11: manual AI response is published to the student immediately', () => {
   const source=block(workflow,'async function aiCompleteReview','async function teacherReviewAi');
-  for (const token of ['INSERT INTO feedbacks', "'ai'", "teacher_review_status='pending'", "status='feedback_received'", 'visibleToStudent: true', 'manual_chatgpt_response']) assert(source.includes(token), token);
+  for (const token of ['INSERT INTO feedbacks', "'ai'", "teacher_review_status='pending'", 'markPortfolioFeedbackReceived(client, row.portfolio_id)', 'visibleToStudent: true', 'manual_chatgpt_response']) assert(source.includes(token), token);
 });
 await test('P12: teacher can review AI history and add a distinct revision without hiding AI feedback', () => {
   const source=block(workflow,'async function teacherReviewAi','async function saveReflection');

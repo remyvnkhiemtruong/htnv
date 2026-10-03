@@ -422,6 +422,30 @@ await test('FSA37: Neon provenance FK has a runner-safe standalone migration', (
   assert(!migration.includes('CREATE OR REPLACE FUNCTION'), 'Standalone FK migration must stay runner-safe');
 });
 
+
+
+await test('FSA38: terminal portfolio states cannot regress when feedback arrives late', () => {
+  const core = read('api/_lib/academic-core.js');
+  const service = read('api/_lib/academic-service.js');
+  assert(core.includes("status NOT IN ('waiting_official_rubric','completed')"), 'Feedback transition must guard rubric-waiting/completed states');
+  assert(core.includes('markPortfolioFeedbackReceived(client, row.portfolio_id)'), 'Core AI/teacher feedback must use guarded transition helper');
+  assert(core.includes('markPortfolioFeedbackReceived(client, portfolio.id)'), 'Manual feedback must use guarded transition helper');
+  assert(service.includes('markPortfolioFeedbackReceived'), 'Workflow service must use guarded transition helper');
+  assert(!service.includes("SET status='feedback_received', updated_at=now() WHERE id=$1"), 'Workflow service must not directly regress portfolio status');
+});
+
+await test('FSA39: official teacher rubric completes the portfolio atomically', () => {
+  const core = read('api/_lib/academic-core.js');
+  const service = read('api/_lib/academic-service.js');
+  const start = core.indexOf('async function submitRubric');
+  const end = core.indexOf('async function assignPeerReview', start);
+  const block = core.slice(start, end);
+  assert(block.includes('student_reflections'), 'Teacher rubric must verify REF1 inside the rubric transaction');
+  assert(block.includes("UPDATE portfolios SET status='completed'"), 'Teacher rubric transaction must set completed');
+  assert(block.indexOf("UPDATE portfolios SET status='completed'") < block.indexOf("await client.query('COMMIT')"), 'Completion must happen before rubric transaction commit');
+  assert(!service.includes("UPDATE portfolios p\n      SET status='completed'"), 'Service must not complete the portfolio in a second transaction');
+});
+
 const failed = results.filter(result => !result.ok);
 console.log(`${results.length - failed.length}/${results.length} full-system audit regression tests passed.`);
 if (failed.length) process.exit(1);

@@ -246,7 +246,7 @@ test('TC08: teacher rejected không xóa feedback AI đã công bố', () => {
   const code = workflow.slice(workflow.indexOf('async function teacherReviewAi'), workflow.indexOf('async function saveReflection'));
   assert(code.includes("decision === 'revised' && finalResponse"), 'Rejected không đi qua nhánh tạo bản sửa');
   assert(!code.includes('DELETE FROM feedbacks'), 'Rejected không được xóa feedback AI đã gửi');
-  assert(code.includes("status='feedback_received'"), 'Workflow phải thoát trạng thái chờ duyệt');
+  assert(code.includes('markPortfolioFeedbackReceived(client, row.portfolio_id)'), 'Workflow phải chuyển trạng thái qua terminal-state guard');
 });
 
 test('TC09: học sinh chỉ xem feedback của chính mình', () => {
