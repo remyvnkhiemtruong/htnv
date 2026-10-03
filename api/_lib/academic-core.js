@@ -110,6 +110,19 @@ async function audit(client, user, action, targetType, targetId, afterJson = nul
   ]);
 }
 
+export async function markPortfolioFeedbackReceived(client, portfolioId) {
+  const updated = await client.query(`
+    UPDATE portfolios
+    SET status='feedback_received', updated_at=now()
+    WHERE id=$1
+      AND status NOT IN ('waiting_official_rubric','completed')
+    RETURNING status
+  `, [portfolioId]);
+  if (updated.rows[0]?.status) return updated.rows[0].status;
+  const existing = await client.query('SELECT status FROM portfolios WHERE id=$1 LIMIT 1', [portfolioId]);
+  return existing.rows[0]?.status || null;
+}
+
 async function capabilities() {
   if (!capabilitiesPromise) {
     capabilitiesPromise = (async () => {
@@ -876,22 +889,41 @@ async function createVersion(user, input, req) {
       }
     }
 
-    const aiPrompt = stage === 'prediction'
-      ? 'Đánh giá bản dự đoán trước đọc theo lập luận và câu hỏi của học sinh. Không tiết lộ đáp án hoặc nội dung chưa được giao. Phản hồi sẽ được gửi cho học sinh và lưu để giáo viên xem sau.'
-      : 'Tạo phản hồi cho đúng phiên bản bất biến này theo rubric và các trục được giao. Nêu điểm mạnh, điểm cần cải thiện và bước chỉnh sửa tiếp theo. Phản hồi được gửi cho học sinh; giáo viên sẽ xem lịch sử và bổ sung khi cần.';
-    await client.query(`
-      INSERT INTO ai_review_requests(portfolio_id,version_id,prompt,stage)
-      VALUES($1,$2,$3,$4) ON CONFLICT(version_id) DO NOTHING
-    `, [portfolio.id, version.id, aiPrompt, stage]);
-    await client.query(`UPDATE portfolios SET active_version=$2,status='submitted_waiting_ai',updated_at=now() WHERE id=$1`, [portfolio.id, versionNumber]);
+    const configuredAiStages = Array.isArray(portfolio.workflow_config?.aiReviewStages)
+      ? portfolio.workflow_config.aiReviewStages.map(String).filter(item => ALLOWED_STAGES.has(item))
+      : ['initial'];
+    const aiReviewRequired = portfolio.workflow_config?.aiReviewRequired !== false;
+    const shouldQueueAiReview = aiReviewRequired && configuredAiStages.includes(stage);
+    if (shouldQueueAiReview) {
+      const aiPrompt = stage === 'initial'
+        ? 'Tạo phản hồi cho V1 bất biến này theo rubric và các trục được giao. Nêu điểm mạnh, điểm cần cải thiện và bước chỉnh sửa tiếp theo. Phản hồi được gửi cho học sinh; giáo viên xem lịch sử và bổ sung khi cần.'
+        : 'Tạo phản hồi AI cho đúng phiên bản bất biến này theo cấu hình nhiệm vụ. Không quyết định điểm chính thức; giáo viên vẫn chịu trách nhiệm Rubric cuối.';
+      await client.query(`
+        INSERT INTO ai_review_requests(portfolio_id,version_id,prompt,stage)
+        VALUES($1,$2,$3,$4) ON CONFLICT(version_id) DO NOTHING
+      `, [portfolio.id, version.id, aiPrompt, stage]);
+    }
+
+    const nextPortfolioStatus = shouldQueueAiReview
+      ? 'submitted_waiting_ai'
+      : stage === 'prediction'
+        ? 'drafting'
+        : stage === 'initial'
+          ? 'teacher_feedback_needed'
+          : 'feedback_received';
+    await client.query(
+      'UPDATE portfolios SET active_version=$2,status=$3,updated_at=now() WHERE id=$1',
+      [portfolio.id, versionNumber, nextPortfolioStatus]
+    );
     await audit(client, user, 'STUDENT_SUBMIT_VERSION', 'portfolio', portfolio.id, {
-      versionId: version.id, versionNumber, sequenceNo: nextSeq, stage, contentChecksum: checksum
+      versionId: version.id, versionNumber, sequenceNo: nextSeq, stage, contentChecksum: checksum,
+      aiReviewQueued: shouldQueueAiReview, portfolioStatus: nextPortfolioStatus
     }, req);
     await client.query('COMMIT');
     return { ok: true, version: {
       id: version.id, versionNumber: version.version_number, sequenceNo: version.sequence_no,
       stage: version.stage, createdAt: version.submitted_at, contentChecksum: version.content_checksum
-    }, portfolioStatus: 'submitted_waiting_ai' };
+    }, portfolioStatus: nextPortfolioStatus, aiReviewQueued: shouldQueueAiReview };
   } catch (error) {
     await client.query('ROLLBACK');
     throw error;
@@ -933,10 +965,10 @@ async function aiCompleteReview(user, input, req) {
       VALUES($1,$2,$3,$4,$5,$6,'ai')
       RETURNING id
     `, [row.portfolio_id, row.version_id, axisId, cleanText(input.selectedSnippet, 5000), response, user.id]);
-    await client.query(`UPDATE portfolios SET status='feedback_received',updated_at=now() WHERE id=$1`, [row.portfolio_id]);
+    const portfolioStatus = await markPortfolioFeedbackReceived(client, row.portfolio_id);
     await audit(client, user, 'AI_PUBLISH_FEEDBACK', 'ai_review', reviewId, { feedbackId: feedback.rows[0].id, visibleToStudent: true }, req);
     await client.query('COMMIT');
-    return { ok: true, feedbackId: feedback.rows[0].id, visibleToStudent: true };
+    return { ok: true, feedbackId: feedback.rows[0].id, visibleToStudent: true, portfolioStatus };
   } catch (error) {
     await client.query('ROLLBACK');
     throw error;
@@ -996,13 +1028,11 @@ async function teacherReviewAi(user, input, req) {
         const existing = await client.query('SELECT id FROM feedbacks WHERE source_ai_review_id=$1 LIMIT 1', [reviewId]);
         feedbackId = existing.rows[0]?.id || null;
       }
-      await client.query(`UPDATE portfolios SET status='feedback_received',updated_at=now() WHERE id=$1`, [row.portfolio_id]);
-    } else {
-      await client.query(`UPDATE portfolios SET status='feedback_received',updated_at=now() WHERE id=$1`, [row.portfolio_id]);
     }
+    const portfolioStatus = await markPortfolioFeedbackReceived(client, row.portfolio_id);
     await audit(client, user, 'TEACHER_FINALIZE_AI_REVIEW', 'ai_review', reviewId, { decision, feedbackId, hasFinalResponse: Boolean(finalResponse) }, req);
     await client.query('COMMIT');
-    return { ok: true, decision, feedbackId, portfolioStatus: 'feedback_received' };
+    return { ok: true, decision, feedbackId, portfolioStatus };
   } catch (error) {
     await client.query('ROLLBACK');
     throw error;
@@ -1056,7 +1086,7 @@ async function addFeedback(user, input, req) {
       INSERT INTO feedbacks(portfolio_id,version_id,axis_id,selected_snippet,comment,author_id,author_role,anchor_json)
       VALUES($1,$2,$3,$4,$5,$6,$7,$8::jsonb) RETURNING id,created_at
     `, [portfolio.id, versionId, axisId, cleanText(input.selectedSnippet, 5000), comment, user.id, authorRole, JSON.stringify(anchor)]);
-    await client.query(`UPDATE portfolios SET status='feedback_received',updated_at=now() WHERE id=$1`, [portfolio.id]);
+    await markPortfolioFeedbackReceived(client, portfolio.id);
     if (peerAssignmentId) await client.query(`UPDATE peer_review_assignments SET status='completed',completed_at=now() WHERE id=$1`, [peerAssignmentId]);
     await audit(client, user, 'ADD_FEEDBACK', 'portfolio', portfolio.id, { feedbackId: inserted.rows[0].id, versionId, axisId }, req);
     await client.query('COMMIT');
@@ -1121,6 +1151,13 @@ async function submitRubric(user, input, req) {
       const exact = await client.query('SELECT 1 FROM portfolio_versions WHERE id=$1 AND portfolio_id=$2 LIMIT 1', [versionId, portfolio.id]);
       if (!exact.rows.length) throw new Error('VERSION_NOT_FOUND');
     }
+    if (user.role === 'teacher') {
+      const reflection = await client.query(
+        'SELECT 1 FROM student_reflections WHERE portfolio_id=$1 AND version_id=$2 LIMIT 1',
+        [portfolio.id, versionId]
+      );
+      if (!reflection.rows.length) throw new Error('REFLECTION_REQUIRED_BEFORE_OFFICIAL_RUBRIC');
+    }
     const criteriaResult = await client.query(`
       SELECT rc.public_id,rc.weight,rc.levels_json FROM assignments a
       JOIN rubric_criteria rc ON rc.rubric_id=a.rubric_id
@@ -1154,10 +1191,15 @@ async function submitRubric(user, input, req) {
                     total_score=EXCLUDED.total_score,max_score=EXCLUDED.max_score,submitted_at=now()
       RETURNING id,submitted_at
     `, [portfolio.id, versionId, user.id, evaluatorRole, normalized, cleanText(input.overallFeedback, 20000), totalScore, maxScore]);
+    let portfolioStatus = null;
+    if (user.role === 'teacher') {
+      await client.query("UPDATE portfolios SET status='completed', updated_at=now() WHERE id=$1", [portfolio.id]);
+      portfolioStatus = 'completed';
+    }
     if (peerAssignmentId) await client.query(`UPDATE peer_review_assignments SET status='completed',completed_at=now() WHERE id=$1`, [peerAssignmentId]);
-    await audit(client, user, 'SUBMIT_RUBRIC', 'portfolio', portfolio.id, { submissionId: inserted.rows[0].id, versionId, totalScore, maxScore }, req);
+    await audit(client, user, 'SUBMIT_RUBRIC', 'portfolio', portfolio.id, { submissionId: inserted.rows[0].id, versionId, totalScore, maxScore, portfolioStatus }, req);
     await client.query('COMMIT');
-    return { ok: true, id: inserted.rows[0].id, submittedAt: inserted.rows[0].submitted_at, totalScore, maxScore };
+    return { ok: true, id: inserted.rows[0].id, submittedAt: inserted.rows[0].submitted_at, totalScore, maxScore, ...(portfolioStatus ? { portfolioStatus } : {}) };
   } catch (error) {
     await client.query('ROLLBACK');
     throw error;
@@ -1410,7 +1452,22 @@ export async function academicHealth() {
       (SELECT count(*)::int FROM assignments) assignments,
       (SELECT count(*)::int FROM portfolios) portfolios,
       (SELECT count(*)::int FROM portfolio_versions) versions,
-      (SELECT count(*)::int FROM ai_review_requests) ai_reviews
+      (SELECT count(*)::int FROM portfolio_versions WHERE change_source IS DISTINCT FROM 'simulation') real_versions,
+      (SELECT count(*)::int FROM portfolio_versions WHERE change_source='simulation') simulation_versions,
+      (SELECT count(*)::int FROM ai_review_requests) ai_reviews,
+      (SELECT count(*)::int
+         FROM ai_review_requests ar
+         JOIN portfolio_versions v ON v.id=ar.version_id
+        WHERE v.change_source IS DISTINCT FROM 'simulation') real_ai_reviews,
+      (SELECT count(*)::int
+         FROM ai_review_requests ar
+         JOIN portfolio_versions v ON v.id=ar.version_id
+        WHERE v.change_source='simulation') simulation_ai_reviews,
+      (SELECT count(*)::int
+         FROM ai_review_requests ar
+         JOIN portfolio_versions v ON v.id=ar.version_id
+        WHERE v.change_source IS DISTINCT FROM 'simulation'
+          AND ar.status IN ('pending','in_progress')) active_ai_reviews
   `);
   return { ...result.rows[0], dbRoundTripMs: Date.now() - started, textVersioning: (await capabilities()).textVersioning };
 }
