@@ -446,6 +446,29 @@ await test('FSA39: official teacher rubric completes the portfolio atomically', 
   assert(!service.includes("UPDATE portfolios p\n      SET status='completed'"), 'Service must not complete the portfolio in a second transaction');
 });
 
+
+await test('FSA40: AI queue defaults to V1 and V0/V2 do not wait for nonexistent AI work', () => {
+  const core = read('api/_lib/academic-core.js');
+  const service = read('api/_lib/academic-service.js');
+  const start = core.indexOf('async function createVersion');
+  const end = core.indexOf('async function aiCompleteReview', start);
+  const block = core.slice(start, end);
+  assert(block.includes("['initial']"));
+  assert(block.includes('configuredAiStages.includes(stage)'));
+  assert(block.includes("'drafting'"));
+  assert(block.includes("'teacher_feedback_needed'"));
+  assert(block.includes("'feedback_received'"));
+  assert(service.includes("result.version.stage !== 'initial' || !result.aiReviewQueued"));
+  assert(service.includes('if (revisionCount > 0)'));
+});
+
+await test('FSA41: health separates simulation from operational data', () => {
+  const core = read('api/_lib/academic-core.js');
+  const health = read('api/health.ts');
+  for (const token of ['real_versions','simulation_versions','real_ai_reviews','simulation_ai_reviews','active_ai_reviews']) assert(core.includes(token), token);
+  for (const token of ['realVersions','simulationVersions','realAiReviews','simulationAiReviews','activeAiReviews']) assert(health.includes(token), token);
+});
+
 const failed = results.filter(result => !result.ok);
 console.log(`${results.length - failed.length}/${results.length} full-system audit regression tests passed.`);
 if (failed.length) process.exit(1);
