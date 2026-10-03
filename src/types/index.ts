@@ -188,6 +188,7 @@ export interface PredictionTemplate {
 export interface WorkflowConfig {
   predictionEnabled?: boolean;
   aiReviewRequired?: boolean;
+  aiReviewStages?: Array<'prediction' | 'initial' | 'revision'>;
   teacherApprovalRequired?: boolean;
   peerReviewEnabled?: boolean;
   officialRubricRequired?: boolean;
