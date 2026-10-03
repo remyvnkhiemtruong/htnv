@@ -32,11 +32,8 @@ async function teacherCanAccessClass(client, classId, teacherId) {
 }
 
 async function updateAiPromptAfterVersion(result) {
-  if (!result?.version?.id || !isUuid(result.version.id)) return result;
-  const stage = result.version.stage;
-  const prompt = stage === 'prediction'
-    ? 'Tạo góp ý AI hỗ trợ cho bản dự đoán V0. Không chấm đúng/sai tuyệt đối và không tiết lộ kiến thức sau đọc. Tài khoản AI là nơi người vận hành dán response từ ChatGPT; sau khi gửi, học sinh được xem góp ý để tiếp tục học.'
-    : 'Tạo góp ý AI cho đúng phiên bản bất biến này. Đối chiếu bài học sinh với câu hỏi, gợi ý chuyên môn, lỗi thường gặp và rubric do giáo viên cung cấp. Nêu điểm đạt, điểm cần bổ sung và câu hỏi gợi mở. Sau khi người vận hành dán response và gửi, học sinh được xem ngay để chỉnh sửa. AI không quyết định điểm chính thức; giáo viên vẫn xem lịch sử và quyết định rubric cuối.';
+  if (!result?.version?.id || !isUuid(result.version.id) || result.version.stage !== 'initial' || !result.aiReviewQueued) return result;
+  const prompt = 'Tạo góp ý AI cho V1 bất biến này. Đối chiếu bài học sinh với câu hỏi, gợi ý chuyên môn, lỗi thường gặp và rubric do giáo viên cung cấp. Nêu điểm đạt, điểm cần bổ sung và câu hỏi gợi mở. AI không quyết định điểm chính thức; giáo viên vẫn quyết định Rubric cuối.';
   const pool = await getPool();
   await pool.query('UPDATE ai_review_requests SET prompt=$2 WHERE version_id=$1', [result.version.id, prompt]);
   return result;
@@ -70,7 +67,7 @@ async function saveDraftWithWorkflow(user, input, req) {
   if (['submitted_waiting_ai', 'ai_proposed_waiting_teacher', 'teacher_feedback_needed', 'waiting_official_rubric', 'completed'].includes(row.portfolio_status)) {
     throw new Error('PORTFOLIO_READ_ONLY');
   }
-  if (revisionCount > 0 && row.portfolio_status === 'feedback_received') throw new Error('PORTFOLIO_READ_ONLY');
+  if (revisionCount > 0) throw new Error('PORTFOLIO_READ_ONLY');
   return academicActionV3(user, input, req);
 }
 
