@@ -153,6 +153,7 @@ export const AssignmentBuilderView: React.FC<Props> = ({ onNavigate }) => {
         workflowConfig: {
           predictionEnabled,
           aiReviewRequired: true,
+          aiReviewStages: ['initial'],
           teacherApprovalRequired: true,
           reflectionRequired: true,
           officialRubricRequired: true
