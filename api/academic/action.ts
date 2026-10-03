@@ -42,6 +42,7 @@ function normalizeCreateAssignmentInput(input: any) {
     workflowConfig: {
       predictionEnabled,
       aiReviewRequired: true,
+      aiReviewStages: ['initial'],
       teacherApprovalRequired: true,
       reflectionRequired: true,
       officialRubricRequired: true

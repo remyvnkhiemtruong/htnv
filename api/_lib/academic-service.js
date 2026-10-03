@@ -3,7 +3,8 @@ import {
   AXES,
   academicAction as academicActionV3,
   assertSameOrigin,
-  getAcademicSnapshot as getAcademicSnapshotV3
+  getAcademicSnapshot as getAcademicSnapshotV3,
+  markPortfolioFeedbackReceived
 } from './academic-core.js';
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
@@ -31,11 +32,8 @@ async function teacherCanAccessClass(client, classId, teacherId) {
 }
 
 async function updateAiPromptAfterVersion(result) {
-  if (!result?.version?.id || !isUuid(result.version.id)) return result;
-  const stage = result.version.stage;
-  const prompt = stage === 'prediction'
-    ? 'Tạo góp ý AI hỗ trợ cho bản dự đoán V0. Không chấm đúng/sai tuyệt đối và không tiết lộ kiến thức sau đọc. Tài khoản AI là nơi người vận hành dán response từ ChatGPT; sau khi gửi, học sinh được xem góp ý để tiếp tục học.'
-    : 'Tạo góp ý AI cho đúng phiên bản bất biến này. Đối chiếu bài học sinh với câu hỏi, gợi ý chuyên môn, lỗi thường gặp và rubric do giáo viên cung cấp. Nêu điểm đạt, điểm cần bổ sung và câu hỏi gợi mở. Sau khi người vận hành dán response và gửi, học sinh được xem ngay để chỉnh sửa. AI không quyết định điểm chính thức; giáo viên vẫn xem lịch sử và quyết định rubric cuối.';
+  if (!result?.version?.id || !isUuid(result.version.id) || result.version.stage !== 'initial' || !result.aiReviewQueued) return result;
+  const prompt = 'Tạo góp ý AI cho V1 bất biến này. Đối chiếu bài học sinh với câu hỏi, gợi ý chuyên môn, lỗi thường gặp và rubric do giáo viên cung cấp. Nêu điểm đạt, điểm cần bổ sung và câu hỏi gợi mở. AI không quyết định điểm chính thức; giáo viên vẫn quyết định Rubric cuối.';
   const pool = await getPool();
   await pool.query('UPDATE ai_review_requests SET prompt=$2 WHERE version_id=$1', [result.version.id, prompt]);
   return result;
@@ -69,7 +67,7 @@ async function saveDraftWithWorkflow(user, input, req) {
   if (['submitted_waiting_ai', 'ai_proposed_waiting_teacher', 'teacher_feedback_needed', 'waiting_official_rubric', 'completed'].includes(row.portfolio_status)) {
     throw new Error('PORTFOLIO_READ_ONLY');
   }
-  if (revisionCount > 0 && row.portfolio_status === 'feedback_received') throw new Error('PORTFOLIO_READ_ONLY');
+  if (revisionCount > 0) throw new Error('PORTFOLIO_READ_ONLY');
   return academicActionV3(user, input, req);
 }
 
@@ -206,10 +204,10 @@ async function aiCompleteReview(user, input, req) {
       feedbackId = existing.rows[0]?.id || null;
     }
 
-    await client.query("UPDATE portfolios SET status='feedback_received', updated_at=now() WHERE id=$1", [row.portfolio_id]);
+    const portfolioStatus = await markPortfolioFeedbackReceived(client, row.portfolio_id);
     await audit(client, user, 'AI_PUBLISH_FEEDBACK', 'ai_review', reviewId, { feedbackId, axisId, visibleToStudent: true, teacherReviewAvailable: true }, req);
     await client.query('COMMIT');
-    return { ok: true, feedbackId, visibleToStudent: true, teacherReviewAvailable: true, portfolioStatus: 'feedback_received' };
+    return { ok: true, feedbackId, visibleToStudent: true, teacherReviewAvailable: true, portfolioStatus };
   } catch (error) {
     await client.query('ROLLBACK');
     throw error;
@@ -275,7 +273,7 @@ async function teacherReviewAi(user, input, req) {
       teacherFeedbackId = inserted.rows[0]?.id || null;
     }
 
-    await client.query("UPDATE portfolios SET status='feedback_received', updated_at=now() WHERE id=$1", [row.portfolio_id]);
+    const portfolioStatus = await markPortfolioFeedbackReceived(client, row.portfolio_id);
     await audit(client, user, 'TEACHER_REVIEW_AI_FEEDBACK', 'ai_review', reviewId, {
       decision,
       teacherFeedbackId,
@@ -283,7 +281,7 @@ async function teacherReviewAi(user, input, req) {
       teacherRevisionVisible: Boolean(teacherFeedbackId)
     }, req);
     await client.query('COMMIT');
-    return { ok: true, decision, feedbackId: teacherFeedbackId, portfolioStatus: 'feedback_received', aiFeedbackRemainsVisible: true };
+    return { ok: true, decision, feedbackId: teacherFeedbackId, portfolioStatus, aiFeedbackRemainsVisible: true };
   } catch (error) {
     await client.query('ROLLBACK');
     throw error;
@@ -364,17 +362,7 @@ async function submitRubricWithWorkflow(user, input, req) {
     if (!check.rows.length) throw new Error('REFLECTION_REQUIRED_BEFORE_OFFICIAL_RUBRIC');
   }
 
-  const result = await academicActionV3(user, input, req);
-  if (user.role === 'teacher' && result?.ok) {
-    const pool = await getPool();
-    await pool.query(`
-      UPDATE portfolios p
-      SET status='completed', updated_at=now()
-      FROM assignments a
-      WHERE p.assignment_id=a.id AND a.public_id=$1 AND p.student_id=$2
-    `, [cleanTrimmed(input.assignmentId, 200), cleanTrimmed(input.studentId, 80)]);
-  }
-  return result;
+  return academicActionV3(user, input, req);
 }
 
 export async function getAcademicSnapshot(user) {
