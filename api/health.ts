@@ -44,7 +44,12 @@ export default async function handler(req: any, res: any) {
         assignments: counts.assignments,
         portfolios: counts.portfolios,
         versions: counts.versions,
-        aiReviews: counts.ai_reviews
+        realVersions: counts.real_versions,
+        simulationVersions: counts.simulation_versions,
+        aiReviews: counts.ai_reviews,
+        realAiReviews: counts.real_ai_reviews,
+        simulationAiReviews: counts.simulation_ai_reviews,
+        activeAiReviews: counts.active_ai_reviews
       },
       textVersioning: Boolean(counts.textVersioning),
       timestamp: new Date().toISOString()
