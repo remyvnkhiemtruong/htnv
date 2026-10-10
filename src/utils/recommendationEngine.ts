@@ -1,3 +1,4 @@
+import { learningVersionLabel } from './learningLabels';
 import type { PoeticAxisId, TaskRecommendation, RubricAssessmentSubmission, Assignment } from '../types';
 
 const AXIS_TITLE_MAP: Record<PoeticAxisId, string> = {
@@ -34,7 +35,7 @@ export function getExplainableRecommendation(
       assignmentTitle: fallback.title,
       targetAxisId: 'plot_situation',
       targetAxisTitle: AXIS_TITLE_MAP.plot_situation,
-      rationale: 'Chưa có điểm rubric để chọn phần cần luyện. Có thể bắt đầu từ tình huống và cốt truyện.',
+      rationale: 'Chưa có điểm bảng tiêu chí chấm điểm để chọn phần cần luyện. Có thể bắt đầu từ tình huống và cốt truyện.',
       expectedGain: 'Xác định tình huống, xung đột và bước ngoặt trong truyện.'
     };
   }
@@ -53,7 +54,7 @@ export function getExplainableRecommendation(
   const weakest = scoresByAxis[0];
   const matchedAssignment = candidates.find(assignment => assignment.targetAxes.includes(weakest.axisId)) || fallback;
 
-  let rationale = `Dựa trên Rubric gần nhất (${latestRubric.versionNumber}), trục [${AXIS_TITLE_MAP[weakest.axisId]}] đạt ${weakest.score}/4. `;
+  let rationale = `Theo kết quả chấm gần nhất (${learningVersionLabel(latestRubric.versionNumber)}), trục [${AXIS_TITLE_MAP[weakest.axisId]}] đạt ${weakest.score}/4. `;
   if (weakest.axisId === 'narrator_pov') rationale += 'Nên luyện nhận diện sự chuyển dịch điểm nhìn và lời nửa trực tiếp.';
   else if (weakest.axisId === 'space_time') rationale += 'Nên luyện phân tích tương phản không gian và thời gian tâm trạng.';
   else if (weakest.axisId === 'language_tone_symbol') rationale += 'Nên giải thích biểu tượng và giọng điệu bằng dẫn chứng.';

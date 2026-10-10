@@ -24,7 +24,7 @@ class AcademicMemoryCache {
   private users: User[] = [];
   private assignments: Assignment[] = [];
   private texts: LiteratureText[] = [];
-  private rubric: RubricMatrix = { id: 'rubric-poetics-std', title: 'Rubric', criteria: [] };
+  private rubric: RubricMatrix = { id: 'rubric-poetics-std', title: 'Bảng tiêu chí chấm điểm', criteria: [] };
   private portfolios: Record<string, StudentPortfolio> = {};
   private feedbacks: FeedbackItem[] = [];
   private rubricSubs: RubricAssessmentSubmission[] = [];
@@ -78,7 +78,7 @@ class AcademicMemoryCache {
     this.users = [];
     this.assignments = [];
     this.texts = [];
-    this.rubric = { id: 'rubric-poetics-std', title: 'Rubric', criteria: [] };
+    this.rubric = { id: 'rubric-poetics-std', title: 'Bảng tiêu chí chấm điểm', criteria: [] };
     this.portfolios = {};
     this.feedbacks = [];
     this.rubricSubs = [];

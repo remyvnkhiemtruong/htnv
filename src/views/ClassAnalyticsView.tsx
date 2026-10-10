@@ -126,7 +126,7 @@ export const ClassAnalyticsView: React.FC<ClassAnalyticsViewProps> = ({ onNaviga
           </div>
           <h1 className="mt-1 text-2xl font-bold tracking-tight text-slate-900">Phân tích kết quả lớp</h1>
           <p className="mt-0.5 text-sm text-slate-500">
-            Chỉ dùng điểm Rubric do giáo viên chấm. Mỗi học sinh được tính một lần.
+            Chỉ dùng điểm bảng tiêu chí chấm điểm do giáo viên chấm. Mỗi học sinh được tính một lần.
           </p>
         </div>
 
@@ -154,7 +154,7 @@ export const ClassAnalyticsView: React.FC<ClassAnalyticsViewProps> = ({ onNaviga
 
       {missingRubricCount > 0 && (
         <div className="rounded-lg border border-amber-200 bg-amber-50 p-3.5 text-xs text-amber-900">
-          Có {missingRubricCount} hồ sơ thiếu Rubric của nhiệm vụ nên chưa được tính.
+          Có {missingRubricCount} hồ sơ thiếu bảng tiêu chí chấm điểm của nhiệm vụ nên chưa được tính.
         </div>
       )}
 
@@ -175,7 +175,7 @@ export const ClassAnalyticsView: React.FC<ClassAnalyticsViewProps> = ({ onNaviga
             <AcademicCapIcon className="h-4 w-4 text-primary-600" />
           </div>
           <div className="mt-2 text-2xl font-bold text-slate-900">{submittedStudents}</div>
-          <div className="mt-1 text-xs text-slate-500">học sinh đã nộp V1+</div>
+          <div className="mt-1 text-xs text-slate-500">học sinh đã nộp bài phân tích</div>
         </div>
 
         <div className="rounded-lg border border-slate-200 bg-white p-4">
@@ -191,7 +191,7 @@ export const ClassAnalyticsView: React.FC<ClassAnalyticsViewProps> = ({ onNaviga
 
         <div className="rounded-lg border border-slate-200 bg-white p-4">
           <div className="flex items-center justify-between text-xs text-slate-500">
-            <span>Trục thi pháp yếu nhất</span>
+            <span>Phần phân tích yếu nhất</span>
             <ExclamationTriangleIcon className="h-4 w-4 text-amber-500" />
           </div>
           <div className="mt-2 text-base font-bold text-amber-900 truncate">
@@ -209,7 +209,7 @@ export const ClassAnalyticsView: React.FC<ClassAnalyticsViewProps> = ({ onNaviga
       <div className="rounded-lg border border-slate-200 bg-white p-5 space-y-4">
         <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 pb-3">
           <div>
-            <h2 className="text-sm font-bold text-slate-900">Kết quả theo 6 trục</h2>
+            <h2 className="text-sm font-bold text-slate-900">Kết quả theo 6 phần</h2>
             <p className="mt-0.5 text-xs text-slate-500">
               Nhấp vào một trục để sắp xếp học sinh cần hỗ trợ lên đầu bảng
             </p>
@@ -275,7 +275,7 @@ export const ClassAnalyticsView: React.FC<ClassAnalyticsViewProps> = ({ onNaviga
         <div className="flex flex-wrap items-center justify-between border-b border-slate-200 bg-slate-50/70 p-4">
           <div>
             <h2 className="text-sm font-bold text-slate-900">Điểm từng học sinh</h2>
-            <p className="mt-0.5 text-xs text-slate-500">“—” là chưa chấm hoặc thiếu Rubric</p>
+            <p className="mt-0.5 text-xs text-slate-500">“—” là chưa chấm hoặc thiếu bảng tiêu chí chấm điểm</p>
           </div>
           {selectedAxisFilter && (
             <span className="text-xs font-semibold text-primary-900 bg-primary-50 px-2.5 py-1 rounded border border-primary-200">

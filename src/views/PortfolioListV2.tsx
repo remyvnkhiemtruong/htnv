@@ -1,3 +1,4 @@
+import { learningVersionLabel } from '../utils/learningLabels';
 import React from 'react';
 import { useAuthStore } from '../app/store/useAuthStore';
 import { academicVersionsOf, deriveStudentWorkflow } from '../app/workflow/workflowState';
@@ -13,10 +14,10 @@ const statusLabel: Record<string, string> = {
   teacher_feedback_needed: 'Cần giáo viên xem',
   feedback_received: 'Đã có góp ý',
   revising: 'Đang sửa bài',
-  waiting_official_rubric: 'Chờ chấm Rubric',
+  waiting_official_rubric: 'Chờ giáo viên chấm',
   completed: 'Hoàn thành',
-  v1_submitted: 'Đã nộp V1',
-  v2_in_revision: 'Đang sửa V2'
+  v1_submitted: 'Đã nộp bài đầu tiên',
+  v2_in_revision: 'Đang sửa bài'
 };
 
 export const PortfolioListV2: React.FC<{ onNavigate: (view: string, params?: any) => void }> = ({ onNavigate }) => {
@@ -75,9 +76,9 @@ export const PortfolioListV2: React.FC<{ onNavigate: (view: string, params?: any
                     <Badge size="sm" variant="outline">{statusLabel[portfolio.status] || 'Đang xử lý'}</Badge>
                   </div>
                   <div className="mt-3 text-sm text-slate-600">
-                    {versions.length} bản V1/V2
-                    {portfolio.versions.some(version => version.stage === 'prediction') ? ' · Có V0' : ''}
-                    {latest ? ` · Mới nhất: ${latest.versionNumber}` : ''}
+                    {versions.length} bài đã nộp
+                    {portfolio.versions.some(version => version.stage === 'prediction') ? ' · Có dự đoán trước khi đọc' : ''}
+                    {latest ? ` · Mới nhất: ${learningVersionLabel(latest)}` : ''}
                   </div>
                   {(canReview || canOpenAi) && versions.length > 0 && (
                     <div className="mt-4 flex justify-end">
@@ -139,7 +140,7 @@ export const PortfolioListV2: React.FC<{ onNavigate: (view: string, params?: any
               <div>
                 <div className="font-semibold text-slate-900">{assignment.title}</div>
                 <div className="mt-1 text-xs text-slate-500">
-                  {versions.length} bản V1/V2 · {portfolio?.versions.some(v => v.stage === 'prediction') ? 'Có V0' : 'Chưa có V0'}
+                  {versions.length} bài đã nộp · {portfolio?.versions.some(v => v.stage === 'prediction') ? 'Có dự đoán trước khi đọc' : 'Chưa có dự đoán trước khi đọc'}
                 </div>
               </div>
               <span className="text-xs text-slate-500">{state.statusLabel}</span>

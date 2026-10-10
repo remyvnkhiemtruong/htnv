@@ -58,7 +58,7 @@ export const DesignSystemKitView: React.FC = () => {
   };
 
   const sampleTableData = [
-    { id: '1', name: 'Nguyễn Văn An', version: 'v2.0', status: 'Đã chấm Rubric', score: '22/24' },
+    { id: '1', name: 'Nguyễn Văn An', version: 'v2.0', status: 'Đã chấm điểm', score: '22/24' },
     { id: '2', name: 'Trần Thị Bình', version: 'v1.0', status: 'Chờ nhận xét', score: '18/24' },
     { id: '3', name: 'Lê Hoàng Cường', version: 'v1.1', status: 'Đang sửa nháp', score: '15/24' },
   ];
@@ -105,7 +105,7 @@ export const DesignSystemKitView: React.FC = () => {
         items={[
           { id: 'overview', label: '1. Typography & Colors' },
           { id: 'components', label: '2. Base UI & Forms' },
-          { id: 'diff-rubric', label: '3. Diff Tokens & Rubric' },
+          { id: 'diff-rubric', label: '3. Dấu hiệu thay đổi và tiêu chí chấm điểm' },
           { id: 'data-views', label: '4. Tables & Analytics' },
         ]}
       />
@@ -130,7 +130,7 @@ export const DesignSystemKitView: React.FC = () => {
 
               <div className="pt-3">
                 <span className="text-caption font-semibold text-slate-400 block uppercase">Heading 1 (30–32px / 700)</span>
-                <h1 className="text-h1 text-slate-900 mt-1">Học tốt Ngữ Văn - Lưu Phiên Bản & Visual Diff</h1>
+                <h1 className="text-h1 text-slate-900 mt-1">Học tốt Ngữ Văn - Lưu bài và so sánh thay đổi</h1>
               </div>
 
               <div className="pt-3">
@@ -154,7 +154,7 @@ export const DesignSystemKitView: React.FC = () => {
                 <span className="text-caption font-semibold text-slate-400 block uppercase">Small (13–14px) & Caption (12px)</span>
                 <div className="flex items-center gap-6 mt-1">
                   <span className="text-small text-slate-600">Text Small: Đã lưu tự động lúc 14:30</span>
-                  <span className="text-caption text-slate-400">Text Caption: Phiên bản v1.0 • Đã đồng bộ máy chủ</span>
+                  <span className="text-caption text-slate-400">Chú thích: Bài làm đầu tiên • Đã đồng bộ máy chủ</span>
                 </div>
               </div>
 
@@ -274,7 +274,7 @@ export const DesignSystemKitView: React.FC = () => {
 
                 <Button variant="primary" disabled>Disabled State</Button>
 
-                <IconButton ariaLabel="So sánh Diff" variant="outline">
+                <IconButton ariaLabel="So sánh bài làm" variant="outline">
                   <ArrowsRightLeftIcon className="w-4 h-4 text-slate-700" />
                 </IconButton>
 
@@ -322,7 +322,7 @@ export const DesignSystemKitView: React.FC = () => {
               <Input
                 label="Tiêu đề nhiệm vụ đọc hiểu"
                 placeholder="Ví dụ: Phân tích nghệ thuật xây dựng tình huống truyện..."
-                helperText="Tên nhiệm vụ sẽ hiển thị trên dashboard học sinh"
+                helperText="Tên nhiệm vụ sẽ hiển thị trên trang chủ học sinh"
               />
 
               <Input
@@ -332,7 +332,7 @@ export const DesignSystemKitView: React.FC = () => {
               />
 
               <Select
-                label="Trục thi pháp trọng tâm"
+                label="Phần phân tích trọng tâm"
                 options={[
                   { value: '1', label: '1. Tình huống – Cốt truyện' },
                   { value: '2', label: '2. Nhân vật – Chi tiết nghệ thuật' },
@@ -344,7 +344,7 @@ export const DesignSystemKitView: React.FC = () => {
               />
 
               <DatePicker
-                label="Hạn nộp bản sơ thảo v1.0"
+                label="Hạn nộp bài làm đầu tiên"
                 defaultValue="2026-09-30"
               />
 
@@ -352,7 +352,7 @@ export const DesignSystemKitView: React.FC = () => {
                 <Textarea
                   label="Gợi ý câu hỏi Scaffolding cho học sinh"
                   rows={3}
-                  placeholder="Nhập hướng dẫn giúp học sinh tiếp cận trục thi pháp từng bước..."
+                  placeholder="Nhập hướng dẫn giúp học sinh tiếp cận phần phân tích từng bước..."
                   defaultValue="1. Tìm các chi tiết miêu tả ngoại hình của nhân vật Tràng. 2. Nhận xét về sự biến đổi tâm lý sau khi có vợ."
                 />
               </div>
@@ -375,7 +375,7 @@ export const DesignSystemKitView: React.FC = () => {
                   selectedValue={radioVal}
                   onChange={setRadioVal}
                   options={[
-                    { value: 'opt1', label: 'Đánh giá đa chiều (Tự chấm + Bạn chấm + GV chấm)', description: 'Áp dụng ma trận Rubric 4 mức độ.' },
+                    { value: 'opt1', label: 'Đánh giá đa chiều (Tự chấm + Bạn chấm + GV chấm)', description: 'Áp dụng bảng tiêu chí chấm điểm 4 mức độ.' },
                     { value: 'opt2', label: 'Chỉ giáo viên đánh giá chính thức' },
                   ]}
                 />
@@ -430,7 +430,7 @@ export const DesignSystemKitView: React.FC = () => {
                 </Alert>
 
                 <Alert type="error" title="Cảnh báo hạn nộp">
-                  Đã quá hạn nộp bản chỉnh sửa v2.0 cho nhiệm vụ đọc hiểu này.
+                  Đã quá hạn nộp bài chỉnh sửa cho nhiệm vụ đọc hiểu này.
                 </Alert>
               </div>
 
@@ -459,7 +459,7 @@ export const DesignSystemKitView: React.FC = () => {
                     addToast({
                       type: 'success',
                       title: 'Đã lưu phiên bản',
-                      message: 'Đã lưu phiên bản v2.0. Bạn có thể xem lại trong lịch sử.'
+                      message: 'Đã lưu bài chỉnh sửa. Bạn có thể xem lại trong lịch sử.'
                     });
                   }}
                 >
@@ -545,7 +545,7 @@ export const DesignSystemKitView: React.FC = () => {
           <section aria-labelledby="rubric-scale-heading" className="bg-white rounded-lg border border-slate-200 p-5 space-y-6">
             <header className="border-b border-slate-100 pb-3">
               <h2 id="rubric-scale-heading" className="text-h3 font-bold text-slate-900">
-                Thang Đo Rubric 4 Mức Độ Chuẩn Hóa
+                Thang Đo bảng tiêu chí chấm điểm 4 Mức Độ Chuẩn Hóa
               </h2>
             </header>
 
@@ -566,7 +566,7 @@ export const DesignSystemKitView: React.FC = () => {
                   <span>2.0 đ</span>
                 </div>
                 <p className="text-caption text-amber-800">
-                  Nhận diện được trục thi pháp cơ bản nhưng phân tích còn sơ sài, ít dẫn chứng.
+                  Nhận diện được phần phân tích cơ bản nhưng phân tích còn sơ sài, ít dẫn chứng.
                 </p>
               </div>
 
@@ -607,7 +607,7 @@ export const DesignSystemKitView: React.FC = () => {
               icon={<BookOpenIcon className="w-5 h-5" />}
             />
             <StatCard
-              label="Tỷ lệ tiến bộ trung bình (v1 -> v2)"
+              label="Tiến bộ trung bình sau khi sửa bài"
               value="+38.5%"
               subValue="Dựa trên 84 phiên bản đã lưu"
               trend={{ value: "P < 0.001 (Có ý nghĩa thực nghiệm)", isPositive: true }}
@@ -626,13 +626,13 @@ export const DesignSystemKitView: React.FC = () => {
           {/* Progress Demo */}
           <Card padding="md" className="space-y-3">
             <h3 className="text-xs font-bold text-slate-800">Tiến độ hoàn thành nhiệm vụ đọc hiểu</h3>
-            <Progress value={75} max={100} label="Tỷ lệ nộp bản v2.0 của lớp 11A1" showValueLabel variant="primary" />
+            <Progress value={75} max={100} label="Tỷ lệ nộp bài chỉnh sửa của lớp 11A1" showValueLabel variant="primary" />
           </Card>
 
           {/* Chart Container & DataTable */}
           <ChartContainer
             title="Biểu Đồ Theo Dõi Phân Phối Điểm Năng Lực"
-            subtitle="Phân bố kết quả đánh giá theo 6 trục thi pháp học"
+            subtitle="Phân bố kết quả đánh giá theo 6 phần học"
             height={220}
           >
             <DataTable
@@ -642,7 +642,7 @@ export const DesignSystemKitView: React.FC = () => {
                 { key: 'name', header: 'Học sinh', render: (r) => <span className="font-semibold text-slate-900">{r.name}</span> },
                 { key: 'version', header: 'Phiên bản mới nhất', render: (r) => <Badge variant="slate">{r.version}</Badge> },
                 { key: 'status', header: 'Trạng thái', render: (r) => <Badge variant={r.status.includes('Đã chấm') ? 'emerald' : 'amber'}>{r.status}</Badge> },
-                { key: 'score', header: 'Tổng điểm Rubric', render: (r) => <span className="font-bold text-primary-700">{r.score}</span> },
+                { key: 'score', header: 'Tổng điểm bảng tiêu chí chấm điểm', render: (r) => <span className="font-bold text-primary-700">{r.score}</span> },
                 {
                   key: 'action',
                   header: 'Thao tác',

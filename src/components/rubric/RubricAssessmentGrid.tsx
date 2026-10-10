@@ -1,3 +1,4 @@
+import { learningVersionLabel } from '../../utils/learningLabels';
 import React, { useState } from 'react';
 import type { RubricMatrix, RubricAssessmentSubmission } from '../../types';
 import { POETIC_AXES } from '../../data/seedData';
@@ -114,17 +115,17 @@ export const RubricAssessmentGrid: React.FC<RubricAssessmentGridProps> = ({
           <div>
             <div className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded bg-sky-50 text-sky-800 text-xs font-medium border border-sky-200 mb-1.5">
               <Award className="w-3.5 h-3.5" />
-              Đánh giá theo ma trận rubric
+              Đánh giá theo bảng tiêu chí chấm điểm
             </div>
             <h2 className="text-base font-bold text-slate-900">{rubric.title}</h2>
             <p className="text-xs text-slate-500 mt-0.5">
-              Đánh giá cho phiên bản: <span className="font-semibold text-slate-800">{versionNumber}</span> • Thang điểm chuẩn 4 mức độ
+              Chấm bài: <span className="font-semibold text-slate-800">{learningVersionLabel(versionNumber)}</span> • Thang điểm chuẩn 4 mức độ
             </p>
           </div>
 
           <div className="flex items-center gap-3">
             <div className="bg-slate-900 text-white rounded-lg px-4 py-2.5 text-center">
-              <div className="text-xs text-slate-300 font-medium">Tổng điểm rubric</div>
+              <div className="text-xs text-slate-300 font-medium">Tổng điểm bảng tiêu chí chấm điểm</div>
               <div className="text-xl font-bold text-sky-400">
                 {totalScore} <span className="text-xs font-normal text-slate-400">/ {maxScore}</span>
               </div>
@@ -276,7 +277,7 @@ export const RubricAssessmentGrid: React.FC<RubricAssessmentGridProps> = ({
               <div>
                 {submittedSuccess && (
                   <span className="text-xs font-semibold text-emerald-700 bg-emerald-50 px-3 py-1.5 rounded-lg border border-emerald-200 animate-fade-in flex items-center gap-1.5">
-                    <CheckCircle className="w-4 h-4" /> Đã lưu điểm rubric.
+                    <CheckCircle className="w-4 h-4" /> Đã lưu điểm bảng tiêu chí chấm điểm.
                   </span>
                 )}
               </div>
@@ -286,7 +287,7 @@ export const RubricAssessmentGrid: React.FC<RubricAssessmentGridProps> = ({
                 className="inline-flex items-center gap-2 px-6 py-2.5 bg-sky-600 hover:bg-sky-700 text-white rounded-lg text-xs font-bold shadow-md hover:shadow-lg transition-all"
               >
                 <Award className="w-4 h-4" />
-                Lưu & Đăng Bảng Đánh Giá Rubric ({currentUser.role === 'teacher' ? 'Giáo viên' : currentUser.role === 'peer' ? 'Bạn học' : 'Tự đánh giá'})
+                Lưu & Đăng Bảng Đánh Giá bảng tiêu chí chấm điểm ({currentUser.role === 'teacher' ? 'Giáo viên' : currentUser.role === 'peer' ? 'Bạn học' : 'Tự đánh giá'})
               </button>
             </div>
           </div>

@@ -1,3 +1,4 @@
+import { learningVersionLabel } from './learningLabels';
 import type { StudentPortfolio, PortfolioVersion, RubricAssessmentSubmission } from '../types';
 import { POETIC_AXES } from '../data/seedData';
 
@@ -43,7 +44,7 @@ export function exportPortfolioAsHTML(
 
   const rubricSection = rubrics.length > 0 ? `
     <div style="margin-top: 32px; border-top: 2px solid #cbd5e1; padding-top: 16px;">
-      <h2 style="font-size: 18px; color: #0f172a;">Minh chứng Đánh giá Rubric</h2>
+      <h2 style="font-size: 18px; color: #0f172a;">Minh chứng Đánh giá bảng tiêu chí chấm điểm</h2>
       ${rubrics.map(r => `
         <div style="margin-bottom: 16px; background: #f1f5f9; padding: 12px; border-radius: 6px;">
           <strong>${escapeHtml(r.evaluatorName)}</strong> (${escapeHtml(r.evaluatorRole.toUpperCase())}) - Điểm: <strong>${escapeHtml(r.totalScore)}/${escapeHtml(r.maxScore)}</strong> (${escapeHtml(r.submittedAt.slice(0, 10))})
@@ -57,7 +58,7 @@ export function exportPortfolioAsHTML(
     <!DOCTYPE html>
     <html>
       <head>
-        <title>Học tốt Ngữ Văn - ${escapeHtml(portfolio.studentName)} - ${escapeHtml(version.versionNumber)}</title>
+        <title>Học tốt Ngữ Văn - ${escapeHtml(portfolio.studentName)} - ${escapeHtml(learningVersionLabel(version))}</title>
         <meta charset="utf-8" />
         <style>
           body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; padding: 40px; color: #1e293b; background: #fff; }
@@ -69,7 +70,7 @@ export function exportPortfolioAsHTML(
         <div class="header">
           <span class="badge">HỌC TỐT NGỮ VĂN - THEO TRỤC THI PHÁP</span>
           <h1 style="margin: 8px 0 4px 0;">Học sinh: ${escapeHtml(portfolio.studentName)} - Lớp: ${escapeHtml(portfolio.className)}</h1>
-          <p style="margin: 0; color: #64748b;">Phiên bản: <strong>${escapeHtml(version.versionNumber)}</strong> | Ngày tạo: ${escapeHtml(version.createdAt.slice(0, 10))} | Chú thích: ${escapeHtml(version.changeSummary)}</p>
+          <p style="margin: 0; color: #64748b;">Bài nộp: <strong>${escapeHtml(learningVersionLabel(version))}</strong> | Ngày tạo: ${escapeHtml(version.createdAt.slice(0, 10))} | Chú thích: ${escapeHtml(version.changeSummary)}</p>
         </div>
         ${axisSections}
         ${rubricSection}

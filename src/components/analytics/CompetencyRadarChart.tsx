@@ -60,7 +60,7 @@ export const CompetencyRadarChart: React.FC<CompetencyAnalyticsProps> = ({
     labels,
     datasets: [
       {
-        label: 'Phiên bản v1.0 (Sơ thảo)',
+        label: 'Bài làm đầu tiên',
         data: v1Scores,
         backgroundColor: 'rgba(239, 68, 68, 0.2)',
         borderColor: 'rgba(239, 68, 68, 0.8)',
@@ -71,7 +71,7 @@ export const CompetencyRadarChart: React.FC<CompetencyAnalyticsProps> = ({
         pointHoverBorderColor: 'rgba(239, 68, 68, 1)'
       },
       {
-        label: 'Phiên bản v2.0 (Sau phản hồi)',
+        label: 'Bài chỉnh sửa',
         data: v2Scores,
         backgroundColor: 'rgba(14, 165, 233, 0.25)',
         borderColor: 'rgba(14, 165, 233, 1)',
@@ -136,12 +136,12 @@ export const CompetencyRadarChart: React.FC<CompetencyAnalyticsProps> = ({
         <div>
           <div className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded bg-emerald-50 text-emerald-800 text-xs font-medium border border-emerald-200 mb-1">
             <TrendingUp className="w-3 h-3" />
-            Biểu đồ 6 trục thi pháp
+            Biểu đồ 6 phần phân tích
           </div>
           <h3 className="text-base font-bold text-slate-900">
             Tăng trưởng Năng lực Đọc hiểu {studentName ? `– ${studentName}` : ''}
           </h3>
-          <p className="text-xs text-slate-500">So sánh mức độ thành thạo giữa phiên bản v1.0 và v2.0</p>
+          <p className="text-xs text-slate-500">So sánh kết quả giữa bài đầu tiên và bài chỉnh sửa</p>
         </div>
 
         <div className="bg-emerald-50 border border-emerald-200 rounded-md px-3 py-1.5 text-right">

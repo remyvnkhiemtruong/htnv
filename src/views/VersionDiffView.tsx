@@ -1,3 +1,4 @@
+import { learningVersionLabel } from '../utils/learningLabels';
 import React, { useEffect, useMemo, useState } from 'react';
 import { useAuthStore } from '../app/store/useAuthStore';
 import { usePortfolio } from '../contexts/PortfolioContext';
@@ -188,7 +189,7 @@ export const VersionDiffView: React.FC<VersionDiffViewProps> = ({
   }
 
   if (!portfolio) return <StatePanel title="Chưa có hồ sơ" message="Không tìm thấy hồ sơ bài làm thuộc phạm vi bạn được phép xem." actionLabel="Quay lại" onAction={() => onNavigate('portfolio-list')} />;
-  if (versions.length < 2) return <StatePanel title="Chưa đủ phiên bản để so sánh" message={portfolio.status === 'completed' ? `Hồ sơ hiện chỉ có ${versions.length} bản nộp được phép đối chiếu. Không thể tạo bản trước từ bài đã khóa.` : versions.length === 0 ? 'Chưa có bản nộp nào. Cần nộp ít nhất 2 phiên bản để so sánh.' : `Hiện mới có 1 phiên bản (${versions[0].versionNumber}). Cần nộp thêm phiên bản sửa đổi.`} actionLabel={isStudent ? 'Quay lại bài viết' : 'Quay lại danh sách'} onAction={() => onNavigate(isStudent ? 'editor' : 'portfolio-list', { assignmentId: assignment.id })} />;
+  if (versions.length < 2) return <StatePanel title="Chưa đủ phiên bản để so sánh" message={portfolio.status === 'completed' ? `Hồ sơ hiện chỉ có ${versions.length} bản nộp được phép đối chiếu. Không thể tạo bản trước từ bài đã khóa.` : versions.length === 0 ? 'Chưa có bản nộp nào. Cần nộp ít nhất 2 phiên bản để so sánh.' : `Hiện mới có 1 phiên bản (${learningVersionLabel(versions[0].versionNumber)}). Cần nộp thêm phiên bản sửa đổi.`} actionLabel={isStudent ? 'Quay lại bài viết' : 'Quay lại danh sách'} onAction={() => onNavigate(isStudent ? 'editor' : 'portfolio-list', { assignmentId: assignment.id })} />;
   if (requestedBeforeMissing || requestedAfterMissing) return <StatePanel title="Phiên bản không tồn tại" message="Phiên bản được yêu cầu không còn tồn tại hoặc không thuộc hồ sơ này." />;
   if (!before || !after) return <StatePanel title="Chọn phiên bản" message="Hãy chọn hai phiên bản hợp lệ để so sánh." />;
 
@@ -269,12 +270,12 @@ export const VersionDiffView: React.FC<VersionDiffViewProps> = ({
                   }`}
                 >
                   <div className="flex items-center gap-1.5">
-                    <span className="text-sm font-extrabold">{ver.versionNumber}</span>
+                    <span className="text-sm font-extrabold">{learningVersionLabel(ver)}</span>
                     {isV1 && <span className="rounded bg-primary-700 px-1 py-0.5 text-xs text-white font-semibold">Bản trước</span>}
                     {isV2 && <span className="rounded bg-emerald-700 px-1 py-0.5 text-xs text-white font-semibold">Bản sau</span>}
                   </div>
                   <span className="mt-0.5 text-xs text-slate-500">
-                    {ver.stage === 'prediction' ? 'Dự đoán V0' : ver.stage === 'initial' ? 'Bản đầu V1' : 'Chỉnh sửa'}
+                    {ver.stage === 'prediction' ? 'Dự đoán trước khi đọc' : ver.stage === 'initial' ? 'Bài làm đầu tiên' : 'Chỉnh sửa'}
                   </span>
                   <span className="text-xs text-slate-400">{formatDate(ver)}</span>
                 </button>
@@ -299,7 +300,7 @@ export const VersionDiffView: React.FC<VersionDiffViewProps> = ({
                 className="rounded-md border border-slate-300 bg-white px-2.5 py-1.5 text-sm font-medium text-slate-800 focus:border-primary-600 focus:outline-none"
               >
                 {versions.map(version => (
-                  <option key={version.id} value={version.versionNumber}>{version.versionNumber} ({formatDate(version)})</option>
+                  <option key={version.id} value={version.versionNumber}>{learningVersionLabel(version)} ({formatDate(version)})</option>
                 ))}
               </select>
             </label>
@@ -312,7 +313,7 @@ export const VersionDiffView: React.FC<VersionDiffViewProps> = ({
                 className="rounded-md border border-slate-300 bg-white px-2.5 py-1.5 text-sm font-medium text-slate-800 focus:border-primary-600 focus:outline-none"
               >
                 {versions.map(version => (
-                  <option key={version.id} value={version.versionNumber}>{version.versionNumber} ({formatDate(version)})</option>
+                  <option key={version.id} value={version.versionNumber}>{learningVersionLabel(version)} ({formatDate(version)})</option>
                 ))}
               </select>
             </label>
@@ -359,7 +360,7 @@ export const VersionDiffView: React.FC<VersionDiffViewProps> = ({
           </div>
           <div className="rounded-lg border border-amber-200 bg-amber-50/50 p-3.5">
             <div className="text-xs font-semibold text-amber-800">✎ Trục thay đổi</div>
-            <div className="mt-1 text-xl font-bold text-amber-950">{aggregateMetrics.changedAxesCount}/6 trục</div>
+            <div className="mt-1 text-xl font-bold text-amber-950">{aggregateMetrics.changedAxesCount}/6 phần</div>
           </div>
           <div className="rounded-lg border border-slate-200 bg-slate-50 p-3.5">
             <div className="text-xs font-semibold text-slate-600">Tự tin bản sau</div>
@@ -447,7 +448,7 @@ export const VersionDiffView: React.FC<VersionDiffViewProps> = ({
                   <div className="grid divide-y divide-slate-200 lg:grid-cols-2 lg:divide-x lg:divide-y-0">
                     <div className="p-4">
                       <div className="mb-2 text-xs font-semibold text-slate-500">
-                        {before.versionNumber} (Bản trước)
+                        {learningVersionLabel(before)} (Bản trước)
                       </div>
                       <div className="min-h-16 whitespace-pre-wrap font-sans text-sm leading-relaxed text-slate-700">
                         {diffResult?.v1Text || <span className="italic text-slate-400">Chưa có nội dung</span>}
@@ -455,7 +456,7 @@ export const VersionDiffView: React.FC<VersionDiffViewProps> = ({
                     </div>
                     <div className="bg-slate-50/30 p-4">
                       <div className="mb-2 text-xs font-semibold text-slate-700">
-                        {after.versionNumber} (Bản sau đối chiếu)
+                        {learningVersionLabel(after)} (Bản sau đối chiếu)
                       </div>
                       <div className="min-h-16 whitespace-pre-wrap font-sans text-sm leading-relaxed text-slate-800">
                         {diffResult?.diffSegments?.length ? (
@@ -478,7 +479,7 @@ export const VersionDiffView: React.FC<VersionDiffViewProps> = ({
                   /* Unified/Inline Mode */
                   <div className="p-5">
                     <div className="mb-3 text-xs font-semibold text-slate-500">
-                      Dòng chảy chỉnh sửa ({before.versionNumber} → {after.versionNumber})
+                      Những điều đã sửa ({learningVersionLabel(before)} → {learningVersionLabel(after)})
                     </div>
                     <div className="whitespace-pre-wrap font-sans text-sm leading-7 text-slate-800">
                       {diffResult?.diffSegments?.length ? (

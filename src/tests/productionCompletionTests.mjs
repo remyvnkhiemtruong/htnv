@@ -113,7 +113,7 @@ await test('P36: REF1 is immutable and required before official teacher rubric',
 });
 await test('P37: student editor counts V0 separately and exposes REF1 after a revision', () => {
   const s=read('src/views/PortfolioEditorView.tsx');
-  for (const token of ["stage !== 'prediction'", 'Nộp V0 (dự đoán)', 'REF1 – Tự phản tư', "action: 'save_reflection'"]) assert(s.includes(token), token);
+  for (const token of ["stage !== 'prediction'", 'Nộp dự đoán', 'Tự nhìn lại sau khi sửa bài', "action: 'save_reflection'"]) assert(s.includes(token), token);
 });
 
 const failed=results.filter(result=>!result.ok);

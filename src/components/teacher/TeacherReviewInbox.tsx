@@ -1,3 +1,4 @@
+import { learningVersionLabel } from '../../utils/learningLabels';
 import React, { useMemo, useState } from 'react';
 import { MagnifyingGlassIcon } from '@heroicons/react/24/outline';
 import type { AiReviewRequest, Assignment, RubricAssessmentSubmission, StudentPortfolio } from '../../types';
@@ -36,7 +37,7 @@ const metaFor = (
   }
   if (hasAiPending) return { kind: 'ai', label: 'AI chờ xem', tone: 'blue', priority: 1 };
   if (portfolio.status === 'waiting_official_rubric' && !teacherRubricDone) {
-    return { kind: 'rubric', label: 'Chờ chấm Rubric', tone: 'purple', priority: 2 };
+    return { kind: 'rubric', label: 'Chờ giáo viên chấm', tone: 'purple', priority: 2 };
   }
   return { kind: 'waiting', label: 'Đang theo dõi', tone: 'slate', priority: 5 };
 };
@@ -123,7 +124,7 @@ export const TeacherReviewInbox: React.FC<TeacherReviewInboxProps> = ({
   const filters: Array<{ id: InboxFilter; label: string }> = [
     { id: 'priority', label: 'Ưu tiên' },
     { id: 'ai', label: 'Góp ý AI' },
-    { id: 'rubric', label: 'Chờ Rubric' },
+    { id: 'rubric', label: 'Chờ chấm điểm' },
     { id: 'all', label: 'Tất cả' }
   ];
 
@@ -133,7 +134,7 @@ export const TeacherReviewInbox: React.FC<TeacherReviewInboxProps> = ({
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <h2 className="text-base font-bold text-slate-950">Hộp bài cần xử lý</h2>
-            <p className="mt-0.5 text-xs leading-5 text-slate-500">Ưu tiên bài có góp ý AI cần xem và bài đã nộp REF1 chờ chấm chính thức.</p>
+            <p className="mt-0.5 text-xs leading-5 text-slate-500">Ưu tiên bài có góp ý AI cần xem và bài đã nộp phiếu tự nhìn lại bài làm chờ chấm chính thức.</p>
           </div>
           <div className="relative w-full sm:w-72">
             <MagnifyingGlassIcon className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
@@ -171,7 +172,7 @@ export const TeacherReviewInbox: React.FC<TeacherReviewInboxProps> = ({
                 {item.portfolio.className || '—'} · {item.assignment?.title || item.portfolio.assignmentId}
               </div>
               <div className="mt-1 text-xs text-slate-400">
-                {item.latestVersion?.versionNumber || item.portfolio.currentActiveVersion} · {relativeAge(item.timestamp)}
+                {learningVersionLabel(item.latestVersion?.versionNumber || item.portfolio.currentActiveVersion)} · {relativeAge(item.timestamp)}
                 {item.assignment?.deadline ? ` · hạn ${new Date(item.assignment.deadline).toLocaleDateString('vi-VN')}` : ''}
               </div>
             </div>

@@ -75,12 +75,12 @@ export const ResearcherJudgeView: React.FC<ResearcherJudgeViewProps> = ({ onNavi
         <div>
           <div className="mb-1"><Button size="sm" variant="ghost" onClick={() => onNavigate('dashboard')} leftIcon={<ArrowLeftIcon className="h-4 w-4" />}>Tổng quan</Button></div>
           <h1 className="text-2xl font-semibold text-slate-900">Phân tích nghiên cứu</h1>
-          <p className="text-sm text-slate-500 mt-0.5">Dữ liệu được ẩn danh trước khi hiển thị và chỉ dùng kết quả Rubric của đúng nhiệm vụ.</p>
+          <p className="text-sm text-slate-500 mt-0.5">Dữ liệu được ẩn danh trước khi hiển thị và chỉ dùng kết quả bảng tiêu chí chấm điểm của đúng nhiệm vụ.</p>
         </div>
         <div className="text-xs text-slate-500">{samples.length} hồ sơ mẫu</div>
       </div>
 
-      {missingRubric > 0 && <div className="rounded-md border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900">{missingRubric} hồ sơ thiếu Rubric của nhiệm vụ nên chưa được tính ở các tiêu chí tương ứng.</div>}
+      {missingRubric > 0 && <div className="rounded-md border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900">{missingRubric} hồ sơ thiếu bảng tiêu chí chấm điểm của nhiệm vụ nên chưa được tính ở các tiêu chí tương ứng.</div>}
 
       <div className="text-sm text-slate-700 bg-slate-50 border border-slate-200 rounded-md p-3.5 flex flex-wrap items-center gap-x-4 gap-y-1">
         <span><strong>{samples.length}</strong> hồ sơ nghiên cứu</span><span className="text-slate-300">·</span>

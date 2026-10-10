@@ -17,7 +17,7 @@ async function saveCatalog(payload: unknown) {
     body: JSON.stringify(payload)
   });
   const d = await r.json().catch(() => ({}));
-  if (!r.ok) throw new Error(d.message || d.code || 'Không thể lưu rubric');
+  if (!r.ok) throw new Error(d.message || d.code || 'Không thể lưu bảng tiêu chí chấm điểm');
   return d;
 }
 
@@ -26,7 +26,7 @@ export const RubricManagementView: React.FC<RubricManagementViewProps> = ({ onNa
   const currentUser = useAuthStore(state => state.currentUser);
   const canEdit = currentUser.role === 'teacher' || currentUser.role === 'admin';
   const [title, setTitle] = useState(rubric.title);
-  const [description, setDescription] = useState('Rubric 4 mức đánh giá năng lực đọc hiểu theo 6 trục thi pháp.');
+  const [description, setDescription] = useState('Bảng tiêu chí chấm điểm 4 mức đánh giá năng lực đọc hiểu theo 6 phần.');
   const [criteria, setCriteria] = useState<RubricCriterion[]>(rubric.criteria);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
@@ -57,11 +57,11 @@ export const RubricManagementView: React.FC<RubricManagementViewProps> = ({ onNa
       const d = await saveCatalog({ action: 'create_rubric_version', title, description, criteria });
       setMessage({
         type: 'success',
-        text: `Đã tạo phiên bản Rubric mới (${d.id}). Các bài đã chấm trước đó vẫn giữ nguyên tiêu chí cũ.`
+        text: `Đã tạo phiên bản bảng tiêu chí chấm điểm mới (${d.id}). Các bài đã chấm trước đó vẫn giữ nguyên tiêu chí cũ.`
       });
       await refreshAcademicData();
     } catch (e: unknown) {
-      setMessage({ type: 'error', text: e instanceof Error ? e.message : 'Không thể lưu rubric' });
+      setMessage({ type: 'error', text: e instanceof Error ? e.message : 'Không thể lưu bảng tiêu chí chấm điểm' });
     } finally {
       setSaving(false);
     }
@@ -93,9 +93,9 @@ export const RubricManagementView: React.FC<RubricManagementViewProps> = ({ onNa
               Quay lại bàn giáo viên
             </Button>
           </div>
-          <h1 className="text-2xl font-bold tracking-tight text-slate-900">Rubric</h1>
+          <h1 className="text-2xl font-bold tracking-tight text-slate-900">Bảng tiêu chí chấm điểm</h1>
           <p className="mt-0.5 text-sm text-slate-500">
-            Tiêu chí chấm theo 6 trục thi pháp, gồm 4 mức.
+            Tiêu chí chấm theo 6 phần, gồm 4 mức.
           </p>
         </div>
 
@@ -114,7 +114,7 @@ export const RubricManagementView: React.FC<RubricManagementViewProps> = ({ onNa
       <div className="rounded-lg border border-slate-200 bg-white p-5 space-y-4">
         <div className="grid gap-4 md:grid-cols-2">
           <Input
-            label="Tên ma trận Rubric"
+            label="Tên bảng tiêu chí chấm điểm"
             value={title}
             onChange={e => setTitle(e.target.value)}
             disabled={!canEdit}
@@ -154,7 +154,7 @@ export const RubricManagementView: React.FC<RubricManagementViewProps> = ({ onNa
             <h2 className="text-sm font-bold text-slate-900">Các mức đánh giá</h2>
             <p className="mt-0.5 text-xs text-slate-500">Mỗi tiêu chí có 4 mức đánh giá.</p>
           </div>
-          <span className="text-xs font-medium text-slate-500">6 trục thi pháp</span>
+          <span className="text-xs font-medium text-slate-500">6 phần phân tích</span>
         </div>
 
         {criteria.map((criterion, ci) => (
@@ -223,7 +223,7 @@ export const RubricManagementView: React.FC<RubricManagementViewProps> = ({ onNa
       {/* Action Footer */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pt-2">
         <p className="text-xs text-slate-500">
-          * Bài đã chấm bằng Rubric cũ vẫn giữ nguyên kết quả.
+          * Bài đã chấm bằng bảng tiêu chí chấm điểm cũ vẫn giữ nguyên kết quả.
         </p>
         {canEdit && (
           <Button
@@ -234,7 +234,7 @@ export const RubricManagementView: React.FC<RubricManagementViewProps> = ({ onNa
             disabled={!criteria.length || !title.trim()}
             leftIcon={<CheckIcon className="h-4 w-4" />}
           >
-            Lưu phiên bản Rubric mới
+            Lưu phiên bản bảng tiêu chí chấm điểm mới
           </Button>
         )}
       </div>

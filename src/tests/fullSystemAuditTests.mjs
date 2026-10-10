@@ -90,7 +90,7 @@ await test('FSA07: Vercel applies baseline browser security headers and keeps AP
 await test('FSA08: class analytics never counts V0 prediction as submitted academic work', () => {
   const source = read('src/views/ClassAnalyticsView.tsx');
   assert(source.includes("portfolio.versions.some(version => version.stage !== 'prediction')"));
-  assert(source.includes('học sinh đã nộp V1+'));
+  assert(source.includes('học sinh đã nộp bài phân tích'));
 });
 
 await test('FSA09: modal focus trap does not reinitialize on every parent render', () => {

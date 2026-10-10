@@ -1,3 +1,4 @@
+import { learningVersionLabel } from '../../utils/learningLabels';
 import React, { useState } from 'react';
 import type { PoeticAxisId } from '../../types';
 import { POETIC_AXES } from '../../data/seedData';
@@ -42,7 +43,7 @@ export const AnchoredFeedbackPanel: React.FC<AnchoredFeedbackPanelProps> = ({
       studentId,
       versionNumber,
       axisId: targetAxisId,
-      selectedSnippet: selectedSnippet.trim() || 'Nhận xét chung cho trục thi pháp này',
+      selectedSnippet: selectedSnippet.trim() || 'Nhận xét chung cho phần phân tích này',
       comment: newComment.trim(),
       authorId: currentUser.id,
       authorName: currentUser.name,
@@ -63,7 +64,7 @@ export const AnchoredFeedbackPanel: React.FC<AnchoredFeedbackPanelProps> = ({
           </div>
           <div>
             <h3 className="font-semibold text-slate-900 text-xs">Phản hồi neo ngữ cảnh</h3>
-            <p className="text-xs text-slate-500">Gắn vào văn bản thuộc phiên bản <strong>{versionNumber}</strong></p>
+            <p className="text-xs text-slate-500">Gắn với bài <strong>{learningVersionLabel(versionNumber)}</strong></p>
           </div>
         </div>
 
@@ -85,12 +86,12 @@ export const AnchoredFeedbackPanel: React.FC<AnchoredFeedbackPanelProps> = ({
           <form onSubmit={handleCreateFeedback} className="bg-slate-50 rounded-lg p-3.5 border border-slate-200 space-y-3">
             <div className="text-xs font-semibold text-slate-900 flex items-center gap-1.5">
               <MessageSquarePlus className="w-3.5 h-3.5 text-primary-600" />
-              Tạo phản hồi cho phiên bản {versionNumber}
+              Gửi góp ý cho {learningVersionLabel(versionNumber)}
             </div>
 
             <div>
               <label className="block text-xs font-semibold text-slate-700 mb-1">
-                Thuộc trục thi pháp:
+                Thuộc phần phân tích:
               </label>
               <select
                 value={targetAxisId}
@@ -151,7 +152,7 @@ export const AnchoredFeedbackPanel: React.FC<AnchoredFeedbackPanelProps> = ({
         {/* Feedback List */}
         {relevantFeedbacks.length === 0 ? (
           <div className="py-6 text-center text-xs text-slate-400">
-            Chưa có phản hồi nào được neo vào phiên bản {versionNumber}.
+            Chưa có góp ý nào cho {learningVersionLabel(versionNumber)}.
           </div>
         ) : (
           <div className="space-y-2.5">

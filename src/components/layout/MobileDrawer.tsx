@@ -54,7 +54,7 @@ const sectionsForRole = (role: string): Section[] => {
       { id: 'portfolio-list', label: 'Hồ sơ học sinh', icon: FolderIcon },
       { id: 'assignment-builder', label: 'Tạo nhiệm vụ', icon: PlusCircleIcon },
       { id: 'literature-texts', label: 'Ngữ liệu', icon: BookOpenIcon },
-      { id: 'rubric-management', label: 'Rubric', icon: AcademicCapIcon }
+      { id: 'rubric-management', label: 'Bảng tiêu chí chấm điểm', icon: AcademicCapIcon }
     ] },
     { label: 'Theo dõi', items: [{ id: 'class-analytics', label: 'Phân tích lớp', icon: UserGroupIcon }] }
   ];

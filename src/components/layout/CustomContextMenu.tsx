@@ -371,7 +371,7 @@ export const CustomContextMenu: React.FC<CustomContextMenuProps> = ({
       await navigator.clipboard.writeText(prompt);
       addToast({
         type: 'success',
-        title: 'Tạo khung dẫn chứng 6 trục',
+        title: 'Tạo khung dẫn chứng 6 phần',
         message: 'Đã tạo mẫu dẫn chứng kèm vị trí phân tích nghệ thuật.'
       });
     } catch {
@@ -500,14 +500,14 @@ export const CustomContextMenu: React.FC<CustomContextMenuProps> = ({
 
     switch (activeView) {
       case 'editor':
-        return { icon: FileText, title: 'Bàn soạn thảo bài viết', subtitle: 'Hồ sơ phiên bản V1/V2' };
+        return { icon: FileText, title: 'Bàn soạn thảo bài viết', subtitle: 'Bài đầu tiên và các bài chỉnh sửa' };
       case 'version-diff':
-        return { icon: Compass, title: 'So sánh phiên bản bài làm', subtitle: 'Visual Diff 6 trục' };
+        return { icon: Compass, title: 'So sánh phiên bản bài làm', subtitle: 'So sánh thay đổi trong 6 phần' };
       case 'teacher-review':
-        return { icon: Award, title: 'Bàn chấm bài giáo viên', subtitle: 'Chấm Rubric & Góp ý bài làm' };
+        return { icon: Award, title: 'Bàn chấm bài giáo viên', subtitle: 'Chấm bảng tiêu chí chấm điểm & Góp ý bài làm' };
       case 'student-analytics':
       case 'class-analytics':
-        return { icon: BarChart3, title: 'Tiến độ & Phân tích', subtitle: 'Biểu đồ năng lực 6 trục' };
+        return { icon: BarChart3, title: 'Tiến độ & Phân tích', subtitle: 'Biểu đồ năng lực 6 phần' };
       case 'literature-texts':
         return { icon: BookMarked, title: 'Kho tác phẩm văn học', subtitle: 'Ngữ liệu chương trình' };
       case 'assignment-list':
@@ -744,7 +744,7 @@ export const CustomContextMenu: React.FC<CustomContextMenuProps> = ({
             className="flex w-full items-center gap-2 rounded-md px-2.5 py-1.5 text-left text-xs font-medium text-slate-700 hover:bg-slate-100"
           >
             <BarChart3 className="h-3.5 w-3.5 text-emerald-600 shrink-0" />
-            <span>Xem biểu đồ tiến bộ 6 trục</span>
+            <span>Xem biểu đồ tiến bộ 6 phần</span>
           </button>
         </div>
       )}
@@ -803,7 +803,7 @@ export const CustomContextMenu: React.FC<CustomContextMenuProps> = ({
             className="flex w-full items-center gap-2 rounded-md px-2.5 py-1.5 text-left text-xs font-medium text-slate-700 hover:bg-slate-100"
           >
             <Compass className="h-3.5 w-3.5 text-slate-500 shrink-0" />
-            <span>Khám phá Khung 6 trục thi pháp</span>
+            <span>Khám phá Khung 6 phần phân tích</span>
           </button>
         </div>
       )}
@@ -851,7 +851,7 @@ export const CustomContextMenu: React.FC<CustomContextMenuProps> = ({
           className="flex w-full items-center gap-2 rounded-md px-2.5 py-1.5 text-left text-xs font-medium text-slate-700 transition-colors hover:bg-slate-100 hover:text-slate-900"
         >
           <BarChart3 className="h-3.5 w-3.5 text-slate-500 shrink-0" />
-          <span>Tiến độ năng lực 6 trục</span>
+          <span>Tiến độ năng lực 6 phần</span>
         </button>
 
         <button

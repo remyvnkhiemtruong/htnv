@@ -159,7 +159,7 @@ Dì Mây nén nỗi đau riêng, từ chối sự níu kéo của chú San để
 
 export const DEFAULT_RUBRIC: RubricMatrix = {
   id: 'rubric-poetics-std',
-  title: 'Ma trận Rubric Đánh giá Năng lực Đọc hiểu theo 6 Trục Thi pháp',
+  title: 'Bảng tiêu chí chấm điểm đọc hiểu theo 6 phần',
   criteria: [
     {
       id: 'crit-plot',
@@ -500,7 +500,7 @@ export const MOCK_ASSIGNMENTS: Assignment[] = [
       'language_tone_symbol',
       'form_argument'
     ],
-    prompt: 'Hãy lập hồ sơ đọc số khám phá thế giới nghệ thuật của truyện ngắn "Vợ nhặt" qua 6 trục thi pháp. Tập trung làm sáng tỏ: Nhà văn Kim Lân đã sử dụng những phương thức thi pháp độc đáo nào để khẳng định khát vọng sống bất diệt của con người bên bờ vực nạn đói 1945?',
+    prompt: 'Hãy lập hồ sơ đọc số khám phá thế giới nghệ thuật của truyện ngắn "Vợ nhặt" qua 6 phần phân tích. Tập trung làm sáng tỏ: Nhà văn Kim Lân đã sử dụng những phương thức thi pháp độc đáo nào để khẳng định khát vọng sống bất diệt của con người bên bờ vực nạn đói 1945?',
     guidingSteps: [
       'Bước 1: Trích xuất và phân tích tình huống nhặt vợ "lạ lùng, éo le mà thấm đẫm tình thương".',
       'Bước 2: Giải mã chuyển biến tâm lý của Tràng, bà cụ Tứ và người vợ nhặt qua các chi tiết nghệ thuật đắt giá.',
@@ -1078,7 +1078,7 @@ export const MOCK_AUDIT_LOGS: AuditLog[] = [
     actorName: 'Cô Nguyễn Thị Mai',
     actorRole: 'teacher',
     action: 'SUBMIT_RUBRIC_GRADE',
-    target: 'Chấm Rubric v2.0 cho học sinh Nguyễn Văn An (22/24 điểm)',
+    target: 'Chấm bảng tiêu chí chấm điểm v2.0 cho học sinh Nguyễn Văn An (22/24 điểm)',
     ipAddress: '192.168.1.10'
   },
   {

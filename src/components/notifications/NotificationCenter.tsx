@@ -1,3 +1,4 @@
+import { learningVersionLabel } from '../../utils/learningLabels';
 import React, { useEffect, useMemo, useState } from 'react';
 import { BellIcon, CheckIcon } from '@heroicons/react/24/outline';
 import { useAuthStore } from '../../app/store/useAuthStore';
@@ -55,7 +56,7 @@ export const NotificationCenter: React.FC<NotificationCenterProps> = ({ onNaviga
         items.push({
           id: `feedback:${feedback.id}`,
           title: feedback.authorRole === 'teacher' ? 'Có nhận xét mới của giáo viên' : feedback.authorRole === 'ai' ? 'Có góp ý AI mới' : 'Có phản hồi mới',
-          message: `${assignment?.title || feedback.assignmentId} · ${feedback.versionNumber} · ${feedback.comment.slice(0, 110)}`,
+          message: `${assignment?.title || feedback.assignmentId} · ${learningVersionLabel(feedback.versionNumber)} · ${feedback.comment.slice(0, 110)}`,
           createdAt: feedback.createdAt,
           tone: feedback.authorRole === 'teacher' ? 'amber' : feedback.authorRole === 'ai' ? 'blue' : 'slate',
           view: 'editor',
@@ -66,8 +67,8 @@ export const NotificationCenter: React.FC<NotificationCenterProps> = ({ onNaviga
         const assignment = overview.assignments.find(item => item.id === rubric.assignmentId);
         items.push({
           id: `rubric:${rubric.id}`,
-          title: 'Giáo viên đã chấm Rubric',
-          message: `${assignment?.title || rubric.assignmentId} · ${rubric.versionNumber} · ${rubric.totalScore}/${rubric.maxScore} điểm`,
+          title: 'Giáo viên đã chấm bài',
+          message: `${assignment?.title || rubric.assignmentId} · ${learningVersionLabel(rubric.versionNumber)} · ${rubric.totalScore}/${rubric.maxScore} điểm`,
           createdAt: rubric.submittedAt,
           tone: 'emerald',
           view: 'student-analytics',
@@ -83,7 +84,7 @@ export const NotificationCenter: React.FC<NotificationCenterProps> = ({ onNaviga
         items.push({
           id: `ai-review:${review.id}`,
           title: 'Góp ý AI cần giáo viên xem',
-          message: `${review.student_name} · ${review.version_number}`,
+          message: `${review.student_name} · ${learningVersionLabel(review.version_number)}`,
           createdAt: review.completed_at || review.created_at,
           tone: 'blue',
           view: 'teacher-review',
@@ -100,8 +101,8 @@ export const NotificationCenter: React.FC<NotificationCenterProps> = ({ onNaviga
           const latest = [...portfolio.versions].reverse().find(version => version.stage !== 'prediction');
           items.push({
             id: `rubric-wait:${portfolio.id}:${latest?.id || 'latest'}`,
-            title: 'Bài đã sẵn sàng chấm Rubric',
-            message: `${portfolio.studentName} · ${portfolio.className || 'Chưa rõ lớp'} · ${latest?.versionNumber || portfolio.currentActiveVersion}`,
+            title: 'Bài đã sẵn sàng để chấm',
+            message: `${portfolio.studentName} · ${portfolio.className || 'Chưa rõ lớp'} · ${learningVersionLabel(latest?.versionNumber || portfolio.currentActiveVersion)}`,
             createdAt: latest?.createdAt || portfolio.lastAutosavedAt,
             tone: 'purple',
             view: 'teacher-review',
@@ -113,7 +114,7 @@ export const NotificationCenter: React.FC<NotificationCenterProps> = ({ onNaviga
           items.push({
             id: `teacher-action:${portfolio.id}:${latest?.id || 'latest'}`,
             title: 'Bài cần giáo viên xử lý',
-            message: `${portfolio.studentName} · ${latest?.versionNumber || portfolio.currentActiveVersion}`,
+            message: `${portfolio.studentName} · ${learningVersionLabel(latest?.versionNumber || portfolio.currentActiveVersion)}`,
             createdAt: latest?.createdAt || portfolio.lastAutosavedAt,
             tone: 'amber',
             view: 'teacher-review',
@@ -186,7 +187,7 @@ export const NotificationCenter: React.FC<NotificationCenterProps> = ({ onNaviga
           <div className="py-12 text-center">
             <BellIcon className="mx-auto h-7 w-7 text-slate-300" />
             <p className="mt-3 text-sm font-medium text-slate-700">Chưa có việc mới</p>
-            <p className="mt-1 text-xs leading-5 text-slate-500">Phản hồi, Rubric và việc cần xử lý sẽ xuất hiện tại đây.</p>
+            <p className="mt-1 text-xs leading-5 text-slate-500">Góp ý, điểm số và việc cần xử lý sẽ xuất hiện tại đây.</p>
           </div>
         ) : (
           <div className="space-y-2">

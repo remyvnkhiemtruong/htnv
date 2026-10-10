@@ -49,12 +49,12 @@ export function deriveStudentWorkflow(input: {
     || versions.some(version => version.stage === 'prediction' || version.stage === 'initial');
 
   const base: Array<Omit<WorkflowStepState, 'active'>> = [];
-  if (predictionRequired && historicalStagesVisible) base.push({ id: 'prediction', label: 'Dự đoán V0', shortLabel: 'V0', done: prediction });
-  if (historicalStagesVisible) base.push({ id: 'initial', label: 'Bản đầu V1', shortLabel: 'V1', done: academicVersions.length > 0 });
+  if (predictionRequired && historicalStagesVisible) base.push({ id: 'prediction', label: 'Dự đoán trước khi đọc', shortLabel: 'Dự đoán', done: prediction });
+  if (historicalStagesVisible) base.push({ id: 'initial', label: 'Bài làm đầu tiên', shortLabel: 'Bài đầu tiên', done: academicVersions.length > 0 });
   base.push({ id: 'feedback', label: 'Nhận góp ý', shortLabel: 'Góp ý', done: hasFeedback });
-  base.push({ id: 'revision', label: 'Chỉnh sửa V2', shortLabel: 'V2', done: Boolean(revision) });
-  if (reflectionRequired) base.push({ id: 'reflection', label: 'Tự phản tư REF1', shortLabel: 'REF1', done: hasReflection });
-  if (rubricRequired) base.push({ id: 'rubric', label: 'Rubric chính thức', shortLabel: 'Rubric', done: hasTeacherRubric });
+  base.push({ id: 'revision', label: 'Bài chỉnh sửa', shortLabel: 'Sửa bài', done: Boolean(revision) });
+  if (reflectionRequired) base.push({ id: 'reflection', label: 'Tự nhìn lại bài làm', shortLabel: 'Tự nhìn lại', done: hasReflection });
+  if (rubricRequired) base.push({ id: 'rubric', label: 'Giáo viên chấm điểm', shortLabel: 'Chấm điểm', done: hasTeacherRubric });
   const activeIndex = base.findIndex(step => !step.done);
   const steps = base.map((step, index) => ({ ...step, active: activeIndex === index }));
   const progress = base.length ? Math.round((base.filter(step => step.done).length / base.length) * 100) : 0;
@@ -63,14 +63,14 @@ export function deriveStudentWorkflow(input: {
     statusLabel, nextActionLabel, nextActionHint, tone, canEdit, isComplete, progress: isComplete ? 100 : progress, steps
   });
 
-  if (hasTeacherRubric || portfolio?.status === 'completed') return make('Hoàn thành', 'Xem hồ sơ hoàn chỉnh', 'Bài đã có Rubric chính thức của giáo viên.', 'emerald', false, true);
+  if (hasTeacherRubric || portfolio?.status === 'completed') return make('Hoàn thành', 'Xem hồ sơ hoàn chỉnh', 'Giáo viên đã chấm bài. Em có thể xem điểm và nhận xét.', 'emerald', false, true);
   if (!portfolio) return predictionRequired
-    ? make('Cần làm V0', 'Hoàn thành V0', 'Ghi dự đoán trước đọc rồi mới nộp V1.', 'blue', true)
-    : make('Đang viết V1', 'Bắt đầu V1', 'Mở bài và hoàn thiện bản đầu tiên.', 'blue', true);
-  if (predictionRequired && !prediction && academicVersions.length === 0) return make('Cần làm V0', 'Hoàn thành V0', 'Ghi dự đoán trước đọc rồi mới nộp V1.', 'blue', true);
-  if (academicVersions.length === 0) return make('Đang viết V1', 'Tiếp tục và nộp V1', 'Hoàn thiện bản đầu tiên để gửi phản hồi.', 'blue', true);
-  if (!hasFeedback) return make('Chờ phản hồi', 'Xem V1 đã nộp', 'V1 đã khóa và đang chờ phản hồi.', 'violet', false);
-  if (!revision) return make('Cần chỉnh sửa', 'Xem góp ý và sửa V2', 'Đọc góp ý, chỉnh bài và nộp V2.', 'amber', true);
-  if (reflectionRequired && !hasReflection) return make('Cần REF1', 'Hoàn thành tự phản tư', 'V2 đã nộp. Hoàn thành REF1 trước Rubric.', 'blue', false);
-  return make('Chờ chấm Rubric', 'Xem hồ sơ đã nộp', 'Hồ sơ đang chờ giáo viên chấm chính thức.', 'violet', false);
+    ? make('Cần ghi dự đoán', 'Ghi dự đoán trước khi đọc', 'Ghi dự đoán trước khi đọc, sau đó viết và nộp bài đầu tiên.', 'blue', true)
+    : make('Đang viết bài đầu tiên', 'Bắt đầu làm bài', 'Mở bài và hoàn thiện bản đầu tiên.', 'blue', true);
+  if (predictionRequired && !prediction && academicVersions.length === 0) return make('Cần ghi dự đoán', 'Ghi dự đoán trước khi đọc', 'Ghi dự đoán trước khi đọc, sau đó viết và nộp bài đầu tiên.', 'blue', true);
+  if (academicVersions.length === 0) return make('Đang viết bài đầu tiên', 'Tiếp tục bài đầu tiên', 'Hoàn thiện bản đầu tiên để gửi phản hồi.', 'blue', true);
+  if (!hasFeedback) return make('Chờ phản hồi', 'Xem bài đầu tiên đã nộp', 'Bài đầu tiên đã nộp và đang chờ góp ý.', 'violet', false);
+  if (!revision) return make('Cần chỉnh sửa', 'Xem góp ý rồi sửa bài', 'Đọc góp ý, sửa bài rồi nộp bản chỉnh sửa.', 'amber', true);
+  if (reflectionRequired && !hasReflection) return make('Cần tự nhìn lại bài làm', 'Tự nhìn lại bài làm', 'Bài chỉnh sửa đã nộp. Hoàn thành phần tự nhìn lại trước khi giáo viên chấm.', 'blue', false);
+  return make('Chờ giáo viên chấm', 'Xem hồ sơ đã nộp', 'Hồ sơ đang chờ giáo viên chấm chính thức.', 'violet', false);
 }

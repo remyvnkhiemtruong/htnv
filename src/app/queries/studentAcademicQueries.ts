@@ -1,3 +1,4 @@
+import { learningText, readableAcademicData } from '../../utils/learningLabels';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import type {
   Assignment,
@@ -52,8 +53,8 @@ export const studentAcademicKeys = {
 async function getJson<T>(url: string): Promise<T> {
   const response = await fetch(url, { credentials: 'include', cache: 'no-store' });
   const data = await response.json().catch(() => ({}));
-  if (!response.ok) throw new Error(data.message || data.code || 'Không thể tải dữ liệu');
-  return data as T;
+  if (!response.ok) throw new Error(learningText(data.message || 'Không thể tải dữ liệu'));
+  return readableAcademicData(data) as T;
 }
 
 export async function postAcademicAction(payload: unknown) {
@@ -64,7 +65,7 @@ export async function postAcademicAction(payload: unknown) {
     body: JSON.stringify(payload)
   });
   const data = await response.json().catch(() => ({}));
-  if (!response.ok) throw new Error(data.message || data.code || 'Không thể cập nhật dữ liệu');
+  if (!response.ok) throw new Error(learningText(data.message || 'Không thể cập nhật dữ liệu'));
   return data;
 }
 

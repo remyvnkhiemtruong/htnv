@@ -50,7 +50,7 @@ const VIEW_TITLES: Record<string, string> = {
   'teacher-dashboard': 'Giảng dạy',
   'teacher-review': 'Chấm bài',
   'assignment-builder': 'Tạo nhiệm vụ',
-  'rubric-management': 'Rubric',
+  'rubric-management': 'Bảng tiêu chí chấm điểm',
   'literature-texts': 'Ngữ liệu',
   'class-analytics': 'Phân tích lớp',
   'researcher-view': 'Nghiên cứu',
@@ -241,12 +241,12 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
         <div className="space-y-4 text-sm text-slate-700">
           <p className="text-slate-600">Quy trình làm bài:</p>
           <ol className="list-inside list-decimal space-y-1.5 pl-1 text-slate-700">
-            <li>Nếu nhiệm vụ yêu cầu dự đoán trước đọc, hoàn thành và nộp V0.</li>
-            <li>Đọc ngữ liệu, viết theo các trục thi pháp và nộp V1.</li>
+            <li>Nếu nhiệm vụ yêu cầu dự đoán trước đọc, hoàn thành và nộp dự đoán trước khi đọc.</li>
+            <li>Đọc ngữ liệu, viết theo các phần phân tích và nộp bài làm đầu tiên.</li>
             <li>Nhận phản hồi gợi ý định hướng để tiếp tục suy nghĩ và hoàn thiện.</li>
             <li>Giáo viên xem góp ý đã gửi và có thể bổ sung nhận xét.</li>
-            <li>Học sinh sửa bài, nộp V2 hoặc bản tiếp theo và ghi lí do thay đổi.</li>
-            <li>Sau bản chỉnh sửa, học sinh hoàn thành REF1; giáo viên chấm Rubric.</li>
+            <li>Học sinh sửa bài, nộp bài chỉnh sửa hoặc bản tiếp theo và ghi lí do thay đổi.</li>
+            <li>Sau bản chỉnh sửa, học sinh hoàn thành phiếu tự nhìn lại bài làm; giáo viên chấm bảng tiêu chí chấm điểm.</li>
           </ol>
           <div className="border-t border-slate-100 pt-2 text-xs text-slate-500">Phím tắt: <strong>Ctrl + K</strong> để tìm nhanh; <strong>Esc</strong> để đóng hộp thoại.</div>
         </div>

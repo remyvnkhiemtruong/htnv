@@ -1,3 +1,4 @@
+import { learningText, learningVersionLabel, readableAcademicData } from '../utils/learningLabels';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { Alert, Badge, Button, PageHeader } from '../components/ui';
 import { useAuthStore } from '../app/store/useAuthStore';
@@ -31,7 +32,7 @@ async function postAction(payload: unknown) {
     body: JSON.stringify(payload)
   });
   const d = await r.json().catch(() => ({}));
-  if (!r.ok) throw new Error(d.message || d.code || 'Không thể cập nhật');
+  if (!r.ok) throw new Error(learningText(d.message || 'Không thể cập nhật'));
   return d;
 }
 
@@ -60,7 +61,7 @@ export const AiWorkspaceView: React.FC = () => {
     const r = await fetch('/api/academic/snapshot', { credentials: 'include', cache: 'no-store' });
     const d = await r.json();
     if (!r.ok) throw new Error(d.message || 'Không thể tải hàng đợi');
-    setSnapshot(d.snapshot);
+    setSnapshot(readableAcademicData(d.snapshot));
   }, []);
 
   const refreshOverview = useCallback(async () => {
@@ -168,12 +169,12 @@ export const AiWorkspaceView: React.FC = () => {
       return `### ${a.label}\n${text || '(Chưa viết)'}`;
     }).join('\n\n');
 
-    const promptText = `Bạn là trợ lý học tập môn Ngữ văn theo phương pháp 6 trục thi pháp.
+    const promptText = `Bạn là trợ lý học tập môn Ngữ văn theo phương pháp 6 phần phân tích.
 Nhiệm vụ: ${assignment?.title || ''}
 Ngữ liệu: ${literatureText?.title || ''} (${literatureText?.author || ''})
 Yêu cầu: ${detailedSelected?.prompt || assignment?.prompt || ''}
 
-BÀI LÀM CỦA HỌC SINH (${selected.student_name} - Phiên bản ${selected.version_number}):
+BÀI LÀM CỦA HỌC SINH (${selected.student_name} - Phiên bản ${learningVersionLabel(selected.version_number)}):
 ${essayParts}
 
 Viết nhận xét ngắn, rõ và bám vào bài học sinh. Nêu phần làm được kèm dẫn chứng, chỉ ra chỗ cần sửa và đặt câu hỏi để học sinh tự sửa. Không khen chung chung, không dùng lời quảng bá hoặc viết hộ bài. Nếu thiếu căn cứ, nói rõ phần chưa thể nhận xét. Không quyết định điểm chính thức.`;
@@ -337,7 +338,7 @@ Viết nhận xét ngắn, rõ và bám vào bài học sinh. Nêu phần làm �
                       )}
                     </div>
                     <div className={`mt-1 text-xs ${isSelected ? 'text-primary-700' : 'text-slate-500'}`}>
-                      {item.version_number} · {completed ? 'Đã gửi học sinh' : 'Chờ nhập'}
+                      {learningVersionLabel(item.version_number)} · {completed ? 'Đã gửi học sinh' : 'Chờ nhập'}
                     </div>
                   </button>
                 );
@@ -365,7 +366,7 @@ Viết nhận xét ngắn, rõ và bám vào bài học sinh. Nêu phần làm �
                     <h2 className="mt-1 text-xl font-bold tracking-tight text-slate-950">{selected.student_name}</h2>
                   </div>
                   <div className="flex items-center gap-2">
-                    <Badge variant="primary">{selected.version_number}</Badge>
+                    <Badge variant="primary">{learningVersionLabel(selected.version_number)}</Badge>
                     <Badge variant="outline">
                       {currentVersion?.stage === 'prediction' ? 'Dự đoán' : currentVersion?.stage === 'initial' ? 'Bản đầu' : 'Bản chỉnh sửa'}
                     </Badge>
@@ -399,7 +400,7 @@ Viết nhận xét ngắn, rõ và bám vào bài học sinh. Nêu phần làm �
 
               <div className="mt-5 space-y-5">
                 <div className="flex items-center justify-between">
-                  <h3 className="text-sm font-bold text-slate-900">Nội dung bài viết theo 6 trục</h3>
+                  <h3 className="text-sm font-bold text-slate-900">Nội dung bài viết theo 6 phần</h3>
                 </div>
                 {axes.map(axis => {
                   const resp = currentVersion?.responses?.[axis.id];
@@ -472,7 +473,7 @@ Viết nhận xét ngắn, rõ và bám vào bài học sinh. Nêu phần làm �
 
             {rubric?.criteria?.length ? (
               <details className="rounded-lg border border-slate-200 p-2.5 text-xs leading-5 text-slate-700">
-                <summary className="cursor-pointer font-semibold select-none">Rubric giáo viên ({rubric.criteria.length} tiêu chí)</summary>
+                <summary className="cursor-pointer font-semibold select-none">Bảng tiêu chí chấm điểm giáo viên ({rubric.criteria.length} tiêu chí)</summary>
                 <div className="mt-2 space-y-1 text-xs border-t border-slate-100 pt-2">
                   {rubric.criteria.map(c => (
                     <div key={c.id} className="text-slate-600">

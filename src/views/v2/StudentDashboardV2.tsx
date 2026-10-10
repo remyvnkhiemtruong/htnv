@@ -113,7 +113,7 @@ export const StudentDashboardView: React.FC<{ onNavigate: (view: string, params?
       <div className="grid gap-3 sm:grid-cols-3">
         <MetricTile label="Tiến độ chung" value={`${averageProgress}%`} note={`${completed}/${items.length} nhiệm vụ hoàn tất`} tone="accent" />
         <MetricTile label="Phản hồi cần xem" value={unresolvedFeedbacks.length} note="AI · giáo viên · phản biện" tone={unresolvedFeedbacks.length ? 'warning' : 'success'} />
-        <MetricTile label="Nhiệm vụ đang học" value={Math.max(0, items.length - completed)} note="V0 · V1 · chỉnh sửa · REF1" />
+        <MetricTile label="Nhiệm vụ đang học" value={Math.max(0, items.length - completed)} note="Dự đoán · Làm bài · Sửa bài · Tự nhìn lại" />
       </div>
 
       {next ? (

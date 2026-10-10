@@ -1,3 +1,4 @@
+import { learningVersionLabel } from '../../utils/learningLabels';
 import React from 'react';
 import type { PortfolioVersion } from '../../types';
 import { History, CheckCircle2, Lock, GitCommit, ArrowRight, Eye } from 'lucide-react';
@@ -68,7 +69,7 @@ export const VersionTimeline: React.FC<VersionTimelineProps> = ({
                 >
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
-                      <span className="font-bold text-slate-900 text-sm">{ver.versionNumber}</span>
+                      <span className="font-bold text-slate-900 text-sm">{learningVersionLabel(ver)}</span>
                       {ver.isFrozen && (
                         <span className="inline-flex items-center gap-1 text-xs font-medium bg-slate-200 text-slate-700 px-1.5 py-0.5 rounded">
                           <Lock className="w-2.5 h-2.5" /> Đóng băng
@@ -107,7 +108,7 @@ export const VersionTimeline: React.FC<VersionTimelineProps> = ({
                         onClick={() => onOpenDiff(prevVer.versionNumber, ver.versionNumber)}
                         className="inline-flex items-center gap-1 text-xs font-semibold text-primary-600 hover:text-primary-800 bg-primary-50 hover:bg-primary-100 px-2 py-0.5 rounded transition-colors"
                       >
-                        So sánh Diff ({prevVer.versionNumber} <ArrowRight className="w-3 h-3" /> {ver.versionNumber})
+                        So sánh bài làm ({learningVersionLabel(prevVer)} <ArrowRight className="w-3 h-3" /> {learningVersionLabel(ver)})
                       </button>
                     )}
                   </div>

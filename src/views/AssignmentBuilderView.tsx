@@ -26,7 +26,7 @@ async function post(payload: unknown) {
 
 const STEPS = [
   { id: 1, title: 'Lớp & Ngữ liệu', desc: 'Thông tin cơ bản' },
-  { id: 2, title: 'Yêu cầu & Trục', desc: 'Đề bài và 6 trục' },
+  { id: 2, title: 'Yêu cầu bài làm', desc: 'Đề bài và 6 phần' },
   { id: 3, title: 'Quy trình', desc: 'Quy trình làm bài' },
   { id: 4, title: 'Kiểm tra', desc: 'Xem lại và xuất bản' }
 ];
@@ -47,7 +47,7 @@ export const AssignmentBuilderView: React.FC<Props> = ({ onNavigate }) => {
   });
   const [axes, setAxes] = useState<PoeticAxisId[]>(POETIC_AXES.map(a => a.id));
   const [predictionEnabled, setPredictionEnabled] = useState(true);
-  const [predictionPrompt, setPredictionPrompt] = useState('Hoàn thành V0 trước khi đọc; nêu dự đoán, căn cứ và mức tự tin. V0 được khóa sau khi nộp.');
+  const [predictionPrompt, setPredictionPrompt] = useState('Ghi dự đoán, căn cứ và mức tự tin trước khi đọc. Phần này sẽ được khóa sau khi nộp.');
   const [predictionQuestionsText, setPredictionQuestionsText] = useState('');
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState('');
@@ -66,7 +66,7 @@ export const AssignmentBuilderView: React.FC<Props> = ({ onNavigate }) => {
     const source = assignments.find(item =>
       item.textId === form.textId && (item.predictionTemplate?.questions?.length || 0) > 0
     );
-    setPredictionPrompt(source?.predictionTemplate?.prompt || 'Hoàn thành V0 trước khi đọc; nêu dự đoán, căn cứ và mức tự tin. V0 được khóa sau khi nộp.');
+    setPredictionPrompt(source?.predictionTemplate?.prompt || 'Ghi dự đoán, căn cứ và mức tự tin trước khi đọc. Phần này sẽ được khóa sau khi nộp.');
     setPredictionQuestionsText((source?.predictionTemplate?.questions || []).join('\n'));
   }, [form.textId, assignments]);
 
@@ -98,18 +98,18 @@ export const AssignmentBuilderView: React.FC<Props> = ({ onNavigate }) => {
         return false;
       }
       if (!form.rubricId || !rubricOptions.some(option => option.id === form.rubricId)) {
-        setMessage('Vui lòng chọn ma trận Rubric đang có trong hệ thống.');
+        setMessage('Vui lòng chọn bảng tiêu chí chấm điểm đang có trong hệ thống.');
         return false;
       }
     }
     if (currentStep === 2) {
       if (axes.length === 0) {
-        setMessage('Cần chọn ít nhất 1 trục thi pháp.');
+        setMessage('Cần chọn ít nhất 1 phần phân tích.');
         return false;
       }
     }
     if (currentStep === 3 && predictionEnabled && predictionQuestions.length === 0) {
-      setMessage('Đã bật V0 nhưng chưa có câu hỏi dự đoán. Hãy nhập ít nhất 1 câu hỏi trước khi tiếp tục.');
+      setMessage('Đã bật dự đoán trước khi đọc nhưng chưa có câu hỏi dự đoán. Hãy nhập ít nhất 1 câu hỏi trước khi tiếp tục.');
       return false;
     }
     setMessage('');
@@ -124,15 +124,15 @@ export const AssignmentBuilderView: React.FC<Props> = ({ onNavigate }) => {
 
   const publish = async () => {
     if (!form.title.trim() || !form.classId || !form.textId || !form.rubricId) {
-      setMessage('Thiếu tên nhiệm vụ, lớp, tác phẩm hoặc rubric.');
+      setMessage('Thiếu tên nhiệm vụ, lớp, tác phẩm hoặc bảng tiêu chí chấm điểm.');
       return;
     }
     if (!rubricOptions.some(option => option.id === form.rubricId)) {
-      setMessage('Rubric đã chọn không còn hợp lệ. Vui lòng chọn lại ma trận Rubric trước khi xuất bản.');
+      setMessage('Bảng tiêu chí chấm điểm đã chọn không còn hợp lệ. Vui lòng chọn lại bảng tiêu chí chấm điểm trước khi xuất bản.');
       return;
     }
     if (predictionEnabled && predictionQuestions.length === 0) {
-      setMessage('Đã bật V0 nhưng chưa có câu hỏi dự đoán. Hãy nhập ít nhất 1 câu hỏi trước khi xuất bản.');
+      setMessage('Đã bật dự đoán trước khi đọc nhưng chưa có câu hỏi dự đoán. Hãy nhập ít nhất 1 câu hỏi trước khi xuất bản.');
       return;
     }
     const textId = form.textId;
@@ -165,11 +165,11 @@ export const AssignmentBuilderView: React.FC<Props> = ({ onNavigate }) => {
           questions: predictionEnabled ? predictionQuestions : []
         },
         guidingSteps: [
-          ...(predictionEnabled ? ['Hoàn thành V0 trước đọc'] : []),
-          'Nộp V1 để nhận góp ý AI/giáo viên',
-          'Đọc góp ý và chỉnh sửa V2',
-          'Hoàn thành REF1',
-          'Chờ giáo viên chấm Rubric chính thức'
+          ...(predictionEnabled ? ['Ghi dự đoán trước khi đọc'] : []),
+          'Nộp bài làm đầu tiên để nhận góp ý AI/giáo viên',
+          'Đọc góp ý và sửa bài',
+          'Hoàn thành phiếu tự nhìn lại bài làm',
+          'Chờ giáo viên chấm điểm'
         ]
       });
       await refreshAcademicData();
@@ -198,7 +198,7 @@ export const AssignmentBuilderView: React.FC<Props> = ({ onNavigate }) => {
           </div>
           <h1 className="text-2xl font-bold tracking-tight text-slate-900">Thiết kế nhiệm vụ học tập</h1>
           <p className="mt-0.5 text-sm text-slate-500">
-            Tạo nhiệm vụ đọc hiểu theo 6 trục thi pháp.
+            Tạo nhiệm vụ đọc hiểu theo 6 phần.
           </p>
         </div>
       </div>
@@ -252,7 +252,7 @@ export const AssignmentBuilderView: React.FC<Props> = ({ onNavigate }) => {
             <div>
               <h2 className="text-base font-bold text-slate-900">1. Thông tin cơ bản nhiệm vụ</h2>
               <p className="mt-0.5 text-xs text-slate-500">
-                Đặt tên nhiệm vụ, chọn lớp, ngữ liệu và Rubric.
+                Đặt tên nhiệm vụ, chọn lớp, ngữ liệu và bảng tiêu chí chấm điểm.
               </p>
             </div>
 
@@ -285,7 +285,7 @@ export const AssignmentBuilderView: React.FC<Props> = ({ onNavigate }) => {
 
               <div className="sm:col-span-2">
                 <Select
-                  label="Ma trận Rubric đánh giá"
+                  label="Bảng tiêu chí chấm điểm"
                   value={form.rubricId}
                   onChange={v => set('rubricId', v)}
                   options={rubricOptions.map(r => [r.id, `${r.title} (${r.criteria?.length || 6} tiêu chí)`])}
@@ -300,9 +300,9 @@ export const AssignmentBuilderView: React.FC<Props> = ({ onNavigate }) => {
         {step === 2 && (
           <div className="space-y-5">
             <div>
-              <h2 className="text-base font-bold text-slate-900">2. Yêu cầu đề bài & Trục thi pháp</h2>
+              <h2 className="text-base font-bold text-slate-900">2. Yêu cầu đề bài & Phần phân tích</h2>
               <p className="mt-0.5 text-xs text-slate-500">
-                Nhập đề bài và chọn các trục thi pháp cần dùng.
+                Nhập đề bài và chọn các phần phân tích cần dùng.
               </p>
             </div>
 
@@ -341,14 +341,14 @@ export const AssignmentBuilderView: React.FC<Props> = ({ onNavigate }) => {
               <div className="sm:col-span-2 space-y-2">
                 <div className="flex items-center justify-between">
                   <label className="block text-xs font-semibold text-slate-700">
-                    Chọn các trục thi pháp mục tiêu ({axes.length}/6 trục đã chọn)
+                    Chọn các phần phân tích mục tiêu ({axes.length}/6 phần đã chọn)
                   </label>
                   <button
                     type="button"
                     onClick={() => setAxes(POETIC_AXES.map(a => a.id))}
                     className="text-xs text-primary-700 hover:underline"
                   >
-                    Chọn toàn bộ 6 trục
+                    Chọn toàn bộ 6 phần
                   </button>
                 </div>
                 <div className="grid gap-2.5 sm:grid-cols-2">
@@ -395,11 +395,11 @@ export const AssignmentBuilderView: React.FC<Props> = ({ onNavigate }) => {
               <label className="flex items-start justify-between rounded-lg border border-slate-200 bg-white p-4 text-xs cursor-pointer hover:border-slate-300">
                 <div className="pr-3">
                   <div className="flex items-center gap-1.5 font-bold text-slate-900">
-                    <span>V0 – Dự đoán trước khi đọc</span>
+                    <span>Dự đoán trước khi đọc</span>
                     <Badge size="sm" variant="outline">Tùy chọn</Badge>
                   </div>
                   <p className="mt-1 leading-relaxed text-slate-500">
-                    Cho học sinh trả lời câu hỏi V0 trước khi đọc toàn văn. Có thể tắt để bắt đầu từ V1.
+                    Cho học sinh trả lời câu hỏi dự đoán trước khi đọc toàn văn. Có thể tắt để bắt đầu từ bài làm đầu tiên.
                   </p>
                 </div>
                 <input
@@ -414,30 +414,30 @@ export const AssignmentBuilderView: React.FC<Props> = ({ onNavigate }) => {
               <RequiredStep
                 title="Góp ý AI"
                 tag="Bắt buộc"
-                description="Sau khi nộp V1, học sinh nhận góp ý AI để sửa bài."
+                description="Sau khi nộp bài làm đầu tiên, học sinh nhận góp ý AI để sửa bài."
               />
               <RequiredStep
-                title="REF1 – Tự phản tư"
+                title="Tự nhìn lại bài làm"
                 tag="Bắt buộc"
-                description="Học sinh hoàn thành REF1 sau bản chỉnh sửa và trước khi giáo viên chấm."
+                description="Học sinh hoàn thành phiếu tự nhìn lại bài làm sau bản chỉnh sửa và trước khi giáo viên chấm."
               />
               <RequiredStep
-                title="Rubric giáo viên"
+                title="Bảng tiêu chí chấm điểm giáo viên"
                 tag="Bắt buộc"
-                description="Giáo viên chấm theo Rubric của nhiệm vụ."
+                description="Giáo viên chấm theo bảng tiêu chí chấm điểm của nhiệm vụ."
               />
             </div>
 
             {predictionEnabled && (
               <div className="space-y-4 rounded-lg border border-sky-200 bg-sky-50/60 p-4">
                 <div>
-                  <div className="text-sm font-bold text-sky-950">Câu hỏi V0</div>
+                  <div className="text-sm font-bold text-sky-950">Câu hỏi trước khi đọc</div>
                   <p className="mt-1 text-xs leading-5 text-sky-800">
-                    Mỗi dòng là một câu hỏi. Nếu ngữ liệu đã có bộ V0, hệ thống sẽ tự nạp để giáo viên chỉnh sửa.
+                    Mỗi dòng là một câu hỏi. Nếu ngữ liệu đã có bộ dự đoán trước khi đọc, hệ thống sẽ tự nạp để giáo viên chỉnh sửa.
                   </p>
                 </div>
                 <div>
-                  <label className="mb-1.5 block text-xs font-semibold text-slate-700">Lời dẫn V0</label>
+                  <label className="mb-1.5 block text-xs font-semibold text-slate-700">Hướng dẫn dự đoán</label>
                   <textarea
                     rows={2}
                     value={predictionPrompt}
@@ -492,8 +492,8 @@ export const AssignmentBuilderView: React.FC<Props> = ({ onNavigate }) => {
                   <span className="text-slate-800 font-medium">{selectedText ? `${selectedText.title} (${selectedText.author})` : '—'}</span>
                 </div>
                 <div>
-                  <span className="font-semibold text-slate-500 block">Ma trận Rubric:</span>
-                  <span className="text-slate-800 font-medium">{selectedRubric?.title || 'Rubric mặc định'}</span>
+                  <span className="font-semibold text-slate-500 block">Bảng tiêu chí chấm điểm:</span>
+                  <span className="text-slate-800 font-medium">{selectedRubric?.title || 'Bảng tiêu chí chấm điểm mặc định'}</span>
                 </div>
                 <div>
                   <span className="font-semibold text-slate-500 block">Hạn nộp:</span>
@@ -503,7 +503,7 @@ export const AssignmentBuilderView: React.FC<Props> = ({ onNavigate }) => {
 
               <div className="border-t border-slate-200 pt-3">
                 <span className="font-semibold text-slate-500 block mb-1">
-                  Trục thi pháp áp dụng ({axes.length} trục):
+                  Phần phân tích áp dụng ({axes.length} phần):
                 </span>
                 <div className="flex flex-wrap gap-1.5">
                   {axes.map(id => {
@@ -515,7 +515,7 @@ export const AssignmentBuilderView: React.FC<Props> = ({ onNavigate }) => {
 
               {predictionEnabled && (
                 <div className="border-t border-slate-200 pt-3">
-                  <span className="font-semibold text-slate-500 block mb-1">Câu hỏi V0:</span>
+                  <span className="font-semibold text-slate-500 block mb-1">Câu hỏi trước khi đọc:</span>
                   <span className="text-slate-800 font-medium">{predictionQuestions.length} câu hỏi sẽ hiển thị cho học sinh</span>
                 </div>
               )}
@@ -523,7 +523,7 @@ export const AssignmentBuilderView: React.FC<Props> = ({ onNavigate }) => {
               <div className="border-t border-slate-200 pt-3">
                 <span className="font-semibold text-slate-500 block mb-1">Quy trình làm bài:</span>
                 <div className="rounded border border-slate-200 bg-white p-2.5 font-mono text-xs text-slate-700">
-                  {predictionEnabled ? 'V0 (Dự đoán) → ' : ''}V1 (Bản đầu) → AI/GV Góp ý → V2 (Chỉnh sửa) → REF1 (Tự phản tư) → Rubric Giáo viên
+                  {predictionEnabled ? 'Dự đoán trước khi đọc → ' : ''}Bài đầu tiên → Nhận góp ý → Sửa bài → Tự nhìn lại → Giáo viên chấm điểm
                 </div>
               </div>
             </div>
@@ -633,4 +633,3 @@ const Select = ({
     </select>
   </div>
 );
-

@@ -6,18 +6,18 @@ interface LandingViewProps { onNavigate: (view: string, extraParams?: unknown) =
 
 const NAV_ITEMS = [
   { id: 'quy-trinh', label: 'Quy trình' },
-  { id: 'truc-doc', label: 'Sáu trục đọc' },
+  { id: 'truc-doc', label: 'Các phần phân tích' },
   { id: 'giao-vien', label: 'Dành cho giáo viên' },
   { id: 've-he-thong', label: 'Thông tin hệ thống' }
 ];
 
 const WORKFLOW_STEPS = [
-  ['V0', 'Dự đoán trước khi đọc', 'Ghi dự đoán, căn cứ và mức tự tin trước khi đọc văn bản.'],
-  ['V1', 'Bản phân tích đầu tiên', 'Đọc văn bản, phân tích theo 6 trục thi pháp và dẫn chứng từ bài đọc.'],
+  ['Dự đoán', 'Dự đoán trước khi đọc', 'Ghi dự đoán, căn cứ và mức tự tin trước khi đọc văn bản.'],
+  ['Làm bài', 'Bản phân tích đầu tiên', 'Đọc văn bản, viết bài theo 6 phần và chọn dẫn chứng từ văn bản.'],
   ['Góp ý', 'Nhận góp ý', 'Đọc góp ý của AI và giáo viên cho từng phần trong bài đã nộp.'],
-  ['V2', 'Bản chỉnh sửa', 'Sửa bài theo góp ý, so sánh với V1 và ghi lý do sửa.'],
-  ['REF1', 'Phiếu tự phản tư', 'Trả lời 5 câu hỏi về điều đã hiểu thêm, phần đã sửa và cách làm bài sau.'],
-  ['Rubric', 'Đánh giá chính thức', 'Giáo viên chấm theo 4 mức của rubric và xem kết quả từng phiên bản.']
+  ['Sửa bài', 'Bản chỉnh sửa', 'Sửa bài theo góp ý, so sánh với bài làm đầu tiên và ghi lý do sửa.'],
+  ['Tự nhìn lại', 'Phiếu tự nhìn lại bài làm', 'Trả lời 5 câu hỏi về điều đã hiểu thêm, phần đã sửa và cách làm bài sau.'],
+  ['Chấm điểm', 'Đánh giá chính thức', 'Giáo viên chấm theo 4 mức của bảng tiêu chí chấm điểm và xem kết quả từng phiên bản.']
 ];
 
 const POETIC_AXES = [
@@ -30,24 +30,24 @@ const POETIC_AXES = [
 ];
 
 const STAGE_PREVIEWS = {
-  v0: { badge: 'Trước khi đọc', title: 'V0: Ghi dự đoán', desc: 'Dựa vào nhan đề và thông tin giáo viên cung cấp, ghi điều em dự đoán và mức tự tin.', sample: 'Ví dụ: Dự đoán tình huống nhặt vợ trong nạn đói 1945 — Căn cứ: Nhan đề Vợ nhặt và hoàn cảnh lịch sử.' },
-  v1: { badge: 'Đọc và phân tích', title: 'V1: Phân tích và dẫn chứng', desc: 'Chọn một đoạn trong ngữ liệu để đưa vào phần dẫn chứng của trục đang viết.', sample: 'Ví dụ ở trục Không gian: Chọn một chi tiết về xóm ngụ cư, rồi giải thích chi tiết đó cho thấy cảnh sống trong nạn đói ra sao.' },
+  v0: { badge: 'Trước khi đọc', title: 'Dự đoán trước khi đọc', desc: 'Dựa vào nhan đề và thông tin giáo viên cung cấp, ghi điều em dự đoán và mức tự tin.', sample: 'Ví dụ: Dự đoán tình huống nhặt vợ trong nạn đói 1945 — Căn cứ: Nhan đề Vợ nhặt và hoàn cảnh lịch sử.' },
+  v1: { badge: 'Đọc và phân tích', title: 'Bài làm đầu tiên', desc: 'Chọn một đoạn trong ngữ liệu để đưa vào phần dẫn chứng của trục đang viết.', sample: 'Ví dụ ở trục Không gian: Chọn một chi tiết về xóm ngụ cư, rồi giải thích chi tiết đó cho thấy cảnh sống trong nạn đói ra sao.' },
   feedback: { badge: 'Góp ý gợi mở', title: 'Góp ý từ AI và giáo viên', desc: 'Đọc nhận xét về bài đã nộp và chọn phần cần bổ sung hoặc sửa.', sample: 'Góp ý: "Em đã chỉ ra chi tiết nồi cháo cám, hãy phân tích thêm phản ứng của bà cụ Tứ để làm rõ tình mẫu tử."' },
-  v2: { badge: 'Hoàn thiện bài viết', title: 'V2 và REF1: Sửa bài và tự nhận xét', desc: 'Xem các đoạn đã thêm, xóa hoặc sửa so với V1. Sau đó trả lời 5 câu hỏi REF1.', sample: 'Phản tư: "Ở bản V2, em đã liên kết được chi tiết giọt nước mắt của bà cụ Tứ với niềm tin vào tương lai."' }
+  v2: { badge: 'Hoàn thiện bài viết', title: 'Sửa bài và tự nhìn lại', desc: 'Xem các đoạn đã thêm, xóa hoặc sửa so với bài làm đầu tiên. Sau đó trả lời 5 câu hỏi phiếu tự nhìn lại bài làm.', sample: 'Phản tư: "Ở bản bài chỉnh sửa, em đã liên kết được chi tiết giọt nước mắt của bà cụ Tứ với niềm tin vào tương lai."' }
 };
 
 const TEACHER_TOOLS = [
-  { icon: DocumentCheckIcon, title: 'Giao bài và quản lý ngữ liệu', desc: 'Chọn văn bản, nhập yêu cầu và câu hỏi dự đoán V0.' },
+  { icon: DocumentCheckIcon, title: 'Giao bài và quản lý ngữ liệu', desc: 'Chọn văn bản, nhập yêu cầu và câu hỏi trước khi đọc.' },
   { icon: SparklesIcon, title: 'Xem góp ý AI', desc: 'Xem góp ý gắn với bài đã nộp và bổ sung nhận xét cho học sinh.' },
-  { icon: CheckCircleIcon, title: 'Chấm theo rubric', desc: 'Chọn mức cho từng tiêu chí sau khi học sinh nộp REF1. Hệ thống tính tổng điểm.' },
-  { icon: ChartBarIcon, title: 'Theo dõi kết quả của lớp', desc: 'So sánh điểm từng trục giữa V1 và V2 khi đã có kết quả chấm.' }
+  { icon: CheckCircleIcon, title: 'Chấm theo bảng tiêu chí chấm điểm', desc: 'Chọn mức cho từng tiêu chí sau khi học sinh nộp phiếu tự nhìn lại bài làm. Hệ thống tính tổng điểm.' },
+  { icon: ChartBarIcon, title: 'Theo dõi kết quả của lớp', desc: 'So sánh điểm từng trục giữa bài làm đầu tiên và bài chỉnh sửa khi đã có kết quả chấm.' }
 ];
 
 const SYSTEM_INFO = [
   ['Phạm vi áp dụng', 'Học sinh và giáo viên THPT.'],
   ['Đơn vị sở hữu', 'Trường THPT Vị Thanh.'],
   ['Đối tượng sử dụng', 'Học sinh, giáo viên Ngữ văn và tổ chuyên môn.'],
-  ['Quy trình học tập', 'Lưu dự đoán V0, bài V1, góp ý, bản sửa V2, phiếu REF1 và kết quả chấm.']
+  ['Quy trình học tập', 'Lưu dự đoán trước khi đọc, bài đầu tiên, góp ý, từng bản sửa, phần tự nhìn lại và kết quả chấm.']
 ];
 
 type StageKey = keyof typeof STAGE_PREVIEWS;
@@ -101,7 +101,7 @@ export const LandingView: React.FC<LandingViewProps> = ({ onNavigate }) => {
                 Đọc, viết và sửa bài Ngữ văn.
               </h1>
               <p className="mt-4 text-sm leading-relaxed text-slate-600 sm:text-base">
-                Học sinh làm bài theo 6 trục thi pháp, nhận góp ý và lưu từng bản sửa. Giáo viên giao bài, theo dõi tiến độ và chấm theo rubric.
+                Học sinh làm bài theo 6 phần, nhận góp ý và lưu từng bản sửa. Giáo viên giao bài, theo dõi tiến độ và chấm theo bảng tiêu chí chấm điểm.
               </p>
               <div className="mt-7 flex flex-wrap items-center gap-3">
                 <Button size="lg" variant="primary" onClick={goToLogin} rightIcon={<ArrowRightIcon className="h-4 w-4" />}>
@@ -126,7 +126,7 @@ export const LandingView: React.FC<LandingViewProps> = ({ onNavigate }) => {
                     onClick={() => setActiveStage(key)}
                     className={`flex-1 rounded py-1.5 font-bold transition-all ${activeStage === key ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-600 hover:text-slate-900'}`}
                   >
-                    {key === 'v0' ? 'V0 Dự đoán' : key === 'v1' ? 'V1 6 Trục' : key === 'feedback' ? 'Góp ý' : 'V2 & REF1'}
+                    {key === 'v0' ? 'Dự đoán' : key === 'v1' ? 'Làm bài' : key === 'feedback' ? 'Góp ý' : 'Sửa bài và tự nhìn lại'}
                   </button>
                 ))}
               </div>
@@ -169,7 +169,7 @@ export const LandingView: React.FC<LandingViewProps> = ({ onNavigate }) => {
         <section id="truc-doc" className="scroll-mt-20 border-b border-slate-200 bg-slate-50/50">
           <div className="mx-auto max-w-6xl px-4 py-14 sm:px-6 sm:py-16">
             <div className="max-w-2xl">
-              <h2 className="text-2xl font-bold tracking-tight text-slate-950 sm:text-3xl">6 trục thi pháp</h2>
+              <h2 className="text-2xl font-bold tracking-tight text-slate-950 sm:text-3xl">6 phần phân tích</h2>
               <p className="mt-2 text-sm leading-6 text-slate-600">Dùng các câu hỏi dưới đây để tìm chi tiết, chọn dẫn chứng và viết phân tích.</p>
             </div>
             <div className="mt-8 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">

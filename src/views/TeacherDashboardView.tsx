@@ -62,14 +62,14 @@ export const TeacherDashboardView: React.FC<Props> = ({ onNavigate }) => {
       <PageHeader
         eyebrow="Giảng dạy"
         title="Bài cần xử lý"
-        description={`${actionCount} việc cần xử lý · ${submitted.length} bài V1/V2 đã nộp.`}
+        description={`${actionCount} việc cần xử lý · ${submitted.length} bài bài đầu tiên và bài chỉnh sửa đã nộp.`}
         actions={<Button variant="primary" onClick={() => onNavigate('assignment-builder')}>Tạo nhiệm vụ</Button>}
       />
 
       <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
         <MetricTile label="Cần xem" value={teacherPending} note="Góp ý đang chờ" tone={teacherPending ? 'warning' : 'success'} onClick={() => onNavigate('teacher-review')} />
         <MetricTile label="Phản hồi AI" value={aiPending} note="Cần giáo viên xem" tone={aiPending ? 'info' : 'default'} onClick={() => onNavigate('teacher-review')} />
-        <MetricTile label="Chờ rubric" value={rubricPending} note="Đã có REF1" tone={rubricPending ? 'warning' : 'default'} onClick={() => onNavigate('teacher-review')} />
+        <MetricTile label="Chờ chấm điểm" value={rubricPending} note="Đã có phiếu tự nhìn lại bài làm" tone={rubricPending ? 'warning' : 'default'} onClick={() => onNavigate('teacher-review')} />
         <MetricTile label="Đang sửa bài" value={revising} note="Sau góp ý" onClick={() => onNavigate('portfolio-list')} />
         <MetricTile label="Hoàn thành" value={done} note="Đã chấm xong" tone="success" onClick={() => onNavigate('portfolio-list')} />
       </div>
@@ -85,7 +85,7 @@ export const TeacherDashboardView: React.FC<Props> = ({ onNavigate }) => {
       <section className="v3-panel flex flex-col gap-4 p-5 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <div className="text-sm font-bold text-slate-900">{assignments.length} nhiệm vụ</div>
-          <div className="mt-1 text-xs leading-5 text-slate-500">Tạo nhiệm vụ, quản lý ngữ liệu và Rubric ở mục “Giảng dạy”.</div>
+          <div className="mt-1 text-xs leading-5 text-slate-500">Tạo nhiệm vụ, quản lý ngữ liệu và bảng tiêu chí chấm điểm ở mục “Giảng dạy”.</div>
         </div>
         <Button variant="outline" onClick={() => onNavigate('class-analytics')}>Xem phân tích lớp</Button>
       </section>

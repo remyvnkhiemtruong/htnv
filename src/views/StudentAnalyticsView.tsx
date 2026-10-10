@@ -1,3 +1,4 @@
+import { learningVersionLabel } from '../utils/learningLabels';
 import React, { useMemo } from 'react';
 import { usePortfolio } from '../contexts/PortfolioContext';
 import { useAuthStore } from '../app/store/useAuthStore';
@@ -200,7 +201,7 @@ export const StudentAnalyticsView: React.FC<StudentAnalyticsViewProps> = ({ stud
                     <h2 className="font-semibold text-slate-900">{item.title}</h2>
                     <p className="mt-1 text-xs text-slate-500">
                       {versions.length} bản đã nộp
-                      {itemPortfolio?.versions.some(version => version.stage === 'prediction') ? ' · Có V0' : ''}
+                      {itemPortfolio?.versions.some(version => version.stage === 'prediction') ? ' · Có dự đoán trước khi đọc' : ''}
                     </p>
                   </div>
                   <Badge size="sm" variant="outline">
@@ -249,8 +250,8 @@ export const StudentAnalyticsView: React.FC<StudentAnalyticsViewProps> = ({ stud
   if (!activeRubric) {
     return (
       <div className="mx-auto mt-16 max-w-md space-y-3 p-6 text-center">
-        <h2 className="text-base font-semibold text-slate-900">Thiếu rubric của nhiệm vụ</h2>
-        <p className="text-sm text-slate-500">Hệ thống không dùng rubric khác để thay thế vì có thể làm sai điểm.</p>
+        <h2 className="text-base font-semibold text-slate-900">Thiếu bảng tiêu chí chấm điểm của nhiệm vụ</h2>
+        <p className="text-sm text-slate-500">Hệ thống không dùng bảng tiêu chí chấm điểm khác để thay thế vì có thể làm sai điểm.</p>
       </div>
     );
   }
@@ -274,7 +275,7 @@ export const StudentAnalyticsView: React.FC<StudentAnalyticsViewProps> = ({ stud
           </div>
           <h1 className="mt-1 text-2xl font-bold tracking-tight text-slate-900">Tiến độ học tập</h1>
           <p className="mt-0.5 text-xs text-slate-500">
-            Chỉ dùng kết quả Rubric do giáo viên chấm.
+            Kết quả dưới đây dựa trên điểm giáo viên chấm.
           </p>
         </div>
 
@@ -328,8 +329,8 @@ export const StudentAnalyticsView: React.FC<StudentAnalyticsViewProps> = ({ stud
       <section className="space-y-3 rounded-lg border border-slate-200 bg-white p-5">
         <div className="flex items-center justify-between border-b border-slate-100 pb-3">
           <div>
-            <h2 className="text-base font-bold text-slate-900">Tiến bộ theo từng trục thi pháp</h2>
-            <p className="mt-0.5 text-xs text-slate-500">So sánh kết quả Rubric giữa các lần chấm.</p>
+            <h2 className="text-base font-bold text-slate-900">Tiến bộ theo từng phần phân tích</h2>
+            <p className="mt-0.5 text-xs text-slate-500">So sánh điểm của từng phần qua các lần nộp bài.</p>
           </div>
           <span className="text-xs font-semibold text-slate-500">
             {officialSubmissions.length ? `${officialSubmissions.length} lần chấm` : 'Chưa có điểm'}
@@ -418,9 +419,9 @@ export const StudentAnalyticsView: React.FC<StudentAnalyticsViewProps> = ({ stud
                 <div key={version.id} className="rounded-lg border border-slate-200 bg-slate-50/50 p-4 space-y-2 text-xs">
                   <div className="flex flex-wrap items-center justify-between gap-2">
                     <div className="flex items-center gap-2">
-                      <Badge variant="primary">{version.versionNumber}</Badge>
+                      <Badge variant="primary">{learningVersionLabel(version)}</Badge>
                       <span className="font-bold text-slate-900">
-                        {version.stage === 'prediction' ? 'V0 – Bản dự đoán' : version.stage === 'initial' ? 'V1 – Bản nháp đầu' : 'V2 – Bản chỉnh sửa'}
+                        {version.stage === 'prediction' ? 'Dự đoán trước khi đọc' : version.stage === 'initial' ? 'Bài đầu tiên đã nộp' : 'Bài đã sửa theo góp ý'}
                       </span>
                     </div>
                     <span className="text-slate-400 font-mono">

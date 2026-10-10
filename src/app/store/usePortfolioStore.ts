@@ -1,3 +1,4 @@
+import { learningText } from '../../utils/learningLabels';
 import { create } from 'zustand';
 import type { StudentPortfolio, PoeticAxisId, PortfolioVersion, EvidenceQuote } from '../../types';
 import { mockDb } from '../../services/mockApi/mockDb';
@@ -53,7 +54,7 @@ const postAction = async (payload: unknown) => {
     });
     const data = await response.json().catch(() => ({}));
     if (!response.ok) {
-      const error = new Error(data.message || data.code || 'Không thể lưu dữ liệu') as Error & { code?: string };
+      const error = new Error(learningText(data.message || 'Không thể lưu dữ liệu')) as Error & { code?: string };
       error.code = data.code;
       throw error;
     }

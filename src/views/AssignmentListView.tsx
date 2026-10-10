@@ -75,7 +75,7 @@ export const AssignmentListView: React.FC<AssignmentListViewProps> = ({ onNaviga
                     </span>
                   </div>
                   <p className="mt-3 text-sm text-slate-600">
-                    {scoped.length} hồ sơ · {submitted} hồ sơ có V1/V2.
+                    {scoped.length} hồ sơ · {submitted} hồ sơ có bài đầu tiên và bài chỉnh sửa.
                   </p>
                   <div className="mt-4 flex justify-end">
                     <Button

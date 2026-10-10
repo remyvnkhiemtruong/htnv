@@ -1,3 +1,4 @@
+import { learningVersionLabel } from '../utils/learningLabels';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { useAuthStore } from '../app/store/useAuthStore';
@@ -211,13 +212,13 @@ export const PortfolioEditorView: React.FC<PortfolioEditorViewProps> = ({ assign
       workspaceQuery.refetch(),
       queryClient.invalidateQueries({ queryKey: studentAcademicKeys.overview(currentUser.id) })
     ]);
-    addToast({ type: 'success', title: `Đã nộp ${nextVersion}`, message: isPredictionMode ? 'V0 đã được khóa làm mốc dự đoán trước đọc.' : 'Bài viết đã được gửi vào hàng đợi phản hồi AI.' });
+    addToast({ type: 'success', title: `Đã nộp ${nextVersion}`, message: isPredictionMode ? 'dự đoán trước khi đọc đã được khóa làm mốc dự đoán trước đọc.' : 'Bài viết đã được gửi vào hàng đợi phản hồi AI.' });
   };
 
   const submitReflection = async () => {
     if (!latestRevision || !assignment) return;
     if (Object.values(reflectionForm).some(value => !value.trim())) {
-      addToast({ type: 'warning', title: 'Chưa hoàn tất tự phản tư', message: 'Hãy trả lời đủ 5 câu trước khi gửi REF1.' });
+      addToast({ type: 'warning', title: 'Chưa hoàn tất tự nhìn lại bài làm', message: 'Hãy trả lời đủ 5 câu trước khi gửi phiếu tự nhìn lại bài làm.' });
       return;
     }
     setIsSavingReflection(true);
@@ -229,9 +230,9 @@ export const PortfolioEditorView: React.FC<PortfolioEditorViewProps> = ({ assign
         reflection: reflectionForm
       });
       setReflectionForm(emptyReflection);
-      addToast({ type: 'success', title: 'Đã lưu REF1', message: 'Đã lưu tự phản tư cho phiên bản này.' });
+      addToast({ type: 'success', title: 'Đã lưu phiếu tự nhìn lại bài làm', message: 'Đã lưu tự nhìn lại bài làm cho phiên bản này.' });
     } catch (error: unknown) {
-      addToast({ type: 'error', title: 'Không thể lưu tự phản tư', message: error instanceof Error ? error.message : 'Vui lòng thử lại.' });
+      addToast({ type: 'error', title: 'Không thể lưu tự nhìn lại bài làm', message: error instanceof Error ? error.message : 'Vui lòng thử lại.' });
     } finally {
       setIsSavingReflection(false);
     }
@@ -418,7 +419,7 @@ export const PortfolioEditorView: React.FC<PortfolioEditorViewProps> = ({ assign
             <div className="min-w-0">
               <div className="flex min-w-0 items-center gap-2">
                 <span className="truncate text-sm font-bold text-slate-900">{assignment.title}</span>
-                <Badge size="sm" variant="outline">{portfolio.currentActiveVersion || 'Nháp'}</Badge>
+                <Badge size="sm" variant="outline">{learningVersionLabel(portfolio.currentActiveVersion || 'Nháp')}</Badge>
               </div>
               <div className="mt-0.5 truncate text-xs text-slate-500">
                 {literatureText ? `${literatureText.title} — ${literatureText.author}` : 'Ngữ liệu'} · {completedAxes}/{POETIC_AXES.length} trục đã viết
@@ -467,7 +468,7 @@ export const PortfolioEditorView: React.FC<PortfolioEditorViewProps> = ({ assign
                   setIsSubmitModalOpen(true);
                 }}
               >
-                Nộp V0 (dự đoán)
+                Nộp dự đoán
               </Button>
             )}
 
@@ -481,7 +482,7 @@ export const PortfolioEditorView: React.FC<PortfolioEditorViewProps> = ({ assign
                   setIsSubmitModalOpen(true);
                 }}
               >
-                {isInitial ? 'Nộp bài V1' : `Nộp ${nextSubmissionVersion(versions)}`}
+                {isInitial ? 'Nộp bài đầu tiên' : `Nộp ${learningVersionLabel(nextSubmissionVersion(versions)).toLocaleLowerCase('vi-VN')}`}
               </Button>
             )}
           </div>
@@ -619,7 +620,7 @@ export const PortfolioEditorView: React.FC<PortfolioEditorViewProps> = ({ assign
               <div className="mt-4 hidden border-t border-slate-200 pt-3 text-xs text-slate-500 lg:block">
                 <div className="flex items-center justify-between">
                   <span>Tiến độ:</span>
-                  <strong className="text-slate-800">{completedAxes}/6 trục</strong>
+                  <strong className="text-slate-800">{completedAxes}/6 phần</strong>
                 </div>
                 <div className="mt-1.5 h-1.5 w-full overflow-hidden rounded-full bg-slate-200">
                   <div
@@ -672,9 +673,9 @@ export const PortfolioEditorView: React.FC<PortfolioEditorViewProps> = ({ assign
 
           {predictionAvailable && (
             <section className="rounded-lg border border-sky-200 bg-sky-50 p-4 text-sm leading-6 text-sky-950 sm:p-5">
-              <div className="font-bold">Bước đầu tiên: V0 – Dự đoán trước đọc</div>
+              <div className="font-bold">Bước đầu tiên: dự đoán trước khi đọc – Dự đoán trước đọc</div>
               <p className="mt-1 text-xs leading-5 text-sky-800">
-                {predictionPrompt || 'Trả lời các câu hỏi dưới đây, nêu căn cứ và mức tự tin trước khi nộp V1. V0 sẽ được khóa sau khi nộp.'}
+                {predictionPrompt || 'Trả lời các câu hỏi dưới đây, nêu căn cứ và mức tự tin trước khi nộp bài làm đầu tiên. dự đoán trước khi đọc sẽ được khóa sau khi nộp.'}
               </p>
               {predictionQuestions.length > 0 ? (
                 <ol className="mt-3 list-decimal space-y-2 pl-5 text-sm leading-6 text-slate-800">
@@ -684,7 +685,7 @@ export const PortfolioEditorView: React.FC<PortfolioEditorViewProps> = ({ assign
                 </ol>
               ) : (
                 <div className="mt-3 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs leading-5 text-amber-900">
-                  Nhiệm vụ đang bật V0 nhưng chưa có bộ câu hỏi. Hãy báo giáo viên để cập nhật nhiệm vụ trước khi nộp.
+                  Nhiệm vụ đang bật dự đoán trước khi đọc nhưng chưa có bộ câu hỏi. Hãy báo giáo viên để cập nhật nhiệm vụ trước khi nộp.
                 </div>
               )}
             </section>
@@ -772,7 +773,7 @@ export const PortfolioEditorView: React.FC<PortfolioEditorViewProps> = ({ assign
                 {versions.map(ver => (
                   <div key={ver.id} className="flex flex-col gap-2 p-3 text-xs text-slate-600 sm:flex-row sm:items-center sm:justify-between">
                     <div className="min-w-0">
-                      <span className="font-bold text-slate-900">{ver.versionNumber}</span>
+                      <span className="font-bold text-slate-900">{learningVersionLabel(ver)}</span>
                       <span className="ml-2 text-slate-500">{new Date(ver.createdAt).toLocaleDateString('vi-VN', { hour: '2-digit', minute: '2-digit' })}</span>
                       <span className="ml-2 text-slate-400">· {ver.stage === 'prediction' ? 'Dự đoán' : ver.stage === 'initial' ? 'Bản đầu' : 'Bản chỉnh sửa'}</span>
                       {ver.revisionReason && <span className="ml-2 italic text-slate-600">· {ver.revisionReason}</span>}
@@ -800,22 +801,22 @@ export const PortfolioEditorView: React.FC<PortfolioEditorViewProps> = ({ assign
           {latestRevision && !isFocusMode && (
             <section className="workspace-prose mx-auto space-y-3 rounded-lg border border-slate-200 bg-slate-50/60 p-4 sm:p-5">
               <div>
-                <span className="text-xs font-bold text-primary-700">Tự phản tư</span>
-                <h2 className="mt-1 text-base font-bold text-slate-900">REF1 – Sau {latestRevision.versionNumber}</h2>
+                <span className="text-xs font-bold text-primary-700">Tự nhìn lại bài làm</span>
+                <h2 className="mt-1 text-base font-bold text-slate-900">Tự nhìn lại sau khi sửa bài</h2>
                 <p className="mt-1 text-xs leading-5 text-slate-500">Ghi lại điều em đã thay đổi sau khi sửa bài.</p>
               </div>
 
               {latestReflection ? (
                 <div className="rounded-lg border border-emerald-200 bg-emerald-50 p-3 text-xs leading-5 text-emerald-900">
-                  <strong>Đã nộp REF1.</strong> Giáo viên có thể xem và chấm Rubric cho {latestRevision.versionNumber}.
+                  <strong>Đã nộp phần tự nhìn lại.</strong> Giáo viên có thể xem phần trả lời và chấm {learningVersionLabel(latestRevision)}.
                 </div>
               ) : (
                 <div className="space-y-3">
                   {[
                     ['changedUnderstanding', '1. Điều quan trọng nhất em đã thay đổi trong cách hiểu tác phẩm sau phản hồi là gì?'],
                     ['mostUsefulFeedback', '2. Phản hồi nào khiến em thay đổi cách đọc nhiều nhất?'],
-                    ['incompleteInV1', '3. Ở V1, em đã hiểu chưa đầy đủ điều gì?'],
-                    ['improvedInV2', `4. Ở ${latestRevision.versionNumber}, em đã bổ sung hoặc thay đổi điều gì?`],
+                    ['incompleteInV1', '3. Ở bài làm đầu tiên, em đã hiểu chưa đầy đủ điều gì?'],
+                    ['improvedInV2', `4. Ở ${learningVersionLabel(latestRevision)}, em đã bổ sung hoặc thay đổi điều gì?`],
                     ['transferToNextReading', '5. Nếu đọc một tác phẩm khác, em sẽ vận dụng cách đọc nào từ nhiệm vụ này?']
                   ].map(([key, label]) => (
                     <div key={key}>
@@ -834,7 +835,7 @@ export const PortfolioEditorView: React.FC<PortfolioEditorViewProps> = ({ assign
                     isLoading={isSavingReflection}
                     onClick={submitReflection}
                   >
-                    Nộp REF1 – Tự phản tư
+                    Nộp Tự nhìn lại bài làm
                   </Button>
                 </div>
               )}
@@ -918,7 +919,7 @@ export const PortfolioEditorView: React.FC<PortfolioEditorViewProps> = ({ assign
                 </div>
                 {predictionAvailable && predictionQuestions.length > 0 && (
                   <div className="space-y-1.5 rounded-lg border border-sky-200 bg-sky-50/70 p-3">
-                    <span className="text-xs font-semibold text-sky-900">Câu hỏi V0 ({predictionQuestions.length} câu):</span>
+                    <span className="text-xs font-semibold text-sky-900">Câu hỏi trước khi đọc ({predictionQuestions.length} câu):</span>
                     <ol className="list-decimal space-y-1.5 pl-4 text-xs leading-5 text-slate-700">
                       {predictionQuestions.map((question, index) => (
                         <li key={`${index}-${question}`}>{question}</li>
@@ -952,7 +953,7 @@ export const PortfolioEditorView: React.FC<PortfolioEditorViewProps> = ({ assign
                 </div>
                 {predictionAvailable ? (
                   <div className="rounded-lg border border-sky-200 bg-sky-50 p-3 text-xs leading-5 text-sky-900">
-                    Ngữ liệu sẽ mở sau khi em nộp V0.
+                    Ngữ liệu sẽ mở sau khi em nộp dự đoán trước khi đọc.
                   </div>
                 ) : (
                   <div className="space-y-2">
@@ -1128,7 +1129,7 @@ export const PortfolioEditorView: React.FC<PortfolioEditorViewProps> = ({ assign
                     {versions.map(ver => (
                       <div key={ver.id} className="p-3 space-y-1">
                         <div className="flex items-center justify-between">
-                          <span className="font-bold text-slate-900">{ver.versionNumber}</span>
+                          <span className="font-bold text-slate-900">{learningVersionLabel(ver)}</span>
                           <span className="text-slate-400">{new Date(ver.createdAt).toLocaleDateString('vi-VN')}</span>
                         </div>
                         {ver.revisionReason && (
@@ -1158,7 +1159,7 @@ export const PortfolioEditorView: React.FC<PortfolioEditorViewProps> = ({ assign
             setIsSubmitModalOpen(true);
           }}
         >
-          {isInitial ? 'Nộp V1' : `Nộp ${nextSubmissionVersion(versions)}`}
+          {isInitial ? 'Nộp bài đầu tiên' : `Nộp ${learningVersionLabel(nextSubmissionVersion(versions)).toLocaleLowerCase('vi-VN')}`}
         </Button>
       </div>}
 

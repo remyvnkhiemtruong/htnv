@@ -1,3 +1,4 @@
+import { learningVersionLabel } from '../../utils/learningLabels';
 import React, { useState } from 'react';
 import type { PortfolioVersion, PoeticAxisId } from '../../types';
 import { POETIC_AXES } from '../../data/seedData';
@@ -43,7 +44,7 @@ export const DiffViewer: React.FC<DiffViewerProps> = ({ v1, v2, studentName }) =
               So sánh chỉnh sửa phiên bản
             </div>
             <h2 className="text-base font-bold text-slate-900 tracking-tight">
-              So sánh: <span className="text-amber-700 font-bold">{v1.versionNumber}</span> ➔ <span className="text-emerald-700 font-bold">{v2.versionNumber}</span>
+              So sánh: <span className="text-amber-700 font-bold">{learningVersionLabel(v1)}</span> ➔ <span className="text-emerald-700 font-bold">{learningVersionLabel(v2)}</span>
             </h2>
             <p className="text-xs text-slate-500 mt-0.5">
               Học sinh: <strong className="text-slate-900">{studentName || v2.authorName}</strong> • Phiên bản sau: {v2.authorName} ({new Date(v2.createdAt).toLocaleDateString('vi-VN')})
@@ -72,7 +73,7 @@ export const DiffViewer: React.FC<DiffViewerProps> = ({ v1, v2, studentName }) =
           <div className="mt-3 pt-3 border-t border-slate-100 flex items-start gap-2 text-xs text-slate-600 bg-slate-50 p-2.5 rounded-md">
             <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
             <div>
-              <span className="font-semibold text-slate-800">Ghi chú sửa đổi ở {v2.versionNumber}:</span>
+              <span className="font-semibold text-slate-800">Ghi chú sửa đổi ở {learningVersionLabel(v2)}:</span>
               <span className="italic ml-1">"{v2.changeSummary}"</span>
             </div>
           </div>
@@ -91,7 +92,7 @@ export const DiffViewer: React.FC<DiffViewerProps> = ({ v1, v2, studentName }) =
                 : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
             }`}
           >
-            Tất cả 6 trục
+            Tất cả 6 phần
           </button>
           {POETIC_AXES.map(axis => (
             <button
@@ -169,7 +170,7 @@ export const DiffViewer: React.FC<DiffViewerProps> = ({ v1, v2, studentName }) =
                     {/* Left: Old Version */}
                     <div className="border border-slate-200 rounded-lg p-4 bg-slate-50/50">
                       <div className="flex items-center justify-between pb-2 mb-3 border-b border-slate-200 text-xs font-bold text-slate-600">
-                        <span>Bản gốc: {v1.versionNumber}</span>
+                        <span>Bản gốc: {learningVersionLabel(v1)}</span>
                         <span className="text-slate-400 font-normal">{new Date(v1.createdAt).toLocaleDateString('vi-VN')}</span>
                       </div>
                       <div className="lit-content text-slate-700 text-sm whitespace-pre-wrap">
@@ -180,7 +181,7 @@ export const DiffViewer: React.FC<DiffViewerProps> = ({ v1, v2, studentName }) =
                     {/* Right: New Version */}
                     <div className="border border-emerald-200 rounded-lg p-4 bg-emerald-50/20">
                       <div className="flex items-center justify-between pb-2 mb-3 border-b border-emerald-200 text-xs font-bold text-emerald-800">
-                        <span>Bản mới: {v2.versionNumber}</span>
+                        <span>Bản mới: {learningVersionLabel(v2)}</span>
                         <span className="text-emerald-600 font-normal">{new Date(v2.createdAt).toLocaleDateString('vi-VN')}</span>
                       </div>
                       <div className="lit-content text-slate-800 text-sm whitespace-pre-wrap">

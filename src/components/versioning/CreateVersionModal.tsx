@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { learningVersionLabel } from '../../utils/learningLabels';
 import { Button, Modal } from '../ui';
 import type { FeedbackItem } from '../../types';
 
@@ -71,7 +72,7 @@ export const CreateVersionModal: React.FC<CreateVersionModalProps> = ({
     }
   };
 
-  const modalTitle = isPrediction ? 'Nộp bản dự đoán V0' : `Nộp phiên bản ${nextVersionNumber}`;
+  const modalTitle = isPrediction ? 'Nộp dự đoán trước khi đọc' : `Nộp ${learningVersionLabel(nextVersionNumber).toLocaleLowerCase('vi-VN')}`;
 
   return (
     <Modal
@@ -79,15 +80,15 @@ export const CreateVersionModal: React.FC<CreateVersionModalProps> = ({
       onClose={onClose}
       title={modalTitle}
       description={isPrediction
-        ? 'Ghi dự đoán trước khi đọc văn bản. V0 được lưu riêng với V1 và V2.'
+        ? 'Ghi dự đoán và căn cứ trước khi đọc. Em sẽ viết bài phân tích ở bước tiếp theo.'
         : effectiveInitial
-          ? `${nextVersionNumber} · Bản đầu tiên gửi đánh giá`
-          : `${nextVersionNumber} · Bản chỉnh sửa sau phản hồi`}
+          ? 'Bài đầu tiên sẽ được lưu để nhận góp ý.'
+          : 'Ghi những điều em đã sửa và lý do sửa.'}
       footer={
         <div className="flex items-center justify-end gap-2 w-full">
           <Button variant="outline" onClick={onClose} disabled={isSubmitting}>Hủy</Button>
           <Button variant="primary" isLoading={isSubmitting} onClick={handleSubmit}>
-            {isPrediction ? 'Nộp V0' : `Nộp ${nextVersionNumber}`}
+            {isPrediction ? 'Nộp dự đoán' : `Nộp ${learningVersionLabel(nextVersionNumber).toLocaleLowerCase('vi-VN')}`}
           </Button>
         </div>
       }

@@ -103,7 +103,7 @@ await test('PA10: V0 question bank survives teacher creation and is rendered to 
   assert(builder.includes('predictionQuestions.length === 0'));
   assert(action.includes('PREDICTION_QUESTIONS_REQUIRED'));
   assert(editor.includes('assignment?.predictionTemplate?.questions'));
-  assert(editor.includes('Câu hỏi V0'));
+  assert(editor.includes('Câu hỏi trước khi đọc'));
 });
 
 await test('PA11: core UI copy avoids obvious AI-generated jargon', () => {
@@ -153,7 +153,7 @@ await test('PA13: V0 hides assigned reading content until prediction is submitte
   assert(academic.includes("synopsis: locked ? '' : row.synopsis"));
   assert(academic.includes("fullContent: locked ? '' : row.full_content"));
   assert(academic.includes("key !== 'readingGuide' && key !== 'readingSources'"));
-  assert(editor.includes('Ngữ liệu sẽ mở sau khi em nộp V0.'));
+  assert(editor.includes('Ngữ liệu sẽ mở sau khi em nộp dự đoán trước khi đọc.'));
   assert(editor.includes("literatureText?.fullContent || literatureText?.excerpt"));
   assert(editor.includes('readingGuide && ('));
 });

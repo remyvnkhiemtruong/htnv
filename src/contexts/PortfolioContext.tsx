@@ -1,3 +1,4 @@
+import { learningText, readableAcademicData } from '../utils/learningLabels';
 import React, { createContext, useCallback, useContext, useEffect, useRef, useState } from 'react';
 import type {
   AcademicSnapshot,
@@ -64,7 +65,7 @@ interface PortfolioContextType {
 }
 
 const PortfolioContext = createContext<PortfolioContextType | undefined>(undefined);
-const emptyRubric: RubricMatrix = { id: '', title: 'Rubric', criteria: [] };
+const emptyRubric: RubricMatrix = { id: '', title: 'Bảng tiêu chí chấm điểm', criteria: [] };
 
 async function postAction(payload: unknown) {
   const response = await fetch('/api/academic/action', {
@@ -74,7 +75,7 @@ async function postAction(payload: unknown) {
     body: JSON.stringify(payload)
   });
   const data = await response.json().catch(() => ({}));
-  if (!response.ok) throw new Error(data.message || data.code || 'Không thể cập nhật dữ liệu');
+  if (!response.ok) throw new Error(learningText(data.message || 'Không thể cập nhật dữ liệu'));
   return data;
 }
 
@@ -117,7 +118,8 @@ export const PortfolioProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   const activeUserIdRef = useRef(currentUser.id);
   activeUserIdRef.current = currentUser.id;
 
-  const applySnapshot = useCallback((snapshot: AcademicSnapshot) => {
+  const applySnapshot = useCallback((rawSnapshot: AcademicSnapshot) => {
+    const snapshot = readableAcademicData(rawSnapshot);
     mockDb.hydrate(snapshot);
     hydratePortfolios(snapshot.portfolios || {});
     setAssignments(snapshot.assignments || []);
