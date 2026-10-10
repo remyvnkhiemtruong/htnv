@@ -1,0 +1,27 @@
+[Unit]
+Description=HTNV PostgreSQL-backed API
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=htnv
+Group=htnv
+WorkingDirectory=/srv/htnv/current
+EnvironmentFile=/etc/htnv.env
+ExecStart=/opt/htnv-node/current/bin/node server/index.mjs
+Restart=on-failure
+RestartSec=5
+TimeoutStopSec=20
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectControlGroups=true
+RestrictSUIDSGID=true
+UMask=0077
+
+[Install]
+WantedBy=multi-user.target

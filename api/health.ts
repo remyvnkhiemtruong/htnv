@@ -29,10 +29,10 @@ export default async function handler(req: any, res: any) {
       version: 'backend-v4-workflow',
       academicData: 'postgresql',
       aiFeedbackMode: 'manual-chatgpt-response-visible-to-student',
-      region: process.env.VERCEL_REGION || 'unknown',
+      region: process.env.APP_REGION || process.env.VERCEL_REGION || 'unknown',
       release: {
-        commitSha: process.env.VERCEL_GIT_COMMIT_SHA || 'local',
-        commitRef: process.env.VERCEL_GIT_COMMIT_REF || 'local',
+        commitSha: process.env.APP_GIT_COMMIT_SHA || process.env.VERCEL_GIT_COMMIT_SHA || 'local',
+        commitRef: process.env.APP_GIT_COMMIT_REF || process.env.VERCEL_GIT_COMMIT_REF || 'local',
         environment: process.env.VERCEL_ENV || process.env.NODE_ENV || 'unknown'
       },
       security: {
@@ -57,7 +57,7 @@ export default async function handler(req: any, res: any) {
   } catch (error: any) {
     console.error('[health]', {
       route: '/api/health',
-      region: process.env.VERCEL_REGION || 'unknown',
+      region: process.env.APP_REGION || process.env.VERCEL_REGION || 'unknown',
       durationMs: Date.now() - startedAt,
       code: String(error?.message || 'BACKEND_UNAVAILABLE')
     });

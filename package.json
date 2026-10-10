@@ -12,7 +12,10 @@
     "build": "npm test && npm run typecheck:web && npm run typecheck:api && npm run lint && vite build",
     "verify": "npm run build",
     "preview": "vite preview",
-    "smoke:production": "node scripts/smoke-production.mjs"
+    "smoke:production": "node scripts/smoke-production.mjs",
+    "build:server": "tsc -p tsconfig.server.json",
+    "build:vps": "npm run build && npm run build:server",
+    "start": "node server/index.mjs"
   },
   "dependencies": {
     "@heroicons/react": "^2.2.0",
@@ -45,5 +48,8 @@
     "postcss": "^8.5.26",
     "tailwindcss": "^4.3.3",
     "typescript": "~6.0.2"
+  },
+  "engines": {
+    "node": ">=24 <25"
   }
 }

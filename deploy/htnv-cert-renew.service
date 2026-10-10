@@ -1,0 +1,9 @@
+[Unit]
+Description=Renew HTNV HTTPS certificates
+After=network-online.target nginx.service
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+ExecStart=/opt/htnv-certbot/bin/certbot renew --cert-name htnv-ip --quiet --no-random-sleep-on-renew
+ExecStart=/opt/htnv-certbot/bin/certbot renew --cert-name htnv-domain --quiet --no-random-sleep-on-renew

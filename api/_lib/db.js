@@ -20,12 +20,17 @@ let poolPromise = null;
 
 export async function getPool() {
   if (!poolPromise) {
-    poolPromise = import('pg').then(({ Pool }) => new Pool({
-      connectionString: databaseUrl(),
-      max: 4,
-      idleTimeoutMillis: 10000,
-      connectionTimeoutMillis: 10000
-    })).catch(err => {
+    poolPromise = import('pg').then(({ Pool }) => {
+      const pool = new Pool({
+        connectionString: databaseUrl(),
+        max: 4,
+        enableChannelBinding: true,
+        idleTimeoutMillis: 10000,
+        connectionTimeoutMillis: 10000
+      });
+      pool.on('error', error => console.error('[database-pool]', { code: error.code || 'POOL_ERROR' }));
+      return pool;
+    }).catch(err => {
       poolPromise = null;
       throw err;
     });
