@@ -16,7 +16,7 @@ export const POETIC_AXES: PoeticAxis[] = [
     order: 1,
     title: '1. Tình huống – Cốt truyện',
     shortName: 'Tình huống',
-    description: 'Khám phá tình huống truyện độc đáo, sự kiện thắt nút, bước ngoặt và diễn biến xung đột nhằm phát hiện tư tưởng tác phẩm.',
+    description: 'Xác định tình huống, sự kiện và xung đột; giải thích chúng góp phần thể hiện chủ đề thế nào.',
     guidingQuestions: [
       'Tình huống truyện then chốt trong tác phẩm là gì (tình huống nhận thức, tâm trạng hay hành động)?',
       'Cốt truyện phát triển theo tuyến tính hay có sự đảo lộn trình tự sự kiện?',
@@ -30,11 +30,11 @@ export const POETIC_AXES: PoeticAxis[] = [
     order: 2,
     title: '2. Nhân vật – Chi tiết nghệ thuật',
     shortName: 'Nhân vật',
-    description: 'Phân tích ngoại hình, hành động, diễn biến tâm lý, chi tiết “đắt giá” (chi tiết nhỏ làm nên nhà văn lớn) khắc họa số phận con người.',
+    description: 'Chọn chi tiết về ngoại hình, lời nói, hành động và tâm trạng để phân tích nhân vật.',
     guidingQuestions: [
       'Nhân vật được xây dựng qua những phương diện nào (ngoại hình, ngôn ngữ, nội tâm)?',
       'Chi tiết nghệ thuật nào giàu sức gợi nhất (chi tiết giọt nước mắt, bát cháo hành, que diêm...)?',
-      'Chiều sâu nhân bản và bi kịch/khát vọng của nhân vật được bộc lộ ra sao?'
+      'Chi tiết nào cho thấy khó khăn, mong muốn hoặc lựa chọn của nhân vật?'
     ],
     focusKeywords: ['Tâm lý nhân vật', 'Chi tiết đắt giá', 'Bi kịch số phận', 'Khát vọng sống'],
     iconName: 'UserCheck'
@@ -72,7 +72,7 @@ export const POETIC_AXES: PoeticAxis[] = [
     order: 5,
     title: '5. Ngôn ngữ – Giọng điệu – Biểu tượng',
     shortName: 'Ngôn ngữ & Biểu tượng',
-    description: 'Giải mã lớp từ ngữ đặc sắc, ngữ điệu trần thuật (xót xa, mỉa mai, tha thiết), các hình ảnh mang tính biểu tượng nghệ thuật.',
+    description: 'Phân tích từ ngữ, giọng điệu và hình ảnh; giải thích tác dụng bằng dẫn chứng.',
     guidingQuestions: [
       'Ngôn ngữ truyện mang phong vị gì (khẩu ngữ nông thôn, chất thơ trữ tình hay triết lý sắc lạnh)?',
       'Giọng điệu chủ đạo của văn bản là gì và có sự biến hóa ra sao?',
@@ -86,7 +86,7 @@ export const POETIC_AXES: PoeticAxis[] = [
     order: 6,
     title: '6. Hình thức – Nội dung và Lập luận',
     shortName: 'Tổng hợp & Lập luận',
-    description: 'Tổng hợp sự thống nhất hữu cơ giữa hình thức thi pháp và thông điệp tư tưởng, xây dựng hệ thống luận điểm phân tích chặt chẽ.',
+    description: 'Liên kết các yếu tố hình thức với nội dung; sắp xếp luận điểm và dẫn chứng cho bài phân tích.',
     guidingQuestions: [
       'Các yếu tố thi pháp ở trên phối hợp với nhau thế nào để thể hiện tư tưởng chủ đề?',
       'Luận điểm phân tích của em có mạch lạc, dẫn chứng có chính xác và thuyết phục không?',

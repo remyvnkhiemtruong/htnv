@@ -12,42 +12,42 @@ const NAV_ITEMS = [
 ];
 
 const WORKFLOW_STEPS = [
-  ['V0', 'Dự đoán trước khi đọc', 'Học sinh ghi nhận suy nghĩ ban đầu, căn cứ và mức tự tin trước khi tiếp cận toàn văn.'],
-  ['V1', 'Bản phân tích đầu tiên', 'Đọc sâu tác phẩm, phân tích theo 6 trục thi pháp và trích dẫn bằng chứng từ ngữ liệu.'],
-  ['Góp ý', 'Phản hồi Socratic', 'AI gợi mở và giáo viên nhận xét gắn liền với từng trục của đúng phiên bản đã nộp.'],
-  ['V2', 'Bản chỉnh sửa nâng cao', 'Học sinh hoàn thiện lập luận, so sánh thay đổi qua trình diff và ghi rõ lý do sửa.'],
-  ['REF1', 'Phiếu tự phản tư', '5 câu hỏi giúp học sinh nhìn nhận bước chuyển nhận thức trước khi kết thúc nhiệm vụ.'],
-  ['Rubric', 'Đánh giá chính thức', 'Giáo viên chấm điểm theo rubric 4 mức gắn với nhiệm vụ, thống kê tiến bộ rõ rệt.']
+  ['V0', 'Dự đoán trước khi đọc', 'Ghi dự đoán, căn cứ và mức tự tin trước khi đọc văn bản.'],
+  ['V1', 'Bản phân tích đầu tiên', 'Đọc văn bản, phân tích theo 6 trục thi pháp và dẫn chứng từ bài đọc.'],
+  ['Góp ý', 'Nhận góp ý', 'Đọc góp ý của AI và giáo viên cho từng phần trong bài đã nộp.'],
+  ['V2', 'Bản chỉnh sửa', 'Sửa bài theo góp ý, so sánh với V1 và ghi lý do sửa.'],
+  ['REF1', 'Phiếu tự phản tư', 'Trả lời 5 câu hỏi về điều đã hiểu thêm, phần đã sửa và cách làm bài sau.'],
+  ['Rubric', 'Đánh giá chính thức', 'Giáo viên chấm theo 4 mức của rubric và xem kết quả từng phiên bản.']
 ];
 
 const POETIC_AXES = [
-  { id: '01', title: 'Tình huống – Cốt truyện', question: 'Tình huống nào tổ chức mạch truyện và tạo bước ngoặt nhận thức cho tác phẩm?', focus: 'Xung đột, biến cố, hành động nhân vật' },
-  { id: '02', title: 'Nhân vật – Chi tiết nghệ thuật', question: 'Chi tiết nghệ thuật nào thể hiện chiều sâu nội tâm và số phận nhân vật?', focus: 'Ngoại hình, ngôn ngữ, cử chỉ, tâm lý' },
-  { id: '03', title: 'Người kể chuyện – Điểm nhìn', question: 'Điểm nhìn trần thuật chuyển dịch ra sao giữa người kể chuyện và nhân vật?', focus: 'Ngôi kể, điểm nhìn bên trong/bên ngoài' },
-  { id: '04', title: 'Không gian – Thời gian nghệ thuật', question: 'Bối cảnh không gian và bước đi thời gian tác động thế nào đến tâm trạng nhân vật?', focus: 'Thời gian tâm lý, không gian biểu tượng' },
-  { id: '05', title: 'Ngôn ngữ – Giọng điệu – Biểu tượng', question: 'Ngôn từ, hình ảnh và giọng điệu chủ đạo kiến tạo nên những tầng nghĩa nào?', focus: 'Biện pháp tu từ, nhịp điệu, biểu tượng văn học' },
-  { id: '06', title: 'Tổng hợp & Lập luận', question: 'Các trục thi pháp kết nối thế nào thành một bài phân tích chặt chẽ, có căn cứ?', focus: 'Luận điểm, liên kết dẫn chứng, tư tưởng tác phẩm' }
+  { id: '01', title: 'Tình huống – Cốt truyện', question: 'Tình huống nào mở đầu xung đột và làm thay đổi diễn biến truyện?', focus: 'Xung đột, biến cố, hành động nhân vật' },
+  { id: '02', title: 'Nhân vật – Chi tiết nghệ thuật', question: 'Chi tiết nào cho thấy suy nghĩ, tâm trạng hoặc hoàn cảnh của nhân vật?', focus: 'Ngoại hình, ngôn ngữ, cử chỉ, tâm lý' },
+  { id: '03', title: 'Người kể chuyện – Điểm nhìn', question: 'Câu chuyện được kể từ điểm nhìn nào? Điểm nhìn có thay đổi không?', focus: 'Ngôi kể, điểm nhìn bên trong/bên ngoài' },
+  { id: '04', title: 'Không gian – Thời gian nghệ thuật', question: 'Không gian và thời gian ảnh hưởng thế nào đến tâm trạng nhân vật?', focus: 'Thời gian tâm lý, không gian biểu tượng' },
+  { id: '05', title: 'Ngôn ngữ – Giọng điệu – Biểu tượng', question: 'Từ ngữ, hình ảnh và giọng điệu góp phần thể hiện ý nghĩa gì?', focus: 'Biện pháp tu từ, nhịp điệu, biểu tượng văn học' },
+  { id: '06', title: 'Tổng hợp & Lập luận', question: 'Em liên kết các nhận xét và dẫn chứng thế nào để làm rõ luận điểm?', focus: 'Luận điểm, liên kết dẫn chứng, tư tưởng tác phẩm' }
 ];
 
 const STAGE_PREVIEWS = {
-  v0: { badge: 'Khởi động tiếp nhận', title: 'V0: Dự đoán độc lập trước khi đọc', desc: 'Học sinh dựa trên nhan đề, tác giả hoặc đoạn trích mở đầu để phán đoán xung đột và tư tưởng, kèm đánh giá độ tự tin.', sample: 'Ví dụ: Dự đoán tình huống nhặt vợ trong nạn đói 1945 — Căn cứ: Nhan đề Vợ nhặt và hoàn cảnh lịch sử.' },
-  v1: { badge: 'Đọc sâu văn bản', title: 'V1: Phân tích 6 trục & Trích dẫn 1 chạm', desc: 'Bàn làm việc thông minh cho phép bôi đen câu chữ ngữ liệu để trích dẫn trực tiếp vào từng trục thi pháp đang phân tích.', sample: 'Ví dụ: "Cái đói đã tràn đến xóm này tự lúc nào..." — Trục Không gian: Bức tranh xóm ngụ cư u ám thời tao loạn.' },
-  feedback: { badge: 'Góp ý gợi mở', title: 'Góp ý gợi mở: AI trợ lực & Thầy cô', desc: 'Góp ý định hướng tư duy phân tích; giáo viên nhận xét và hướng dẫn hoàn thiện bài viết qua từng phiên bản.', sample: 'Góp ý: "Em đã chỉ ra chi tiết nồi cháo cám, hãy phân tích thêm phản ứng của bà cụ Tứ để làm rõ tình mẫu tử."' },
-  v2: { badge: 'Hoàn thiện bài viết', title: 'V2 & REF1: So sánh trực quan & Tự phản tư', desc: 'Trình so sánh phiên bản (Visual Diff) phân định đoạn thêm/sửa; 5 câu hỏi tự phản tư REF1 giúp học sinh đúc kết kinh nghiệm học tập.', sample: 'Phản tư: "Ở bản V2, em đã liên kết được chi tiết giọt nước mắt của bà cụ Tứ với niềm tin vào tương lai."' }
+  v0: { badge: 'Trước khi đọc', title: 'V0: Ghi dự đoán', desc: 'Dựa vào nhan đề và thông tin giáo viên cung cấp, ghi điều em dự đoán và mức tự tin.', sample: 'Ví dụ: Dự đoán tình huống nhặt vợ trong nạn đói 1945 — Căn cứ: Nhan đề Vợ nhặt và hoàn cảnh lịch sử.' },
+  v1: { badge: 'Đọc và phân tích', title: 'V1: Phân tích và dẫn chứng', desc: 'Chọn một đoạn trong ngữ liệu để đưa vào phần dẫn chứng của trục đang viết.', sample: 'Ví dụ ở trục Không gian: Chọn một chi tiết về xóm ngụ cư, rồi giải thích chi tiết đó cho thấy cảnh sống trong nạn đói ra sao.' },
+  feedback: { badge: 'Góp ý gợi mở', title: 'Góp ý từ AI và giáo viên', desc: 'Đọc nhận xét về bài đã nộp và chọn phần cần bổ sung hoặc sửa.', sample: 'Góp ý: "Em đã chỉ ra chi tiết nồi cháo cám, hãy phân tích thêm phản ứng của bà cụ Tứ để làm rõ tình mẫu tử."' },
+  v2: { badge: 'Hoàn thiện bài viết', title: 'V2 và REF1: Sửa bài và tự nhận xét', desc: 'Xem các đoạn đã thêm, xóa hoặc sửa so với V1. Sau đó trả lời 5 câu hỏi REF1.', sample: 'Phản tư: "Ở bản V2, em đã liên kết được chi tiết giọt nước mắt của bà cụ Tứ với niềm tin vào tương lai."' }
 };
 
 const TEACHER_TOOLS = [
-  { icon: DocumentCheckIcon, title: 'Quản lý nhiệm vụ & Ngữ liệu', desc: 'Tạo đề từ ngân hàng văn bản; thiết lập V0 dự đoán và câu hỏi khởi động.' },
-  { icon: SparklesIcon, title: 'Kiểm duyệt phản hồi AI', desc: 'Xem xét và bổ sung góp ý AI trước hoặc sau khi gửi đến học sinh trên từng bản nộp.' },
-  { icon: CheckCircleIcon, title: 'Đánh giá Rubric 6 trục', desc: 'Chấm điểm 4 mức tiêu chuẩn sau khi học sinh nộp REF1; tự tính tổng và phần trăm.' },
-  { icon: ChartBarIcon, title: 'Phân tích tiến bộ lớp học', desc: 'Biểu đồ đối chiếu sự tiến bộ giữa bản đầu V1 và bản chỉnh sửa V2 trên từng trục.' }
+  { icon: DocumentCheckIcon, title: 'Giao bài và quản lý ngữ liệu', desc: 'Chọn văn bản, nhập yêu cầu và câu hỏi dự đoán V0.' },
+  { icon: SparklesIcon, title: 'Xem góp ý AI', desc: 'Xem góp ý gắn với bài đã nộp và bổ sung nhận xét cho học sinh.' },
+  { icon: CheckCircleIcon, title: 'Chấm theo rubric', desc: 'Chọn mức cho từng tiêu chí sau khi học sinh nộp REF1. Hệ thống tính tổng điểm.' },
+  { icon: ChartBarIcon, title: 'Theo dõi kết quả của lớp', desc: 'So sánh điểm từng trục giữa V1 và V2 khi đã có kết quả chấm.' }
 ];
 
 const SYSTEM_INFO = [
-  ['Phạm vi áp dụng', 'Dành cho học sinh và giáo viên tất cả các trường THPT trên toàn quốc.'],
-  ['Bản quyền sở hữu', 'Bản quyền thuộc về Trường THPT Vị Thanh (Copyright © THPT Vị Thanh).'],
-  ['Đối tượng sử dụng', 'Học sinh, Giáo viên tổ Ngữ văn và Ban chuyên môn các nhà trường.'],
-  ['Quy trình học tập', 'Lưu giữ toàn diện tiến trình từ dự đoán ban đầu, bài nháp V1, góp ý, bản sửa V2 đến Rubric đánh giá.']
+  ['Phạm vi áp dụng', 'Học sinh và giáo viên THPT.'],
+  ['Đơn vị sở hữu', 'Trường THPT Vị Thanh.'],
+  ['Đối tượng sử dụng', 'Học sinh, giáo viên Ngữ văn và tổ chuyên môn.'],
+  ['Quy trình học tập', 'Lưu dự đoán V0, bài V1, góp ý, bản sửa V2, phiếu REF1 và kết quả chấm.']
 ];
 
 type StageKey = keyof typeof STAGE_PREVIEWS;
@@ -95,27 +95,27 @@ export const LandingView: React.FC<LandingViewProps> = ({ onNavigate }) => {
             <div className="max-w-2xl">
               <div className="inline-flex items-center gap-2 rounded-full border border-primary-200 bg-primary-50 px-3 py-1 text-xs font-semibold text-primary-900">
                 <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
-                Dành cho các trường THPT · Năm học 2026–2027
+                Ngữ văn THPT · Năm học 2026–2027
               </div>
               <h1 className="mt-4 text-3xl font-extrabold leading-tight tracking-tight text-slate-950 sm:text-4xl lg:text-5xl">
-                Học tốt Ngữ Văn qua tiến trình 6 trục thi pháp.
+                Đọc, viết và sửa bài Ngữ văn.
               </h1>
               <p className="mt-4 text-sm leading-relaxed text-slate-600 sm:text-base">
-                Nền tảng hỗ trợ học sinh và giáo viên các trường THPT rèn luyện kỹ năng đọc hiểu văn bản, viết bài nghị luận và nâng cao kỹ năng diễn đạt theo Chương trình GDPT 2018.
+                Học sinh làm bài theo 6 trục thi pháp, nhận góp ý và lưu từng bản sửa. Giáo viên giao bài, theo dõi tiến độ và chấm theo rubric.
               </p>
               <div className="mt-7 flex flex-wrap items-center gap-3">
                 <Button size="lg" variant="primary" onClick={goToLogin} rightIcon={<ArrowRightIcon className="h-4 w-4" />}>
-                  Vào bàn học trực tuyến
+                  Vào học
                 </Button>
                 <a href="#quy-trinh" className="inline-flex min-h-11 items-center rounded-lg border border-slate-300 bg-white px-5 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50 transition-colors shadow-sm">
-                  Khám phá quy trình
+                  Xem cách làm bài
                 </a>
               </div>
             </div>
 
             <div className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
               <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-                <span className="text-xs font-bold text-slate-500">Mô phỏng bàn làm việc</span>
+                <span className="text-xs font-bold text-slate-500">Ví dụ cách làm bài</span>
                 <span className="rounded bg-primary-50 px-2 py-0.5 text-xs font-bold text-primary-800">{currentPreview.badge}</span>
               </div>
               <div className="mt-3 flex rounded-md bg-slate-100 p-1 text-xs">
@@ -138,8 +138,8 @@ export const LandingView: React.FC<LandingViewProps> = ({ onNavigate }) => {
                 </div>
               </div>
               <div className="mt-4 grid grid-cols-2 gap-2 border-t border-slate-100 pt-3 text-xs text-slate-500">
-                <div className="flex items-center gap-1.5"><CheckCircleIcon className="h-4 w-4 text-emerald-600 shrink-0" /> Bản lưu bất biến</div>
-                <div className="flex items-center gap-1.5"><SparklesIcon className="h-4 w-4 text-primary-600 shrink-0" /> Trích dẫn 1 chạm</div>
+                <div className="flex items-center gap-1.5"><CheckCircleIcon className="h-4 w-4 text-emerald-600 shrink-0" /> Giữ các bản đã nộp</div>
+                <div className="flex items-center gap-1.5"><SparklesIcon className="h-4 w-4 text-primary-600 shrink-0" /> Chọn đoạn để trích dẫn</div>
               </div>
             </div>
           </div>
@@ -148,8 +148,8 @@ export const LandingView: React.FC<LandingViewProps> = ({ onNavigate }) => {
         <section id="quy-trinh" className="scroll-mt-20 border-b border-slate-200 bg-white">
           <div className="mx-auto max-w-6xl px-4 py-14 sm:px-6 sm:py-16">
             <div className="max-w-2xl">
-              <h2 className="text-2xl font-bold tracking-tight text-slate-950 sm:text-3xl">Tiến trình làm bài khoa học</h2>
-              <p className="mt-2 text-sm leading-6 text-slate-600">Dữ liệu được lưu độc lập qua từng mốc. Bản chỉnh sửa sau không làm mất dấu vết bản trước.</p>
+              <h2 className="text-2xl font-bold tracking-tight text-slate-950 sm:text-3xl">Các bước làm bài</h2>
+              <p className="mt-2 text-sm leading-6 text-slate-600">Mỗi lần nộp được lưu thành một phiên bản riêng để xem lại và so sánh.</p>
             </div>
             <div className="mt-8 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
               {WORKFLOW_STEPS.map(([code, title, description], index) => (
@@ -169,8 +169,8 @@ export const LandingView: React.FC<LandingViewProps> = ({ onNavigate }) => {
         <section id="truc-doc" className="scroll-mt-20 border-b border-slate-200 bg-slate-50/50">
           <div className="mx-auto max-w-6xl px-4 py-14 sm:px-6 sm:py-16">
             <div className="max-w-2xl">
-              <h2 className="text-2xl font-bold tracking-tight text-slate-950 sm:text-3xl">Khung phân tích 6 trục thi pháp</h2>
-              <p className="mt-2 text-sm leading-6 text-slate-600">Câu hỏi định hướng giúp học sinh bám sát đặc trưng thể loại thay vì diễn giải cảm tính.</p>
+              <h2 className="text-2xl font-bold tracking-tight text-slate-950 sm:text-3xl">6 trục thi pháp</h2>
+              <p className="mt-2 text-sm leading-6 text-slate-600">Dùng các câu hỏi dưới đây để tìm chi tiết, chọn dẫn chứng và viết phân tích.</p>
             </div>
             <div className="mt-8 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
               {POETIC_AXES.map((axis, idx) => (
@@ -200,8 +200,8 @@ export const LandingView: React.FC<LandingViewProps> = ({ onNavigate }) => {
               <div className="inline-flex items-center gap-1.5 rounded bg-primary-50 px-2.5 py-1 text-xs font-bold text-primary-900">
                 <AcademicCapIcon className="h-4 w-4" /> Dành cho Giáo viên
               </div>
-              <h2 className="mt-3 text-2xl font-bold tracking-tight text-slate-950">Công cụ sư phạm số</h2>
-              <p className="mt-2 text-sm leading-6 text-slate-600">Quản lý nhiệm vụ, theo dõi tiến độ và chấm điểm chính xác theo lớp được phân công.</p>
+              <h2 className="mt-3 text-2xl font-bold tracking-tight text-slate-950">Giao bài, góp ý và chấm điểm</h2>
+              <p className="mt-2 text-sm leading-6 text-slate-600">Xem bài đã nộp, góp ý và chấm cho các lớp được phân công.</p>
             </div>
             <div className="grid gap-3 sm:grid-cols-2">
               {TEACHER_TOOLS.map(tool => (
@@ -220,7 +220,7 @@ export const LandingView: React.FC<LandingViewProps> = ({ onNavigate }) => {
             <div className="grid gap-8 lg:grid-cols-[280px_minmax(0,1fr)]">
               <div>
                 <h2 className="text-2xl font-bold tracking-tight text-slate-950">Thông tin hệ thống</h2>
-                <p className="mt-2 text-sm leading-6 text-slate-600">Hệ thống hồ sơ học tập số môn Ngữ văn dành cho học sinh và giáo viên các trường THPT toàn quốc.</p>
+                <p className="mt-2 text-sm leading-6 text-slate-600">Học tốt Ngữ Văn lưu bài làm, nhận xét và kết quả chấm của từng nhiệm vụ.</p>
               </div>
               <dl className="grid gap-3 sm:grid-cols-2 text-xs">
                 {SYSTEM_INFO.map(([title, desc]) => (
@@ -239,9 +239,9 @@ export const LandingView: React.FC<LandingViewProps> = ({ onNavigate }) => {
         <div className="mx-auto flex max-w-6xl flex-col gap-2 px-4 py-8 text-xs sm:flex-row sm:items-center sm:justify-between sm:px-6">
           <div className="flex items-center gap-2.5">
             <img src="/Logo.png" alt="Logo THPT Vị Thanh" className="h-6 w-6 object-contain" />
-            <span>Học tốt Ngữ Văn · Nền tảng học tập số dành cho các trường THPT</span>
+            <span>Học tốt Ngữ Văn · Dành cho học sinh và giáo viên THPT</span>
           </div>
-          <span>Copyright © 2026–2027 Trường THPT Vị Thanh. All rights reserved.</span>
+          <span>© 2026–2027 Trường THPT Vị Thanh.</span>
         </div>
       </footer>
     </div>

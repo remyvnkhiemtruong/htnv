@@ -40,7 +40,7 @@ export const VersionTimeline: React.FC<VersionTimelineProps> = ({
 
       {versions.length === 0 ? (
         <div className="py-6 text-center text-xs text-slate-400">
-          Chưa có phiên bản nào được đóng băng. Hãy viết nháp và bấm "Tạo Phiên bản Mới" để lưu mốc v1.0.
+          Chưa lưu phiên bản nào. Viết bản nháp rồi chọn "Tạo phiên bản mới".
         </div>
       ) : (
         <div className="relative pl-6 space-y-4 before:absolute before:left-2.5 before:top-2 before:bottom-2 before:w-0.5 before:bg-slate-200">

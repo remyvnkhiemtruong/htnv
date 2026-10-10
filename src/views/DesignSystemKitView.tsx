@@ -146,7 +146,7 @@ export const DesignSystemKitView: React.FC = () => {
               <div className="pt-3">
                 <span className="text-caption font-semibold text-slate-400 block uppercase">Body (15–16px / 400)</span>
                 <p className="text-body text-slate-700 mt-1">
-                  Đoạn văn phân tích thi pháp: Chi tiết chiếc lá sen khô bọc lấy nắm xôi không đơn thuần là chi tiết miêu tả hiện thực mà đã trở thành biểu tượng nghệ thuật mang chiều sâu tâm lý.
+                  Ví dụ phân tích: Chi tiết chiếc lá sen khô bọc nắm xôi cần được đọc cùng hành động và tâm trạng của nhân vật.
                 </p>
               </div>
 
@@ -178,7 +178,7 @@ export const DesignSystemKitView: React.FC = () => {
               <h2 id="colors-heading" className="text-h3 font-bold text-slate-900">
                 Bảng Màu Semantic Tokens (Không Lạm Dụng Màu Bão Hòa)
               </h2>
-              <p className="text-caption text-slate-500">Mỗi dải màu đều mang ý nghĩa sư phạm và trạng thái cụ thể</p>
+              <p className="text-caption text-slate-500">Màu dùng cho từng trạng thái trong giao diện</p>
             </header>
 
             <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
@@ -301,7 +301,7 @@ export const DesignSystemKitView: React.FC = () => {
                   }
                   content={
                     <div className="w-56 text-xs space-y-1">
-                      <div className="font-bold text-slate-900">Ghi chú sư phạm:</div>
+                      <div className="font-bold text-slate-900">Ghi chú:</div>
                       <p className="text-slate-600">Đã neo 3 phản hồi vào phiên bản này.</p>
                     </div>
                   }
@@ -417,12 +417,12 @@ export const DesignSystemKitView: React.FC = () => {
 
               {/* Alerts */}
               <div className="space-y-3 pt-2">
-                <Alert type="info" title="Thông tin sư phạm">
-                  Phiên bản <strong>v1.0</strong> đã được đóng băng. Học sinh có thể đọc lại nhận xét của giáo viên để chuẩn bị cho bản <strong>v2.0</strong>.
+                <Alert type="info" title="Bản đã nộp">
+                  Phiên bản <strong>v1.0</strong> đã được lưu và khóa chỉnh sửa. Học sinh có thể đọc lại nhận xét của giáo viên để chuẩn bị cho bản <strong>v2.0</strong>.
                 </Alert>
 
-                <Alert type="success" title="Lưu trữ thành công">
-                  Đã ghi nhận mốc snapshot phiên bản mới vào hệ cơ sở dữ liệu nghiên cứu.
+                <Alert type="success" title="Đã lưu phiên bản">
+                  Phiên bản mới đã được lưu để xem lại và so sánh.
                 </Alert>
 
                 <Alert type="warning" title="Yêu cầu tiếp thu phản hồi">
@@ -445,7 +445,7 @@ export const DesignSystemKitView: React.FC = () => {
 
                 <EmptyState
                   title="Chưa có dữ liệu phiên bản"
-                  description="Bắt đầu viết nháp để tạo mốc snapshot đầu tiên."
+                  description="Viết bản nháp rồi lưu phiên bản đầu tiên."
                   className="border border-slate-200 rounded-lg bg-white p-4"
                 />
               </div>
@@ -458,8 +458,8 @@ export const DesignSystemKitView: React.FC = () => {
                   onClick={() => {
                     addToast({
                       type: 'success',
-                      title: 'Đã lưu snapshot',
-                      message: 'Phiên bản v2.0 của bạn đã được đóng băng thành công!'
+                      title: 'Đã lưu phiên bản',
+                      message: 'Đã lưu phiên bản v2.0. Bạn có thể xem lại trong lịch sử.'
                     });
                   }}
                 >
@@ -472,7 +472,7 @@ export const DesignSystemKitView: React.FC = () => {
                     addToast({
                       type: 'error',
                       title: 'Chưa đủ điều kiện',
-                      message: 'Cần nhập tóm tắt thay đổi trước khi đóng băng phiên bản.'
+                      message: 'Ghi phần đã thay đổi trước khi lưu phiên bản.'
                     });
                   }}
                 >
@@ -586,7 +586,7 @@ export const DesignSystemKitView: React.FC = () => {
                   <span>4.0 đ</span>
                 </div>
                 <p className="text-caption text-emerald-800">
-                  Khám phá sâu sắc tính chỉnh thể nghệ thuật và tư tưởng nhân đạo độc đáo của tác giả.
+                  Liên kết các nhận xét về chi tiết, hình thức và nội dung bằng dẫn chứng.
                 </p>
               </div>
             </div>
@@ -609,7 +609,7 @@ export const DesignSystemKitView: React.FC = () => {
             <StatCard
               label="Tỷ lệ tiến bộ trung bình (v1 -> v2)"
               value="+38.5%"
-              subValue="Dựa trên 84 mốc snapshot đóng băng"
+              subValue="Dựa trên 84 phiên bản đã lưu"
               trend={{ value: "P < 0.001 (Có ý nghĩa thực nghiệm)", isPositive: true }}
               icon={<SparklesIcon className="w-5 h-5" />}
               variant="accent"

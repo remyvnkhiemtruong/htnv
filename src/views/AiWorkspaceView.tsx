@@ -176,7 +176,7 @@ Yêu cầu: ${detailedSelected?.prompt || assignment?.prompt || ''}
 BÀI LÀM CỦA HỌC SINH (${selected.student_name} - Phiên bản ${selected.version_number}):
 ${essayParts}
 
-Hãy đưa ra nhận xét sư phạm mang tính gợi mở, phân tích cụ thể ưu điểm và những điểm cần mở rộng hoặc chỉnh sửa cho phiên bản tiếp theo.`;
+Viết nhận xét ngắn, rõ và bám vào bài học sinh. Nêu phần làm được kèm dẫn chứng, chỉ ra chỗ cần sửa và đặt câu hỏi để học sinh tự sửa. Không khen chung chung, không dùng lời quảng bá hoặc viết hộ bài. Nếu thiếu căn cứ, nói rõ phần chưa thể nhận xét. Không quyết định điểm chính thức.`;
 
     try {
       if (navigator?.clipboard?.writeText) {
@@ -224,7 +224,7 @@ Hãy đưa ra nhận xét sư phạm mang tính gợi mở, phân tích cụ th�
         title={canPublish ? 'Nhập phản hồi AI' : 'Theo dõi phản hồi AI'}
         description={canPublish
           ? 'Sao chép bài sang ChatGPT, dán phản hồi vào đây và gửi cho học sinh.'
-          : 'Xem các phản hồi AI trong phạm vi tài khoản của bạn. Chỉ tài khoản nhập phản hồi AI mới có thể gửi nội dung.'}
+          : 'Xem góp ý AI cho các bài được phân công. Tài khoản nhập phản hồi AI có quyền gửi góp ý.'}
         actions={
           <Button size="sm" variant="outline" onClick={() => void refresh()} leftIcon={<ArrowPathIcon className="h-4 w-4" />}>
             Tải lại
@@ -255,15 +255,15 @@ Hãy đưa ra nhận xét sư phạm mang tính gợi mở, phân tích cụ th�
         </div>
       </div>
 
-      {message && <Alert type={message.type} title={message.type === 'success' ? 'Thành công' : 'Có lỗi'}>{message.text}</Alert>}
+      {message && <Alert type={message.type} title={message.type === 'success' ? 'Thông báo' : 'Có lỗi'}>{message.text}</Alert>}
       {isTeacher && teacherOverviewLoading && reviews.length === 0 && (
-        <Alert type="info" title="Đang tải hàng đợi">Đang tải danh sách phản hồi AI trong phạm vi lớp được phân công.</Alert>
+        <Alert type="info" title="Đang tải hàng đợi">Đang tải góp ý AI của các lớp được phân công.</Alert>
       )}
       {isTeacher && selected && teacherWorkspaceQuery.isLoading && !teacherWorkspace && (
-        <Alert type="info" title="Đang tải bài">Đang tải đúng phiên bản bất biến của học sinh đang chọn.</Alert>
+        <Alert type="info" title="Đang tải bài">Đang tải bài đã nộp của học sinh.</Alert>
       )}
       {isTeacher && teacherWorkspaceQuery.error && !teacherWorkspace && (
-        <Alert type="error" title="Không thể tải bài">{teacherWorkspaceQuery.error instanceof Error ? teacherWorkspaceQuery.error.message : 'Không thể tải workspace giáo viên.'}</Alert>
+        <Alert type="error" title="Không thể tải bài">{teacherWorkspaceQuery.error instanceof Error ? teacherWorkspaceQuery.error.message : 'Không thể tải bài của học sinh.'}</Alert>
       )}
       {integrityError && (
         <Alert type="error" title="Không thể mở bản đã nộp">

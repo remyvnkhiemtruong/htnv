@@ -79,7 +79,7 @@ export const CreateVersionModal: React.FC<CreateVersionModalProps> = ({
       onClose={onClose}
       title={modalTitle}
       description={isPrediction
-        ? 'Ghi nhận quan sát ban đầu trước khi đọc sâu tác phẩm. V0 không làm thay đổi số thứ tự V1, V2…'
+        ? 'Ghi dự đoán trước khi đọc văn bản. V0 được lưu riêng với V1 và V2.'
         : effectiveInitial
           ? `${nextVersionNumber} · Bản đầu tiên gửi đánh giá`
           : `${nextVersionNumber} · Bản chỉnh sửa sau phản hồi`}

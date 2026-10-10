@@ -335,7 +335,7 @@ export const CustomContextMenu: React.FC<CustomContextMenuProps> = ({
       await navigator.clipboard.writeText(selectedText);
       addToast({
         type: 'success',
-        title: 'Sao chép thành công',
+        title: 'Đã sao chép',
         message: 'Đã sao chép đoạn văn bản vào bộ nhớ tạm.'
       });
     } catch {
@@ -758,13 +758,13 @@ export const CustomContextMenu: React.FC<CustomContextMenuProps> = ({
             type="button"
             role="menuitem"
             onClick={() => {
-              addToast({ type: 'info', title: 'Gợi ý Socratic', message: 'Hãy đặt câu hỏi gợi mở thay vì sửa từ trực tiếp để phát huy tư duy học sinh.' });
+              addToast({ type: 'info', title: 'Góp ý bằng câu hỏi', message: 'Chỉ ra chỗ cần xem lại và đặt câu hỏi để học sinh tự sửa.' });
               closeMenu();
             }}
             className="flex w-full items-center gap-2 rounded-md px-2.5 py-1.5 text-left text-xs font-medium text-slate-700 hover:bg-slate-100"
           >
             <HelpCircle className="h-3.5 w-3.5 text-amber-500 shrink-0" />
-            <span>Xem tiêu chuẩn gợi ý Socratic</span>
+            <span>Xem cách góp ý bằng câu hỏi</span>
           </button>
           <button
             type="button"

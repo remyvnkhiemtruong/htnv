@@ -14,8 +14,8 @@ const EMPTY_RECOMMENDATION: TaskRecommendation = {
   assignmentTitle: 'Chưa có nhiệm vụ tiếp theo',
   targetAxisId: 'plot_situation',
   targetAxisTitle: AXIS_TITLE_MAP.plot_situation,
-  rationale: 'Hiện chưa có nhiệm vụ học tập phù hợp để hệ thống tạo đề xuất. Giáo viên cần xuất bản thêm nhiệm vụ hoặc gán bạn vào một lớp có nhiệm vụ đang hoạt động.',
-  expectedGain: 'Đề xuất sẽ xuất hiện khi có thêm dữ liệu nhiệm vụ và rubric.'
+  rationale: 'Chưa có bài để đề xuất. Liên hệ giáo viên để được giao bài.',
+  expectedGain: 'Gợi ý sẽ xuất hiện khi có bài được giao.'
 };
 
 export function getExplainableRecommendation(
@@ -34,8 +34,8 @@ export function getExplainableRecommendation(
       assignmentTitle: fallback.title,
       targetAxisId: 'plot_situation',
       targetAxisTitle: AXIS_TITLE_MAP.plot_situation,
-      rationale: 'Quy tắc khởi tạo: Hệ thống đề xuất bắt đầu khám phá thế giới nghệ thuật từ việc nhận diện tình huống truyện và xung đột cốt lõi.',
-      expectedGain: 'Phát triển năng lực phát hiện bước ngoặt nghệ thuật và xung đột kịch tính.'
+      rationale: 'Chưa có điểm rubric để chọn phần cần luyện. Có thể bắt đầu từ tình huống và cốt truyện.',
+      expectedGain: 'Xác định tình huống, xung đột và bước ngoặt trong truyện.'
     };
   }
 
@@ -56,8 +56,8 @@ export function getExplainableRecommendation(
   let rationale = `Dựa trên Rubric gần nhất (${latestRubric.versionNumber}), trục [${AXIS_TITLE_MAP[weakest.axisId]}] đạt ${weakest.score}/4. `;
   if (weakest.axisId === 'narrator_pov') rationale += 'Nên luyện nhận diện sự chuyển dịch điểm nhìn và lời nửa trực tiếp.';
   else if (weakest.axisId === 'space_time') rationale += 'Nên luyện phân tích tương phản không gian và thời gian tâm trạng.';
-  else if (weakest.axisId === 'language_tone_symbol') rationale += 'Nên luyện giải mã biểu tượng và phân tích giọng điệu.';
-  else if (weakest.axisId === 'character_detail') rationale += 'Nên đào sâu chi tiết nghệ thuật và diễn biến tâm lý nhân vật.';
+  else if (weakest.axisId === 'language_tone_symbol') rationale += 'Nên giải thích biểu tượng và giọng điệu bằng dẫn chứng.';
+  else if (weakest.axisId === 'character_detail') rationale += 'Nên chọn chi tiết và giải thích điều chúng cho thấy về nhân vật.';
   else if (weakest.axisId === 'plot_situation') rationale += 'Nên củng cố cách nhận diện tình huống, thắt nút và mở nút.';
   else rationale += 'Nên tăng tính liên kết giữa hình thức nghệ thuật, dẫn chứng và lập luận.';
 
@@ -67,6 +67,6 @@ export function getExplainableRecommendation(
     targetAxisId: weakest.axisId,
     targetAxisTitle: AXIS_TITLE_MAP[weakest.axisId],
     rationale,
-    expectedGain: `Hướng tới nâng mức thành thạo ở trục [${AXIS_TITLE_MAP[weakest.axisId]}] từ ${weakest.score} lên ${Math.min(4, weakest.score + 1)}/4.`
+    expectedGain: `Luyện trục ${AXIS_TITLE_MAP[weakest.axisId]}; mức tiếp theo cần đạt là ${Math.min(4, weakest.score + 1)}/4.`
   };
 }

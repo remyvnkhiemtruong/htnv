@@ -247,7 +247,7 @@ export const RubricAssessmentGrid: React.FC<RubricAssessmentGridProps> = ({
                   value={selected.note}
                   disabled={isReadOnly}
                   onChange={e => handleNoteChange(crit.id, e.target.value)}
-                  placeholder="Ghi chú minh chứng cụ thể cho tiêu chí này (tùy chọn)..."
+                  placeholder="Dẫn chứng cho mức chấm này (không bắt buộc)..."
                   className="w-full text-xs bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 focus:ring-2 focus:ring-sky-500 focus:bg-white focus:outline-none"
                 />
               </div>
@@ -260,14 +260,14 @@ export const RubricAssessmentGrid: React.FC<RubricAssessmentGridProps> = ({
           <div className="bg-white rounded-lg border border-slate-200 p-5 space-y-4">
             <h3 className="font-semibold text-slate-900 text-xs flex items-center gap-2">
               <MessageSquare className="w-4 h-4 text-sky-600" />
-              Nhận xét tổng thể & Định hướng sư phạm
+              Nhận xét chung và phần cần sửa
             </h3>
 
             <textarea
               rows={4}
               value={overallFeedback}
               onChange={e => setOverallFeedback(e.target.value)}
-              placeholder="Nhận xét tổng quát về mức độ tiến bộ, điểm sáng và định hướng hoàn thiện ở phiên bản tiếp theo..."
+              placeholder="Nêu phần làm được, chỗ cần sửa và dẫn chứng trong bài..."
               className="w-full text-xs border border-slate-300 rounded-md p-2.5 focus:border-sky-500 focus:outline-none"
               required
             />
@@ -276,7 +276,7 @@ export const RubricAssessmentGrid: React.FC<RubricAssessmentGridProps> = ({
               <div>
                 {submittedSuccess && (
                   <span className="text-xs font-semibold text-emerald-700 bg-emerald-50 px-3 py-1.5 rounded-lg border border-emerald-200 animate-fade-in flex items-center gap-1.5">
-                    <CheckCircle className="w-4 h-4" /> Đã lưu kết quả đánh giá Rubric thành công!
+                    <CheckCircle className="w-4 h-4" /> Đã lưu điểm rubric.
                   </span>
                 )}
               </div>

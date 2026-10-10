@@ -183,7 +183,7 @@ export const PortfolioEditorView: React.FC<PortfolioEditorViewProps> = ({ assign
     if (!assignment || !workflowState?.canEdit) return;
     try {
       await manualSaveDraft(currentUser.id, assignment.id);
-      addToast({ type: 'success', title: 'Đã lưu', message: 'Bản nháp đã được lưu thành công.' });
+      addToast({ type: 'success', title: 'Đã lưu', message: 'Bản nháp đã được lưu.' });
     } catch {
       addToast({ type: 'error', title: 'Chưa lưu được', message: 'Kiểm tra kết nối và thử lại.' });
     }
@@ -388,7 +388,7 @@ export const PortfolioEditorView: React.FC<PortfolioEditorViewProps> = ({ assign
     return <StatePanel title="Không tìm thấy nhiệm vụ" message="Nhiệm vụ này không tồn tại hoặc bạn chưa được phân công." actionLabel="Xem danh sách nhiệm vụ" onAction={() => onNavigate('assignment-list')} />;
   }
   if (!portfolio) {
-    return <StatePanel title="Chưa có hồ sơ cho nhiệm vụ này" message="Hồ sơ học tập của bạn đang được tạo. Hãy tải lại dữ liệu." actionLabel="Tải lại dữ liệu" onAction={() => void workspaceQuery.refetch()} />;
+    return <StatePanel title="Chưa có hồ sơ cho nhiệm vụ này" message="Chưa tìm thấy hồ sơ của bài này. Thử tải lại hoặc liên hệ giáo viên." actionLabel="Tải lại dữ liệu" onAction={() => void workspaceQuery.refetch()} />;
   }
 
   const saveStatus = autosaveStatus === 'saving'

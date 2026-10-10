@@ -53,7 +53,7 @@ export const LoginView: React.FC<LoginViewProps> = ({
         body: JSON.stringify({ email, password })
       });
       const data = await res.json();
-      if (!res.ok) throw new Error(data.message || 'Không thể xác thực tài khoản');
+      if (!res.ok) throw new Error(data.message || 'Không thể đăng nhập');
       if (data.user?.mustChangePassword) {
         setPassword('');
         setMustChange(true);
@@ -106,7 +106,7 @@ export const LoginView: React.FC<LoginViewProps> = ({
 
             <div className="mb-7">
               <p className="v3-kicker">Học tốt Ngữ Văn</p>
-              <h2 className="mt-2 text-2xl font-bold tracking-tight text-slate-950 sm:text-3xl">{mustChange ? 'Thiết lập mật khẩu mới' : 'Đăng nhập hệ thống'}</h2>
+              <h2 className="mt-2 text-2xl font-bold tracking-tight text-slate-950 sm:text-3xl">{mustChange ? 'Đổi mật khẩu' : 'Đăng nhập'}</h2>
               <p className="mt-2 text-sm leading-6 text-slate-500">
                 {mustChange ? 'Đổi mật khẩu trước khi tiếp tục.' : 'Dùng tài khoản do nhà trường hoặc quản trị viên cấp.'}
               </p>
@@ -138,7 +138,7 @@ export const LoginView: React.FC<LoginViewProps> = ({
                   </button>
                   <span className={`inline-flex items-center gap-1 font-semibold ${passwordReady ? 'text-emerald-700' : 'text-slate-400'}`}><CheckCircleIcon className="h-4 w-4" /> Tối thiểu 10 ký tự</span>
                 </div>
-                <Button type="submit" variant="primary" size="lg" isLoading={loading} disabled={!passwordReady} className="w-full">Đổi mật khẩu & tiếp tục</Button>
+                <Button type="submit" variant="primary" size="lg" isLoading={loading} disabled={!passwordReady} className="w-full">Đổi mật khẩu và tiếp tục</Button>
               </form>
             ) : (
               <form onSubmit={submit} className="space-y-5" autoComplete="on">
@@ -177,7 +177,7 @@ export const LoginView: React.FC<LoginViewProps> = ({
               </form>
             )}
 
-            <div className="mt-7 border-t border-slate-200 pt-5 text-center text-xs leading-5 text-slate-500">Tài khoản do nhà trường cấp. Copyright © Trường THPT Vị Thanh.</div>
+            <div className="mt-7 border-t border-slate-200 pt-5 text-center text-xs leading-5 text-slate-500">Tài khoản do nhà trường cấp. © Trường THPT Vị Thanh.</div>
           </div>
         </section>
       </div>

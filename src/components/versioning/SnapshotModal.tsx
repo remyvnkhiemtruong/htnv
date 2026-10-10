@@ -31,11 +31,11 @@ export const SnapshotModal: React.FC<SnapshotModalProps> = ({
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!versionNumber.trim()) {
-      setError('Vui lòng nhập số hiệu phiên bản (ví dụ: v1.0, v2.0).');
+      setError('Nhập ký hiệu phiên bản, ví dụ v1.0 hoặc v2.0.');
       return;
     }
     if (!changeSummary.trim() || changeSummary.trim().length < 8) {
-      setError('Vui lòng viết rõ chú thích thay đổi / lý do chỉnh sửa (tối thiểu 8 ký tự).');
+      setError('Ghi nội dung đã sửa và lý do, ít nhất 8 ký tự.');
       return;
     }
 
@@ -49,7 +49,7 @@ export const SnapshotModal: React.FC<SnapshotModalProps> = ({
           <div className="p-2.5 bg-slate-50 rounded-md border border-slate-200 text-xs text-slate-700 flex items-start gap-2">
             <AlertCircle className="w-4 h-4 text-slate-500 shrink-0 mt-0.5" />
             <div>
-              Việc tạo phiên bản sẽ lưu lại bản thảo của 6 trục thi pháp thành một mốc lịch sử để so sánh và nhận xét sau này.
+              Lưu bản nháp của 6 trục thành một phiên bản riêng để so sánh và nhận xét.
             </div>
           </div>
 
@@ -80,7 +80,7 @@ export const SnapshotModal: React.FC<SnapshotModalProps> = ({
                 setChangeSummary(e.target.value);
                 setError('');
               }}
-              placeholder="Ví dụ: Đã tiếp thu nhận xét của GV về việc phân tích thời gian tâm lý và làm rõ chi tiết bát cháo cám..."
+              placeholder="Ví dụ: Thêm dẫn chứng về bát cháo cám theo góp ý của giáo viên."
               className="w-full text-xs font-normal border border-slate-300 rounded-md p-2.5 focus:border-sky-500 focus:outline-none"
             />
           </div>

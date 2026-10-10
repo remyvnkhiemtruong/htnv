@@ -19,7 +19,7 @@ export const ExplainableNextStepCard: React.FC<ExplainableNextStepCardProps> = (
           Nhiệm vụ tiếp theo
         </div>
         <span className="text-xs text-slate-500 font-medium">
-          Trọng tâm cải thiện: <strong className="text-slate-800">{recommendation.targetAxisTitle}</strong>
+          Phần cần luyện: <strong className="text-slate-800">{recommendation.targetAxisTitle}</strong>
         </span>
       </div>
 
@@ -34,7 +34,7 @@ export const ExplainableNextStepCard: React.FC<ExplainableNextStepCardProps> = (
       <div className="bg-slate-50 border border-slate-200 rounded-md p-3 space-y-1 text-xs">
         <div className="flex items-center gap-1.5 font-semibold text-slate-700">
           <HelpCircle className="w-3.5 h-3.5 text-primary-600" />
-          <span>Cơ sở sư phạm đề xuất:</span>
+          <span>Vì sao chọn bài này:</span>
         </div>
         <p className="text-slate-600 leading-relaxed">
           {recommendation.rationale}
@@ -45,7 +45,7 @@ export const ExplainableNextStepCard: React.FC<ExplainableNextStepCardProps> = (
       <div className="flex items-center gap-2 text-xs text-emerald-800 bg-emerald-50 p-2.5 rounded-md border border-emerald-200">
         <CheckCircle className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
         <span>
-          <strong>Mục tiêu năng lực:</strong> {recommendation.expectedGain}
+          <strong>Mục tiêu:</strong> {recommendation.expectedGain}
         </span>
       </div>
 
