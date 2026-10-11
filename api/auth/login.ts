@@ -1,6 +1,7 @@
 import { createHmac, randomBytes, scryptSync, timingSafeEqual } from "node:crypto";
 import { getPool } from "../_lib/db.js";
 import { assertSameOrigin, body, checkRateLimit, login, requestIp, send } from "./auth.js";
+import { normalizeLoginIdentifier } from "./login-identifier.js";
 
 function scryptHash(password:string) {
   const salt=randomBytes(16).toString("hex");
@@ -57,15 +58,15 @@ export default async function handler(req:any,res:any) {
   try {
     assertSameOrigin(req);
     const {email,password}=body(req);
-    if(!email||!password) return send(res,400,{code:"VALIDATION_ERROR",message:"Email và mật khẩu là bắt buộc."});
-    const cleanEmail=String(email).trim().toLowerCase().slice(0,240);
+    if(!email||!password) return send(res,400,{code:"VALIDATION_ERROR",message:"Tài khoản và mật khẩu là bắt buộc."});
+    const cleanEmail=normalizeLoginIdentifier(email);
     const cleanPassword=String(password);
     if(cleanPassword.length>512) return send(res,400,{code:"VALIDATION_ERROR",message:"Thông tin đăng nhập không hợp lệ."});
     const key=`login:${requestIp(req)}:${cleanEmail}`;
-    if(!await checkRateLimit(key,8,900)) return send(res,429,{code:"RATE_LIMITED",message:"Đăng nhập quá nhiều lần. Vui lòng thử lại sau."});
+    if(!await checkRateLimit(key,8,900)) return send(res,429,{code:"RATE_LIMITED",message:"Em đã thử đăng nhập quá nhiều lần. Hãy đợi 15 phút rồi thử lại."});
     await migrateTemporaryCredential(cleanEmail,cleanPassword);
     const result=await login(cleanEmail,cleanPassword);
-    if(!result) return send(res,401,{code:"INVALID_CREDENTIALS",message:"Email hoặc mật khẩu không đúng, hoặc tài khoản đã bị khóa."});
+    if(!result) return send(res,401,{code:"INVALID_CREDENTIALS",message:"Tài khoản hoặc mật khẩu chưa đúng. Nếu đã đổi mật khẩu, em cần dùng mật khẩu mới."});
     return send(res,200,{user:result.user},result.token);
   } catch(e:any) {
     const code=String(e?.message||'LOGIN_ERROR');

@@ -145,13 +145,14 @@ export const LoginView: React.FC<LoginViewProps> = ({
                 <input type="text" name="b_trap_username" style={{ display: 'none' }} tabIndex={-1} aria-hidden="true" autoComplete="off" />
                 <input type="password" name="b_trap_password" style={{ display: 'none' }} tabIndex={-1} aria-hidden="true" autoComplete="off" />
                 <Input
-                  label="Email đăng nhập"
-                  type="email"
+                  label="Email hoặc tên đăng nhập"
+                  type="text"
                   required
                   maxLength={240}
                   value={email}
                   onChange={e => setEmail(e.target.value)}
-                  placeholder="name@school.edu.vn"
+                  placeholder="Email được cấp hoặc 12a9.12"
+                  helperText="Học sinh 12A9 có thể nhập tên ngắn, ví dụ 12a9.12. Email đầy đủ dùng đuôi @htnv.io.vn."
                   name="user_email"
                   autoComplete="username"
                   spellCheck={false}
@@ -168,6 +169,7 @@ export const LoginView: React.FC<LoginViewProps> = ({
                     placeholder="Tối thiểu 8 ký tự"
                     name="user_password"
                     autoComplete="current-password"
+                    helperText="Nếu đã đổi mật khẩu, em hãy dùng mật khẩu mới."
                   />
                   <button type="button" onClick={() => setShowPassword(value => !value)} className="inline-flex items-center gap-1.5 text-xs font-medium text-slate-500 hover:text-slate-900">
                     {showPassword ? <EyeSlashIcon className="h-4 w-4" /> : <EyeIcon className="h-4 w-4" />}{showPassword ? 'Ẩn mật khẩu' : 'Hiện mật khẩu'}

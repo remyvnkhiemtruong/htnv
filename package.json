@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "test": "node src/tests/runTests.mjs && node src/tests/hardeningTests.mjs && node src/tests/productionCompletionTests.mjs && node src/tests/contentCompatTests.mjs && node src/tests/schemaContractTests.mjs && node src/tests/auditFixTests.mjs && node src/tests/fullSystemAuditTests.mjs && node src/tests/productionAuditRegressionTests.mjs && node src/tests/learningLabelsTests.mjs",
+    "test": "node src/tests/runTests.mjs && node src/tests/hardeningTests.mjs && node src/tests/productionCompletionTests.mjs && node src/tests/contentCompatTests.mjs && node src/tests/schemaContractTests.mjs && node src/tests/auditFixTests.mjs && node src/tests/fullSystemAuditTests.mjs && node src/tests/productionAuditRegressionTests.mjs && node src/tests/learningLabelsTests.mjs && node src/tests/loginIdentifierTests.mjs",
     "typecheck:web": "tsc -b",
     "typecheck:api": "tsc --noEmit -p tsconfig.api.json",
     "lint": "oxlint",
