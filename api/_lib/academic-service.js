@@ -78,6 +78,11 @@ async function createVersionWithWorkflow(user, input, req) {
   const pool = await getPool();
   const row = await getStudentWorkflowRow(pool, user.id, assignmentId);
   if (!row) throw new Error('PORTFOLIO_NOT_FOUND');
+  const submissionKey = cleanTrimmed(input.submissionKey, 80);
+  if (isUuid(submissionKey)) {
+    const retry = await pool.query('SELECT 1 FROM portfolio_versions WHERE portfolio_id=$1 AND submission_key=$2 LIMIT 1', [row.portfolio_id, submissionKey]);
+    if (retry.rows.length) return academicActionV3(user, input, req);
+  }
   if (row.assignment_status !== 'published') throw new Error('ASSIGNMENT_CLOSED');
   if (['waiting_official_rubric', 'completed'].includes(row.portfolio_status)) throw new Error('PORTFOLIO_READ_ONLY');
 

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { learningVersionLabel } from '../../utils/learningLabels';
+import { learningErrorText, learningVersionLabel } from '../../utils/learningLabels';
 import { Button, Modal } from '../ui';
 import type { FeedbackItem } from '../../types';
 
@@ -65,8 +65,8 @@ export const CreateVersionModal: React.FC<CreateVersionModalProps> = ({
         stage
       });
       onClose();
-    } catch {
-      setErrorMsg('Không thể nộp phiên bản. Vui lòng thử lại.');
+    } catch (error) {
+      setErrorMsg(learningErrorText(error, 'Chưa nộp được bài. Nội dung vẫn được giữ; em hãy thử lại.'));
     } finally {
       setIsSubmitting(false);
     }

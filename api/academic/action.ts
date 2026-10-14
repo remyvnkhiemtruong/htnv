@@ -67,15 +67,20 @@ const clientMessage = (code: string) => {
     REFLECTION_REQUIRES_REVISION: "Tự phản tư chỉ được thực hiện sau phiên bản chỉnh sửa V2 trở đi.",
     REFLECTION_REQUIRED_BEFORE_OFFICIAL_RUBRIC: "Học sinh cần hoàn thành tự phản tư sau V2 trước khi giáo viên chấm rubric chính thức.",
     PREDICTION_QUESTIONS_REQUIRED: "Đã bật V0 nhưng nhiệm vụ chưa có câu hỏi dự đoán trước đọc.",
-    PREDICTION_REQUIRED_FIRST: "Em cần hoàn thành và nộp phần dự đoán V0 trước khi gửi bản V1.",
+    PREDICTION_REQUIRED_FIRST: "Em cần nộp phần dự đoán trước khi nộp bài làm đầu tiên.",
     RUBRIC_NOT_FOUND: "Nhiệm vụ chưa có rubric hợp lệ. Vui lòng liên hệ giáo viên phụ trách.",
     AI_REVIEW_CLAIMED: "Bài này đang được một tài khoản AI khác xử lý.",
     AI_REVIEW_CLOSED: "Phản hồi AI này đã được xử lý hoặc không còn mở.",
     DRAFT_CONFLICT: "Bản nháp đã được cập nhật ở một phiên khác. Hệ thống đã giữ nguyên nội dung trên máy này; hãy tải lại và đối chiếu trước khi lưu tiếp.",
     PORTFOLIO_READ_ONLY: "Hồ sơ hiện đã khóa theo quy trình và không thể chỉnh sửa hoặc nộp thêm.",
-    PREDICTION_ALREADY_SUBMITTED: "V0 đã được nộp và không thể nộp lại.",
-    INITIAL_ALREADY_SUBMITTED: "V1 đã được nộp và không thể nộp lại.",
-    REVISION_ALREADY_SUBMITTED: "V2 đã được nộp và không thể nộp thêm phiên bản chỉnh sửa."
+    PREDICTION_ALREADY_SUBMITTED: "Em đã nộp dự đoán. Hãy tải lại để bắt đầu bài làm đầu tiên.",
+    INITIAL_ALREADY_SUBMITTED: "Em đã nộp bài đầu tiên. Hãy tải lại để xem bài đã lưu và chờ góp ý.",
+    REVISION_ALREADY_SUBMITTED: "Em đã nộp bài chỉnh sửa. Hãy hoàn thành phần tự nhìn lại bài làm.",
+    PREDICTION_WINDOW_CLOSED: "Em đã nộp bài đầu tiên nên không thể nộp thêm dự đoán.",
+    INITIAL_VERSION_REQUIRED: "Em cần nộp bài đầu tiên trước khi nộp bài chỉnh sửa.",
+    FEEDBACK_REQUIRED_BEFORE_REVISION: "Em cần chờ góp ý cho bài đầu tiên trước khi nộp bài chỉnh sửa.",
+    REVISION_REASON_REQUIRED: "Em hãy ghi lý do sửa bài trước khi nộp.",
+    INVALID_CONFIDENCE: "Em hãy chọn mức tự tin từ 1 đến 5."
   };
   if (code.startsWith("INVALID_RUBRIC_LEVEL")) return "Mức rubric không hợp lệ.";
   return messages[code] || "Không thể thực hiện thao tác. Vui lòng thử lại.";
@@ -114,7 +119,7 @@ export default async function handler(req: any, res: any) {
     let status = 500;
     if (code === "CSRF_ORIGIN_MISMATCH" || code === "FORBIDDEN" || code.endsWith("_FORBIDDEN") || code === "FORBIDDEN_STUDENT_RUBRIC") status = 403;
     else if (code.includes("NOT_FOUND")) status = 404;
-    else if (code === "ASSIGNMENT_CLOSED" || code === "AI_REVIEW_CLAIMED" || code === "AI_REVIEW_CLOSED" || code === "DRAFT_CONFLICT" || code === "PORTFOLIO_READ_ONLY" || code === "PREDICTION_ALREADY_SUBMITTED" || code === "INITIAL_ALREADY_SUBMITTED" || code === "REVISION_ALREADY_SUBMITTED") status = 409;
+    else if (code === "ASSIGNMENT_CLOSED" || code === "AI_REVIEW_CLAIMED" || code === "AI_REVIEW_CLOSED" || code === "DRAFT_CONFLICT" || code === "PORTFOLIO_READ_ONLY" || code === "PREDICTION_ALREADY_SUBMITTED" || code === "PREDICTION_WINDOW_CLOSED" || code === "INITIAL_ALREADY_SUBMITTED" || code === "REVISION_ALREADY_SUBMITTED") status = 409;
     else if (code.startsWith("INVALID") || code.includes("REQUIRED") || code === "EMPTY_RESPONSE" || code === "CANNOT_PEER_REVIEW_SELF" || code === "VALIDATION_ERROR" || code === "PREDICTION_ALREADY_SUBMITTED" || code === "PEER_REVIEWER_INVALID" || code === "PEER_STUDENT_INVALID" || code === "CONTENT_TOO_LARGE" || code === "SCHEMA_MIGRATION_REQUIRED") status = 400;
 
     const log = status >= 500 ? console.error : console.warn;

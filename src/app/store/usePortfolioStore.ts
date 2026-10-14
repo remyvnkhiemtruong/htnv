@@ -1,4 +1,4 @@
-import { learningText } from '../../utils/learningLabels';
+import { learningErrorText, learningText } from '../../utils/learningLabels';
 import { create } from 'zustand';
 import type { StudentPortfolio, PoeticAxisId, PortfolioVersion, EvidenceQuote } from '../../types';
 import { mockDb } from '../../services/mockApi/mockDb';
@@ -54,7 +54,7 @@ const postAction = async (payload: unknown) => {
     });
     const data = await response.json().catch(() => ({}));
     if (!response.ok) {
-      const error = new Error(learningText(data.message || 'Không thể lưu dữ liệu')) as Error & { code?: string };
+      const error = new Error(learningText(response.status === 401 ? 'Phiên đăng nhập đã hết hạn. Em hãy đăng nhập lại; bản nháp vẫn được giữ trên máy này.' : data.message || 'Không thể lưu dữ liệu')) as Error & { code?: string };
       error.code = data.code;
       throw error;
     }
@@ -71,7 +71,7 @@ const saveFailureStatus = (error: unknown): Pick<PortfolioState, 'autosaveStatus
   }
   return {
     autosaveStatus: typeof navigator !== 'undefined' && navigator.onLine === false ? 'offline' : 'dirty',
-    lastSaveError: typed?.message || 'Chưa thể đồng bộ bản nháp.'
+    lastSaveError: learningErrorText(error, 'Chưa thể đồng bộ bản nháp.')
   };
 };
 
@@ -152,7 +152,9 @@ export const usePortfolioStore = create<PortfolioState>((set, get) => ({
 
   hydratePortfolios: (serverPortfolios) => {
     const local = get().portfolios;
-    const merged: Record<string, StudentPortfolio> = {};
+    const merged: Record<string, StudentPortfolio> = Object.fromEntries(
+      Object.entries(local).filter(([key]) => dirtyPortfolioKeys.has(key))
+    );
     for (const [key, serverPortfolio] of Object.entries(serverPortfolios)) {
       const localPortfolio = local[key];
       merged[key] = dirtyPortfolioKeys.has(key) && localPortfolio
@@ -214,8 +216,10 @@ export const usePortfolioStore = create<PortfolioState>((set, get) => ({
           });
           if (epoch !== sessionEpoch) return;
           applySavedRevision(key, result, set, get);
-          dirtyPortfolioKeys.delete(key);
-          void clearDraftRecovery(studentId, assignmentId);
+          if (get().portfolios[key]?.currentDraft === latestPortfolio.currentDraft) {
+            dirtyPortfolioKeys.delete(key);
+            void clearDraftRecovery(studentId, assignmentId);
+          }
           set({ autosaveStatus: dirtyPortfolioKeys.size ? 'dirty' : 'saved', lastSavedTime: new Date().toLocaleTimeString('vi-VN'), lastSaveError: '' });
         } catch (error) {
           if (epoch !== sessionEpoch) return;
@@ -249,8 +253,10 @@ export const usePortfolioStore = create<PortfolioState>((set, get) => ({
         });
         if (epoch !== sessionEpoch) return;
         applySavedRevision(key, result, set, get);
-        dirtyPortfolioKeys.delete(key);
-        void clearDraftRecovery(studentId, assignmentId);
+        if (get().portfolios[key]?.currentDraft === port.currentDraft) {
+          dirtyPortfolioKeys.delete(key);
+          void clearDraftRecovery(studentId, assignmentId);
+        }
         set({ autosaveStatus: dirtyPortfolioKeys.size ? 'dirty' : 'saved', lastSavedTime: new Date().toLocaleTimeString('vi-VN'), lastSaveError: '' });
       } catch (error) {
         if (epoch !== sessionEpoch) return;
@@ -270,8 +276,10 @@ export const usePortfolioStore = create<PortfolioState>((set, get) => ({
     const epoch = sessionEpoch;
 
     const operation = (async () => {
+      const isRetry = pendingSubmissionKeys.has(key);
       const submissionKey = pendingSubmissionKeys.get(key) || options.submissionKey || newSubmissionKey();
       pendingSubmissionKeys.set(key, submissionKey);
+      let draftSaved = false;
       try {
         const pendingSave = saveTimers.get(key);
         if (pendingSave) {
@@ -279,7 +287,7 @@ export const usePortfolioStore = create<PortfolioState>((set, get) => ({
           saveTimers.delete(key);
         }
 
-        await enqueueSave(key, async () => {
+        if (!isRetry) await enqueueSave(key, async () => {
           if (epoch !== sessionEpoch) throw new Error('SESSION_CHANGED');
           const latest = get().getPortfolio(studentId, assignmentId);
           set({ autosaveStatus: 'saving' });
@@ -290,12 +298,15 @@ export const usePortfolioStore = create<PortfolioState>((set, get) => ({
             draftRevision: latest.draftRevision ?? 0
           });
           applySavedRevision(key, result, set, get);
-          void clearDraftRecovery(studentId, assignmentId);
+          draftSaved = true;
+          if (get().portfolios[key]?.currentDraft === latest.currentDraft) {
+            dirtyPortfolioKeys.delete(key);
+            void clearDraftRecovery(studentId, assignmentId);
+          }
         });
 
         if (epoch !== sessionEpoch) throw new Error('SESSION_CHANGED');
         const port = get().getPortfolio(studentId, assignmentId);
-        dirtyPortfolioKeys.delete(key);
 
         const result = await postAction({
           action: 'create_version',
@@ -303,6 +314,7 @@ export const usePortfolioStore = create<PortfolioState>((set, get) => ({
           versionNumber,
           changeSummary,
           content: port.currentDraft,
+          draftRevision: port.draftRevision ?? 0,
           submissionKey,
           stage: options.stage,
           confidence: options.confidence,
@@ -327,7 +339,7 @@ export const usePortfolioStore = create<PortfolioState>((set, get) => ({
           createdBy: studentId,
           authorName,
           changeSummary: changeSummary.trim(),
-          responses: JSON.parse(JSON.stringify(port.currentDraft)),
+          responses: JSON.parse(JSON.stringify(serverVer.responses || port.currentDraft)),
           isFrozen: true,
           isSubmitted: true
         };
@@ -336,11 +348,20 @@ export const usePortfolioStore = create<PortfolioState>((set, get) => ({
           : [...port.versions, newVer];
         const updated: StudentPortfolio = {
           ...port,
+          currentDraft: get().portfolios[key]?.currentDraft || port.currentDraft,
           currentActiveVersion: newVer.versionNumber,
+          draftRevision: result.draftRevision ?? port.draftRevision,
           status: result.portfolioStatus || 'submitted_waiting_ai',
           versions: previousVersions
         };
         pendingSubmissionKeys.delete(key);
+        if (updated.currentDraft === port.currentDraft) {
+          dirtyPortfolioKeys.delete(key);
+          void clearDraftRecovery(studentId, assignmentId);
+        } else {
+          dirtyPortfolioKeys.add(key);
+          persistRecovery(studentId, assignmentId, updated);
+        }
         mockDb.savePortfolio(updated);
         set(state => ({
           portfolios: { ...state.portfolios, [key]: updated },
@@ -351,10 +372,14 @@ export const usePortfolioStore = create<PortfolioState>((set, get) => ({
         return true;
       } catch (error) {
         if (epoch === sessionEpoch) {
-          dirtyPortfolioKeys.add(key);
           const latestPortfolio = get().getPortfolio(studentId, assignmentId);
-          persistRecovery(studentId, assignmentId, latestPortfolio);
-          set(saveFailureStatus(error));
+          if (draftSaved) {
+            set({ autosaveStatus: dirtyPortfolioKeys.size ? 'dirty' : 'saved', lastSaveError: learningErrorText(error) });
+          } else {
+            dirtyPortfolioKeys.add(key);
+            persistRecovery(studentId, assignmentId, latestPortfolio);
+            set(saveFailureStatus(error));
+          }
         }
         return false;
       } finally {

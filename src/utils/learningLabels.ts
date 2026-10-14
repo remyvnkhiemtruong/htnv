@@ -48,6 +48,14 @@ const instructionFields = new Set([
   'title', 'description', 'prompt', 'guidingSteps', 'aiGuidance',
   'commonMistakes', 'referenceGuide', 'questions', 'readingGuide', 'label', 'shortLabel'
 ]);
+
+export function learningErrorText(error: unknown, fallback = 'Không thể thực hiện thao tác. Em hãy thử lại.'): string {
+  const message = error instanceof Error ? error.message : typeof error === 'string' ? error : '';
+  if (/failed to fetch|networkerror|load failed|fetch failed/i.test(message)) return 'Mất kết nối. Bài viết vẫn được giữ trên máy này; em hãy kiểm tra mạng rồi thử lại.';
+  if (message === 'SESSION_CHANGED') return 'Phiên đăng nhập đã thay đổi. Em hãy đăng nhập lại trước khi nộp bài.';
+  if (!message || /^[A-Z][A-Z_]+$/.test(message)) return fallback;
+  return learningText(message);
+}
 const originalContentFields = new Set([
   'literatureText', 'literatureTexts', 'portfolios', 'portfolio', 'responses', 'draftResponses',
   'reflection', 'reflections', 'feedbacks', 'aiReviews', 'auditLogs', 'users'

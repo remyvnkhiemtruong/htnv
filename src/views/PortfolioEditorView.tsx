@@ -12,7 +12,7 @@ import {
 } from '../app/queries/studentAcademicQueries';
 import { POETIC_AXES } from '../data/seedData';
 import type { EvidenceQuote, PoeticAxisId } from '../types';
-import { Badge, Button, SkeletonEditor } from '../components/ui';
+import { Alert, Badge, Button, SkeletonEditor } from '../components/ui';
 import { CreateVersionModal } from '../components/versioning/CreateVersionModal';
 import { clearDraftRecovery, getDraftRecovery } from '../app/offline/draftRecovery';
 import {
@@ -154,6 +154,10 @@ export const PortfolioEditorView: React.FC<PortfolioEditorViewProps> = ({ assign
   const predictionVersion = versions.find(item => item.stage === 'prediction');
   const isInitial = submittedVersions.length === 0;
   const predictionAvailable = !predictionVersion && isInitial && assignment?.workflowConfig?.predictionEnabled !== false;
+  const openSubmitModal = React.useCallback(() => {
+    setIsPredictionMode(predictionAvailable);
+    setIsSubmitModalOpen(true);
+  }, [predictionAvailable]);
   const nextVersion = isPredictionMode ? 'V0' : nextSubmissionVersion(versions);
   const latestRevision = [...versions].reverse().find(item => item.stage === 'revision');
   const latestReflection = latestRevision && assignment
@@ -198,7 +202,8 @@ export const PortfolioEditorView: React.FC<PortfolioEditorViewProps> = ({ assign
     confidence: number;
     stage?: 'prediction' | 'initial' | 'revision';
   }) => {
-    if (!assignment || !workflowState?.canEdit) throw new Error('PORTFOLIO_READ_ONLY');
+    if (!assignment || !workflowState?.canEdit) throw new Error('Bài này hiện chưa cho phép nộp thêm. Em hãy tải lại để xem bước tiếp theo.');
+    if (predictionAvailable && data.stage !== 'prediction') throw new Error('Em cần nộp phần dự đoán trước khi nộp bài làm đầu tiên.');
     const ok = await createSnapshot(currentUser.id, assignment.id, nextVersion, data.changeSummary, currentUser.name, {
       submissionKey: typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : undefined,
       stage: data.stage,
@@ -207,12 +212,12 @@ export const PortfolioEditorView: React.FC<PortfolioEditorViewProps> = ({ assign
       revisionReason: data.revisionReason,
       linkedFeedbackIds: data.linkedFeedbackIds
     });
-    if (!ok) throw new Error('CREATE_VERSION_FAILED');
+    if (!ok) throw new Error(usePortfolioStore.getState().lastSaveError || 'Chưa nộp được bài. Nội dung vẫn được giữ; em hãy thử lại.');
     await Promise.all([
       workspaceQuery.refetch(),
       queryClient.invalidateQueries({ queryKey: studentAcademicKeys.overview(currentUser.id) })
     ]);
-    addToast({ type: 'success', title: `Đã nộp ${nextVersion}`, message: isPredictionMode ? 'dự đoán trước khi đọc đã được khóa làm mốc dự đoán trước đọc.' : 'Bài viết đã được gửi vào hàng đợi phản hồi AI.' });
+    addToast({ type: 'success', title: `Đã nộp ${learningVersionLabel(nextVersion).toLocaleLowerCase('vi-VN')}`, message: isPredictionMode ? 'Dự đoán đã được lưu. Em có thể đọc văn bản và viết bài đầu tiên.' : 'Bài đã được lưu. Em có thể xem góp ý khi có phản hồi.' });
   };
 
   const submitReflection = async () => {
@@ -349,8 +354,7 @@ export const PortfolioEditorView: React.FC<PortfolioEditorViewProps> = ({ assign
       if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
         e.preventDefault();
         if (workflowState?.canEdit) {
-          setIsPredictionMode(false);
-          setIsSubmitModalOpen(true);
+          openSubmitModal();
         }
         return;
       }
@@ -374,7 +378,7 @@ export const PortfolioEditorView: React.FC<PortfolioEditorViewProps> = ({ assign
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [isFocusMode, isSubmitModalOpen, saveNow, workflowState?.canEdit]);
+  }, [isFocusMode, isSubmitModalOpen, openSubmitModal, saveNow, workflowState?.canEdit]);
 
   if (isLoading && !assignment) {
     return <SkeletonEditor />;
@@ -459,30 +463,14 @@ export const PortfolioEditorView: React.FC<PortfolioEditorViewProps> = ({ assign
               </Button>
             )}
 
-            {workflowState?.canEdit && predictionAvailable && (
-              <Button
-                size="sm"
-                variant="ghost"
-                onClick={() => {
-                  setIsPredictionMode(true);
-                  setIsSubmitModalOpen(true);
-                }}
-              >
-                Nộp dự đoán
-              </Button>
-            )}
-
             {workflowState?.canEdit && (
               <Button
                 size="sm"
                 variant="primary"
                 title="Phím tắt: Ctrl/Cmd + Enter"
-                onClick={() => {
-                  setIsPredictionMode(false);
-                  setIsSubmitModalOpen(true);
-                }}
+                onClick={openSubmitModal}
               >
-                {isInitial ? 'Nộp bài đầu tiên' : `Nộp ${learningVersionLabel(nextSubmissionVersion(versions)).toLocaleLowerCase('vi-VN')}`}
+                {predictionAvailable ? 'Nộp dự đoán' : isInitial ? 'Nộp bài đầu tiên' : `Nộp ${learningVersionLabel(nextSubmissionVersion(versions)).toLocaleLowerCase('vi-VN')}`}
               </Button>
             )}
           </div>
@@ -503,6 +491,11 @@ export const PortfolioEditorView: React.FC<PortfolioEditorViewProps> = ({ assign
         )}
 
         {/* Mobile Tab Switcher */}
+        {predictionAvailable && workflowState?.canEdit && (
+          <Alert type="info" title="Nộp dự đoán trước khi làm bài">
+            Trả lời các câu hỏi trước khi đọc, rồi chọn “Nộp dự đoán”. Sau bước này, em có thể đọc văn bản và nộp bài làm đầu tiên.
+          </Alert>
+        )}
         <div className="mt-2.5 flex border-t border-slate-100 pt-2 lg:hidden" role="tablist" aria-label="Khu vực bài làm trên di động">
           <button
             type="button"
@@ -1154,12 +1147,9 @@ export const PortfolioEditorView: React.FC<PortfolioEditorViewProps> = ({ assign
         <Button
           size="sm"
           variant="primary"
-          onClick={() => {
-            setIsPredictionMode(false);
-            setIsSubmitModalOpen(true);
-          }}
+          onClick={openSubmitModal}
         >
-          {isInitial ? 'Nộp bài đầu tiên' : `Nộp ${learningVersionLabel(nextSubmissionVersion(versions)).toLocaleLowerCase('vi-VN')}`}
+          {predictionAvailable ? 'Nộp dự đoán' : isInitial ? 'Nộp bài đầu tiên' : `Nộp ${learningVersionLabel(nextSubmissionVersion(versions)).toLocaleLowerCase('vi-VN')}`}
         </Button>
       </div>}
 

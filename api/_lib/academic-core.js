@@ -768,6 +768,9 @@ async function saveDraft(user, input, _req) {
     const portfolio = await portfolioForStudent(client, assignmentId, user.id, true);
     if (!portfolio) throw new Error('PORTFOLIO_NOT_FOUND');
     if (portfolio.assignment_status !== 'published') throw new Error('ASSIGNMENT_CLOSED');
+    if (['submitted_waiting_ai', 'ai_proposed_waiting_teacher', 'teacher_feedback_needed', 'waiting_official_rubric', 'completed'].includes(portfolio.status)) throw new Error('PORTFOLIO_READ_ONLY');
+    const revision = await client.query("SELECT 1 FROM portfolio_versions WHERE portfolio_id=$1 AND stage='revision' LIMIT 1", [portfolio.id]);
+    if (revision.rows.length) throw new Error('PORTFOLIO_READ_ONLY');
 
     const draftResult = await client.query(
       'SELECT draft_revision FROM portfolio_drafts WHERE portfolio_id=$1 FOR UPDATE',
@@ -815,26 +818,38 @@ async function createVersion(user, input, req) {
     await client.query('BEGIN');
     const portfolio = await portfolioForStudent(client, assignmentId, user.id, true);
     if (!portfolio) throw new Error('PORTFOLIO_NOT_FOUND');
-    if (portfolio.assignment_status !== 'published') throw new Error('ASSIGNMENT_CLOSED');
-
     const existing = await client.query(`SELECT * FROM portfolio_versions WHERE portfolio_id=$1 AND submission_key=$2 LIMIT 1`, [portfolio.id, submissionKey]);
     if (existing.rows[0]) {
+      const draft = await client.query('SELECT draft_revision FROM portfolio_drafts WHERE portfolio_id=$1', [portfolio.id]);
       await client.query('COMMIT');
       const row = existing.rows[0];
       return { ok: true, isIdempotentRetry: true, version: {
         id: row.id, versionNumber: row.version_number, sequenceNo: row.sequence_no, stage: row.stage,
-        createdAt: row.submitted_at, contentChecksum: row.content_checksum
-      }, portfolioStatus: portfolio.status };
+        createdAt: row.submitted_at, contentChecksum: row.content_checksum, responses: normalizeDraft(row.content_json)
+      }, portfolioStatus: portfolio.status, draftRevision: Number(draft.rows[0]?.draft_revision || 0) };
     }
+    if (portfolio.assignment_status !== 'published') throw new Error('ASSIGNMENT_CLOSED');
+    if (['waiting_official_rubric', 'completed'].includes(portfolio.status)) throw new Error('PORTFOLIO_READ_ONLY');
+
+    const draftState = await client.query('SELECT draft_revision,content_json FROM portfolio_drafts WHERE portfolio_id=$1 FOR UPDATE', [portfolio.id]);
+    const currentDraftRevision = Number(draftState.rows[0]?.draft_revision || 0);
+    if (input.draftRevision !== undefined && Number(input.draftRevision) !== currentDraftRevision) {
+      const matchesSavedContent = input.content && typeof input.content === 'object'
+        && checksumContent(normalizeDraft(input.content)) === checksumContent(normalizeDraft(draftState.rows[0]?.content_json || emptyDraft()));
+      if (!matchesSavedContent) throw new Error('DRAFT_CONFLICT');
+    }
+    let savedDraftRevision = currentDraftRevision;
 
     let content;
     if (input.content && typeof input.content === 'object') {
       content = normalizeDraft(input.content);
-      await client.query(`
-        INSERT INTO portfolio_drafts(portfolio_id,content_json,updated_by,updated_at)
-        VALUES($1,$2,$3,now()) ON CONFLICT(portfolio_id)
-        DO UPDATE SET content_json=EXCLUDED.content_json,updated_by=EXCLUDED.updated_by,updated_at=now()
+      const savedDraft = await client.query(`
+        INSERT INTO portfolio_drafts(portfolio_id,content_json,updated_by,updated_at,draft_revision)
+        VALUES($1,$2,$3,now(),1) ON CONFLICT(portfolio_id)
+        DO UPDATE SET content_json=EXCLUDED.content_json,updated_by=EXCLUDED.updated_by,updated_at=now(),draft_revision=portfolio_drafts.draft_revision+1
+        RETURNING draft_revision
       `, [portfolio.id, content, user.id]);
+      savedDraftRevision = Number(savedDraft.rows[0].draft_revision);
     } else {
       const draft = await client.query('SELECT content_json FROM portfolio_drafts WHERE portfolio_id=$1', [portfolio.id]);
       content = normalizeDraft(draft.rows[0]?.content_json || emptyDraft());
@@ -855,7 +870,18 @@ async function createVersion(user, input, req) {
     const submissionCount = Number(counts.rows[0]?.submission_count || 0);
     const isPrediction = requestedStage === 'prediction';
     if (isPrediction && predictionCount > 0) throw new Error('PREDICTION_ALREADY_SUBMITTED');
+    if (isPrediction && submissionCount > 0) throw new Error('PREDICTION_WINDOW_CLOSED');
+    if (requestedStage === 'initial' && submissionCount > 0) throw new Error('INITIAL_ALREADY_SUBMITTED');
+    if (requestedStage === 'revision' && submissionCount === 0) throw new Error('INITIAL_VERSION_REQUIRED');
     const stage = isPrediction ? 'prediction' : (submissionCount === 0 ? 'initial' : 'revision');
+    if (stage === 'initial' && Boolean(portfolio.workflow_config?.predictionEnabled) && predictionCount === 0) throw new Error('PREDICTION_REQUIRED_FIRST');
+    if (stage === 'revision') {
+      if (['submitted_waiting_ai', 'ai_proposed_waiting_teacher', 'teacher_feedback_needed'].includes(portfolio.status)) throw new Error('PORTFOLIO_READ_ONLY');
+      const revisionCount = await client.query("SELECT 1 FROM portfolio_versions WHERE portfolio_id=$1 AND stage='revision' LIMIT 1", [portfolio.id]);
+      if (revisionCount.rows.length) throw new Error('REVISION_ALREADY_SUBMITTED');
+      const feedback = await client.query('SELECT 1 FROM feedbacks WHERE portfolio_id=$1 AND version_id=$2 LIMIT 1', [portfolio.id, prev?.id]);
+      if (!feedback.rows.length) throw new Error('FEEDBACK_REQUIRED_BEFORE_REVISION');
+    }
     const versionNumber = isPrediction ? 'V0' : `V${submissionCount + 1}`;
     const revisionReason = cleanTrimmed(input.revisionReason, 5000);
     if (stage === 'revision' && !revisionReason) throw new Error('REVISION_REASON_REQUIRED');
@@ -922,8 +948,8 @@ async function createVersion(user, input, req) {
     await client.query('COMMIT');
     return { ok: true, version: {
       id: version.id, versionNumber: version.version_number, sequenceNo: version.sequence_no,
-      stage: version.stage, createdAt: version.submitted_at, contentChecksum: version.content_checksum
-    }, portfolioStatus: nextPortfolioStatus, aiReviewQueued: shouldQueueAiReview };
+      stage: version.stage, createdAt: version.submitted_at, contentChecksum: version.content_checksum, responses: content
+    }, portfolioStatus: nextPortfolioStatus, aiReviewQueued: shouldQueueAiReview, draftRevision: savedDraftRevision };
   } catch (error) {
     await client.query('ROLLBACK');
     throw error;
