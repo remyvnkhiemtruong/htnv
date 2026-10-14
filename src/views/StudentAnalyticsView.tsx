@@ -6,6 +6,7 @@ import { useStudentOverviewQuery, useStudentWorkspaceQuery } from '../app/querie
 import { useTeacherWorkspaceQuery } from '../app/queries/teacherAcademicQueries';
 import { academicVersionsOf } from '../app/workflow/workflowState';
 import type { PoeticAxisId } from '../types';
+import { teacherAssessmentsByVersion } from '../utils/assessmentAnalytics';
 import { Badge, Button } from '../components/ui';
 import {
   ArrowLeftIcon,
@@ -19,6 +20,9 @@ interface StudentAnalyticsViewProps {
   assignmentId: string;
   onNavigate: (view: string, extraParams?: unknown) => void;
 }
+
+const EMPTY_LIST: never[] = [];
+const EMPTY_PORTFOLIOS: Record<string, never> = {};
 
 const labels: Record<PoeticAxisId, string> = {
   plot_situation: 'Tình huống – Cốt truyện',
@@ -46,27 +50,29 @@ export const StudentAnalyticsView: React.FC<StudentAnalyticsViewProps> = ({ stud
   const studentOverview = overviewQuery.data;
   const teacherWorkspace = teacherWorkspaceQuery.data;
 
-  const assignments = isStudent
-    ? (assignmentId ? (studentWorkspace?.assignment ? [studentWorkspace.assignment] : []) : (studentOverview?.assignments || []))
+  const assignments = useMemo(() => isStudent
+    ? (assignmentId ? (studentWorkspace?.assignment ? [studentWorkspace.assignment] : EMPTY_LIST) : (studentOverview?.assignments || EMPTY_LIST))
     : isTeacher && assignmentId
-      ? (teacherWorkspace?.assignment ? [teacherWorkspace.assignment] : [])
-      : compatibility.assignments;
-  const portfolios = isStudent
+      ? (teacherWorkspace?.assignment ? [teacherWorkspace.assignment] : EMPTY_LIST)
+      : compatibility.assignments,
+  [isStudent, isTeacher, assignmentId, studentWorkspace?.assignment, studentOverview?.assignments, teacherWorkspace?.assignment, compatibility.assignments]);
+  const portfolios = useMemo(() => isStudent
     ? (assignmentId && studentWorkspace?.portfolio
       ? { [studentWorkspace.portfolio.id]: studentWorkspace.portfolio }
-      : (studentOverview?.portfolios || {}))
+      : (studentOverview?.portfolios || EMPTY_PORTFOLIOS))
     : isTeacher && assignmentId
-      ? (teacherWorkspace?.portfolio ? { [teacherWorkspace.portfolio.id]: teacherWorkspace.portfolio } : {})
-      : compatibility.portfolios;
+      ? (teacherWorkspace?.portfolio ? { [teacherWorkspace.portfolio.id]: teacherWorkspace.portfolio } : EMPTY_PORTFOLIOS)
+      : compatibility.portfolios,
+  [isStudent, isTeacher, assignmentId, studentWorkspace?.portfolio, studentOverview?.portfolios, teacherWorkspace?.portfolio, compatibility.portfolios]);
   const feedbacks = isStudent
-    ? (assignmentId ? (studentWorkspace?.feedbacks || []) : (studentOverview?.feedbacks || []))
+    ? (assignmentId ? (studentWorkspace?.feedbacks || EMPTY_LIST) : (studentOverview?.feedbacks || EMPTY_LIST))
     : isTeacher && assignmentId
-      ? (teacherWorkspace?.feedbacks || [])
+      ? (teacherWorkspace?.feedbacks || EMPTY_LIST)
       : compatibility.feedbacks;
   const rubricSubmissions = isStudent
-    ? (assignmentId ? (studentWorkspace?.rubricSubmissions || []) : (studentOverview?.rubricSubmissions || []))
+    ? (assignmentId ? (studentWorkspace?.rubricSubmissions || EMPTY_LIST) : (studentOverview?.rubricSubmissions || EMPTY_LIST))
     : isTeacher && assignmentId
-      ? (teacherWorkspace?.rubricSubmissions || [])
+      ? (teacherWorkspace?.rubricSubmissions || EMPTY_LIST)
       : compatibility.rubricSubmissions;
   const rubrics = isStudent
     ? (studentWorkspace?.rubric?.id ? { [studentWorkspace.rubric.id]: studentWorkspace.rubric } : {})
@@ -94,10 +100,10 @@ export const StudentAnalyticsView: React.FC<StudentAnalyticsViewProps> = ({ stud
   const studentFeedback = feedbacks.filter(item => item.studentId === studentId && item.assignmentId === assignmentId);
   const academicVersions = academicVersionsOf(portfolio);
 
-  const officialSubmissions = useMemo(() => rubricSubmissions
-    .filter(item => item.studentId === studentId && item.assignmentId === assignmentId && item.evaluatorRole === 'teacher')
-    .sort((a, b) => new Date(a.submittedAt).getTime() - new Date(b.submittedAt).getTime()),
-  [rubricSubmissions, studentId, assignmentId]);
+  const officialSubmissions = useMemo(() => teacherAssessmentsByVersion(
+    rubricSubmissions.filter(item => item.studentId === studentId && item.assignmentId === assignmentId),
+    portfolio?.versions
+  ), [rubricSubmissions, studentId, assignmentId, portfolio?.versions]);
 
   const peerSubmissions = useMemo(() => rubricSubmissions.filter(item =>
     item.studentId === studentId && item.assignmentId === assignmentId && item.evaluatorRole === 'peer'

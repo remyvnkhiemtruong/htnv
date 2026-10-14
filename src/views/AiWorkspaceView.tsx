@@ -118,10 +118,13 @@ export const AiWorkspaceView: React.FC = () => {
     ? (teacherWorkspace?.aiReviews.find(item => item.id === selected?.id) || selected)
     : selected;
 
+  const detailedSelectedId = detailedSelected?.id;
+  const detailedSelectedResponse = detailedSelected?.response;
+
   useEffect(() => {
-    if (!isTeacher || !detailedSelected) return;
-    setResponse(detailedSelected.response || '');
-  }, [detailedSelected?.id, detailedSelected?.response, isTeacher]);
+    if (!isTeacher || !detailedSelectedId) return;
+    setResponse(detailedSelectedResponse || '');
+  }, [detailedSelectedId, detailedSelectedResponse, isTeacher]);
 
   const refresh = useCallback(async () => {
     if (isTeacher) {

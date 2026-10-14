@@ -45,6 +45,8 @@ const StatePanel: React.FC<{
 
 type InspectorTab = 'comment' | 'rubric' | 'ai' | 'reflection';
 
+const EMPTY_LIST: never[] = [];
+
 export const TeacherReviewView: React.FC<TeacherReviewViewProps> = ({
   studentId,
   assignmentId,
@@ -133,10 +135,10 @@ export const TeacherReviewView: React.FC<TeacherReviewViewProps> = ({
     : assignment
       ? (rubrics[assignment.rubricId] || rubric)
       : rubric;
-  const feedbacks = isTeacher ? (teacherWorkspace?.feedbacks || []) : overviewFeedbacks;
-  const rubricSubmissions = isTeacher ? (teacherWorkspace?.rubricSubmissions || []) : overviewRubricSubmissions;
-  const aiReviews = isTeacher ? (teacherWorkspace?.aiReviews || []) : overviewAiReviews;
-  const reflections = isTeacher ? (teacherWorkspace?.reflections || []) : overviewReflections;
+  const feedbacks = isTeacher ? (teacherWorkspace?.feedbacks || EMPTY_LIST) : overviewFeedbacks;
+  const rubricSubmissions = isTeacher ? (teacherWorkspace?.rubricSubmissions || EMPTY_LIST) : overviewRubricSubmissions;
+  const aiReviews = isTeacher ? (teacherWorkspace?.aiReviews || EMPTY_LIST) : overviewAiReviews;
+  const reflections = isTeacher ? (teacherWorkspace?.reflections || EMPTY_LIST) : overviewReflections;
 
   const refreshReviewData = async () => {
     if (isTeacher) {
@@ -161,19 +163,25 @@ export const TeacherReviewView: React.FC<TeacherReviewViewProps> = ({
   const integrityError = Boolean(currentPortfolio && selectedVersion && !selectedSnapshot);
   const activeResponse = selectedSnapshot?.responses?.[activeAxisId];
 
+  const gradingStudentId = currentPortfolio?.studentId;
+  const gradingAssignmentId = assignment?.id;
+  const existingAssessment = useMemo(() => rubricSubmissions.find(item =>
+    item.studentId === gradingStudentId && item.assignmentId === gradingAssignmentId &&
+    item.versionNumber === selectedVersion && item.evaluatorRole === evaluatorRole &&
+    (isAdminReadOnly || item.evaluatorId === currentUser.id)
+  ), [rubricSubmissions, gradingStudentId, gradingAssignmentId, selectedVersion, evaluatorRole, isAdminReadOnly, currentUser.id]);
+  const gradingTargetKey = currentPortfolio && assignment && selectedSnapshot
+    ? JSON.stringify([currentPortfolio.id, assignment.id, selectedSnapshot.id, evaluatorRole, currentUser.id])
+    : '';
+
   useEffect(() => {
     const reset = Object.fromEntries((activeRubric.criteria || []).map(criterion => [criterion.id, 0]));
-    if (!currentPortfolio || !assignment || !selectedVersion || !selectedSnapshot) {
+    if (!gradingTargetKey) {
       setRubricScores(reset);
       setOverallFeedback('');
       return;
     }
-    const existing = rubricSubmissions.find(item =>
-      item.studentId === currentPortfolio.studentId &&
-      item.assignmentId === assignment.id &&
-      item.versionNumber === selectedVersion &&
-      item.evaluatorRole === evaluatorRole
-    );
+    const existing = existingAssessment;
     if (existing) {
       const loaded: Record<string, number> = {};
       for (const [criterionId, value] of Object.entries(existing.criterionScores || {})) {
@@ -185,7 +193,7 @@ export const TeacherReviewView: React.FC<TeacherReviewViewProps> = ({
       setRubricScores(reset);
       setOverallFeedback('');
     }
-  }, [currentPortfolio, assignment, selectedVersion, selectedSnapshot, evaluatorRole, activeRubric.id, activeRubric.criteria, rubricSubmissions]);
+  }, [gradingTargetKey, existingAssessment, activeRubric.id, activeRubric.criteria]);
 
   const currentFeedbacks = useMemo(() => {
     if (!currentPortfolio || !assignment || !selectedVersion) return [];

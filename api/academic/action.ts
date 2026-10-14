@@ -64,11 +64,11 @@ const clientMessage = (code: string) => {
     CSRF_ORIGIN_MISMATCH: "Yêu cầu không hợp lệ.",
     VALIDATION_ERROR: "Dữ liệu gửi lên không hợp lệ.",
     REFLECTION_REQUIRED: "Em cần hoàn thành đủ phần tự phản tư trước khi gửi.",
-    REFLECTION_REQUIRES_REVISION: "Tự phản tư chỉ được thực hiện sau phiên bản chỉnh sửa V2 trở đi.",
-    REFLECTION_REQUIRED_BEFORE_OFFICIAL_RUBRIC: "Học sinh cần hoàn thành tự phản tư sau V2 trước khi giáo viên chấm rubric chính thức.",
-    PREDICTION_QUESTIONS_REQUIRED: "Đã bật V0 nhưng nhiệm vụ chưa có câu hỏi dự đoán trước đọc.",
+    REFLECTION_REQUIRES_REVISION: "Em cần nộp bài chỉnh sửa trước khi tự nhìn lại bài làm.",
+    REFLECTION_REQUIRED_BEFORE_OFFICIAL_RUBRIC: "Học sinh cần tự nhìn lại bài chỉnh sửa trước khi giáo viên chấm điểm chính thức.",
+    PREDICTION_QUESTIONS_REQUIRED: "Đã bật phần dự đoán nhưng nhiệm vụ chưa có câu hỏi dự đoán trước khi đọc.",
     PREDICTION_REQUIRED_FIRST: "Em cần nộp phần dự đoán trước khi nộp bài làm đầu tiên.",
-    RUBRIC_NOT_FOUND: "Nhiệm vụ chưa có rubric hợp lệ. Vui lòng liên hệ giáo viên phụ trách.",
+    RUBRIC_NOT_FOUND: "Bài tập chưa có bảng tiêu chí chấm điểm hợp lệ. Vui lòng liên hệ giáo viên phụ trách.",
     AI_REVIEW_CLAIMED: "Bài này đang được một tài khoản AI khác xử lý.",
     AI_REVIEW_CLOSED: "Phản hồi AI này đã được xử lý hoặc không còn mở.",
     DRAFT_CONFLICT: "Bản nháp đã được cập nhật ở một phiên khác. Hệ thống đã giữ nguyên nội dung trên máy này; hãy tải lại và đối chiếu trước khi lưu tiếp.",
@@ -82,7 +82,7 @@ const clientMessage = (code: string) => {
     REVISION_REASON_REQUIRED: "Em hãy ghi lý do sửa bài trước khi nộp.",
     INVALID_CONFIDENCE: "Em hãy chọn mức tự tin từ 1 đến 5."
   };
-  if (code.startsWith("INVALID_RUBRIC_LEVEL")) return "Mức rubric không hợp lệ.";
+  if (code.startsWith("INVALID_RUBRIC_LEVEL")) return "Mức điểm đã chọn không hợp lệ.";
   return messages[code] || "Không thể thực hiện thao tác. Vui lòng thử lại.";
 };
 
@@ -120,7 +120,7 @@ export default async function handler(req: any, res: any) {
     if (code === "CSRF_ORIGIN_MISMATCH" || code === "FORBIDDEN" || code.endsWith("_FORBIDDEN") || code === "FORBIDDEN_STUDENT_RUBRIC") status = 403;
     else if (code.includes("NOT_FOUND")) status = 404;
     else if (code === "ASSIGNMENT_CLOSED" || code === "AI_REVIEW_CLAIMED" || code === "AI_REVIEW_CLOSED" || code === "DRAFT_CONFLICT" || code === "PORTFOLIO_READ_ONLY" || code === "PREDICTION_ALREADY_SUBMITTED" || code === "PREDICTION_WINDOW_CLOSED" || code === "INITIAL_ALREADY_SUBMITTED" || code === "REVISION_ALREADY_SUBMITTED") status = 409;
-    else if (code.startsWith("INVALID") || code.includes("REQUIRED") || code === "EMPTY_RESPONSE" || code === "CANNOT_PEER_REVIEW_SELF" || code === "VALIDATION_ERROR" || code === "PREDICTION_ALREADY_SUBMITTED" || code === "PEER_REVIEWER_INVALID" || code === "PEER_STUDENT_INVALID" || code === "CONTENT_TOO_LARGE" || code === "SCHEMA_MIGRATION_REQUIRED") status = 400;
+    else if (code.startsWith("INVALID") || code.includes("REQUIRED") || code === "UNKNOWN_ACTION" || code === "EMPTY_RESPONSE" || code === "CANNOT_PEER_REVIEW_SELF" || code === "VALIDATION_ERROR" || code === "PREDICTION_ALREADY_SUBMITTED" || code === "PEER_REVIEWER_INVALID" || code === "PEER_STUDENT_INVALID" || code === "CONTENT_TOO_LARGE" || code === "SCHEMA_MIGRATION_REQUIRED") status = 400;
 
     const log = status >= 500 ? console.error : console.warn;
     log("[academic/action]", {
@@ -132,6 +132,6 @@ export default async function handler(req: any, res: any) {
       durationMs: Date.now() - startedAt
     });
     res.setHeader("Server-Timing", `total;dur=${Date.now() - startedAt}`);
-    return send(res, status, { code, message: clientMessage(code), requestId });
+    return send(res, status, { code: status >= 500 ? "ACADEMIC_ACTION_ERROR" : code, message: clientMessage(code), requestId });
   }
 }

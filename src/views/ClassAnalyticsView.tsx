@@ -1,6 +1,7 @@
 import React, { useMemo, useState } from 'react';
 import { usePortfolio } from '../contexts/PortfolioContext';
 import type { PoeticAxisId } from '../types';
+import { assessmentPercentage } from '../utils/assessmentAnalytics';
 import { Badge, Button } from '../components/ui';
 import { ArrowLeftIcon, ArrowTrendingUpIcon, ExclamationTriangleIcon, AcademicCapIcon, UserGroupIcon } from '@heroicons/react/24/outline';
 
@@ -52,13 +53,12 @@ export const ClassAnalyticsView: React.FC<ClassAnalyticsViewProps> = ({ onNaviga
         if (Number.isFinite(raw)) scores[meta.axisId] = Math.max(0, Math.min(100, (raw / meta.max) * 100));
       });
     }
-    const values = Object.values(scores).filter((value): value is number => typeof value === 'number' && Number.isFinite(value));
     return {
       portfolio,
       submission: teacherSubmission,
       rubricMissing: Boolean(assignment && !assignmentRubric),
       scores,
-      average: values.length ? values.reduce((sum, value) => sum + value, 0) / values.length : null
+      average: assignmentRubric ? assessmentPercentage(teacherSubmission) : null
     };
   }), [filtered, assignments, rubrics, rubricSubmissions]);
 

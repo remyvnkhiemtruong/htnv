@@ -315,7 +315,8 @@ async function saveReflection(user, input, req) {
   try {
     await client.query('BEGIN');
     const target = await client.query(`
-      SELECT p.id portfolio_id, v.id version_id, v.stage
+      SELECT p.id portfolio_id, p.status portfolio_status, a.status assignment_status,
+             v.id version_id, v.stage
       FROM portfolios p
       JOIN assignments a ON a.id=p.assignment_id
       JOIN portfolio_versions v ON v.portfolio_id=p.id
@@ -326,6 +327,14 @@ async function saveReflection(user, input, req) {
     const row = target.rows[0];
     if (!row) throw new Error('VERSION_NOT_FOUND');
     if (row.stage !== 'revision') throw new Error('REFLECTION_REQUIRES_REVISION');
+
+    const previous = await client.query('SELECT id, created_at FROM student_reflections WHERE portfolio_id=$1 AND version_id=$2', [row.portfolio_id, row.version_id]);
+    if (previous.rows[0]) {
+      await client.query('COMMIT');
+      return { ok: true, isIdempotentRetry: true, id: previous.rows[0].id, createdAt: previous.rows[0].created_at, portfolioStatus: row.portfolio_status };
+    }
+    if (row.portfolio_status === 'completed') throw new Error('PORTFOLIO_READ_ONLY');
+    if (row.assignment_status !== 'published') throw new Error('ASSIGNMENT_CLOSED');
 
     const inserted = await client.query(`
       INSERT INTO student_reflections(portfolio_id, version_id, reflection_json, created_by)

@@ -123,7 +123,7 @@ export const AdminAuditView: React.FC<AdminAuditViewProps> = ({ onNavigate: _onN
   const statsQuery = useAdminStatsQuery();
 
   const users = usersQuery.data?.users || [];
-  const classes = classesQuery.data?.classes || [];
+  const classes = useMemo(() => classesQuery.data?.classes || [], [classesQuery.data?.classes]);
   const logs = auditQuery.data?.logs || [];
 
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());

@@ -209,7 +209,7 @@ function excelDate(value: string) {
   const trimmed = value.trim();
   if (!trimmed) return '';
   if (/^\d{4}-\d{2}-\d{2}$/.test(trimmed)) return trimmed;
-  const vn = trimmed.match(/^(\d{1,2})[\/-](\d{1,2})[\/-](\d{4})$/);
+  const vn = trimmed.match(/^(\d{1,2})[/-](\d{1,2})[/-](\d{4})$/);
   if (vn) return `${vn[3]}-${vn[2].padStart(2, '0')}-${vn[1].padStart(2, '0')}`;
   const serial = Number(trimmed);
   if (Number.isFinite(serial) && serial > 20000 && serial < 80000) {

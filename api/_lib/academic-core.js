@@ -34,6 +34,19 @@ export function emptyDraft() {
   return Object.fromEntries(AXES.map(axisId => [axisId, { axisId, analysisText: '', evidenceQuotes: [] }]));
 }
 
+function anonymousCriterionScores(input) {
+  if (!input || typeof input !== 'object' || Array.isArray(input)) return {};
+  return Object.fromEntries(Object.entries(input).flatMap(([id, value]) => {
+    const score = value?.score == null ? null : Number(value.score);
+    const level = value?.level == null ? null : Number(value.level);
+    const numeric = {
+      ...(score !== null && Number.isFinite(score) ? { score } : {}),
+      ...(level !== null && Number.isFinite(level) ? { level } : {})
+    };
+    return Object.keys(numeric).length ? [[id, { ...numeric, note: '' }]] : [];
+  }));
+}
+
 function isUuid(value) {
   return UUID_RE.test(String(value || ''));
 }
@@ -645,7 +658,7 @@ export async function getAcademicSnapshot(user) {
           ? 'Giáo viên'
           : (row.evaluator_name || (row.evaluator_role === 'teacher' ? 'Giáo viên' : row.evaluator_role === 'peer' ? 'Đồng đẳng' : 'Tự đánh giá')),
         evaluatorRole: row.evaluator_role,
-        criterionScores: row.criterion_scores || {},
+        criterionScores: researcher ? anonymousCriterionScores(row.criterion_scores) : (row.criterion_scores || {}),
         overallFeedback: researcher ? '' : (row.overall_feedback || ''),
         totalScore: Number(row.total_score),
         maxScore: Number(row.max_score),

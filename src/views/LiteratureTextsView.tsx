@@ -10,6 +10,8 @@ interface LiteratureTextsViewProps {
   onNavigate: (view: string, extraParams?: unknown) => void;
 }
 
+const EMPTY_TEXTS: LiteratureText[] = [];
+
 async function saveCatalog(payload: unknown) {
   const r = await fetch('/api/academic/catalog', {
     method: 'POST',
@@ -27,7 +29,7 @@ export const LiteratureTextsView: React.FC<LiteratureTextsViewProps> = ({ onNavi
   const currentUser = useAuthStore(state => state.currentUser);
   const isTeacher = currentUser.role === 'teacher';
   const teacherLiteratureQuery = useTeacherLiteratureQuery(currentUser.id, isTeacher && Boolean(currentUser.id));
-  const literatureTexts = isTeacher ? (teacherLiteratureQuery.data || []) : compatibility.literatureTexts;
+  const literatureTexts = isTeacher ? (teacherLiteratureQuery.data || EMPTY_TEXTS) : compatibility.literatureTexts;
   const refreshAcademicData = compatibility.refreshAcademicData;
   const isLoading = isTeacher ? teacherLiteratureQuery.isLoading : compatibility.isLoading;
   const canEdit = currentUser.role === 'teacher' || currentUser.role === 'admin';

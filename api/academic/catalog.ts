@@ -55,7 +55,7 @@ function normalizeRubricInput(input: any) {
 
 const safeMessage = (code: string) => {
   if (code === 'CSRF_ORIGIN_MISMATCH') return 'Yêu cầu không hợp lệ.';
-  if (code === 'SCHEMA_MIGRATION_REQUIRED') return 'Hệ thống đang nâng cấp version ngữ liệu. Vui lòng thử lại sau.';
+  if (code === 'SCHEMA_MIGRATION_REQUIRED') return 'Hệ thống đang cập nhật dữ liệu tác phẩm. Vui lòng thử lại sau.';
   if (code === 'LITERATURE_TEXT_NOT_FOUND') return 'Không tìm thấy tác phẩm cần chỉnh sửa.';
   if (code.startsWith('INVALID_') || code === 'VALIDATION_ERROR') return 'Dữ liệu danh mục không hợp lệ.';
   return 'Không thể lưu danh mục.';
@@ -93,6 +93,6 @@ export default async function handler(req: any, res: any) {
       : 500;
     console.error('[academic/catalog]', { requestId, code, status, route: '/api/academic/catalog', durationMs: Date.now() - startedAt });
     res.setHeader('Server-Timing', `total;dur=${Date.now() - startedAt}`);
-    return send(res, status, { code, message: safeMessage(code), requestId });
+    return send(res, status, { code: status >= 500 ? 'CATALOG_ERROR' : code, message: safeMessage(code), requestId });
   }
 }

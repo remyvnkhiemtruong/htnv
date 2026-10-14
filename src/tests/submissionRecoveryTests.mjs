@@ -116,6 +116,21 @@ try{
   assert(db.calls.includes('ROLLBACK'));assert(!db.calls.some(s=>s.includes('INSERT INTO portfolio_versions')));
  });
  const serviceText=read('api/_lib/academic-service.js').replace(/^import \{[\s\S]*?\} from ['"][^'"]+['"];\s*/gm,'').replace(/export /g,'');
+ for(const existing of [true,false]) await test(existing ? 'A retried reflection preserves completed status and the official grade' : 'A completed portfolio cannot be reopened by a new reflection',async()=>{
+  const calls=[];
+  const query=async sql=>{
+   calls.push(sql);
+   if(sql.includes('SELECT p.id portfolio_id'))return {rows:[{portfolio_id:'portfolio',version_id:'version',stage:'revision',portfolio_status:'completed',assignment_status:'published'}]};
+   if(sql.includes('SELECT id, created_at FROM student_reflections'))return {rows:existing?[{id:'reflection',created_at:'2026-10-14'}]:[]};
+   return {rows:[]};
+  };
+  const pool={connect:async()=>({query,release(){}})};
+  const fn=new Function('getPool',serviceText+'\nreturn saveReflection;')(async()=>pool);
+  const request={assignmentId:'test',versionId:randomUUID(),reflection:Object.fromEntries(['changedUnderstanding','mostUsefulFeedback','incompleteInV1','improvedInV2','transferToNextReading'].map(key=>[key,'Câu trả lời kiểm tra']))};
+  if(existing){const result=await fn(user,request,{});assert.equal(result.portfolioStatus,'completed');assert(result.isIdempotentRetry)}
+  else await assert.rejects(fn(user,request,{}),/PORTFOLIO_READ_ONLY/);
+  assert(!calls.some(sql=>sql.includes('UPDATE portfolios')||sql.includes('INSERT INTO')));
+ });
  await test('The workflow wrapper recognises an existing submission before rejecting completed portfolios',async()=>{
   let delegated=false;const pool={query:async sql=>({rows:sql.includes('GROUP BY')?[{portfolio_id:'portfolio',portfolio_status:'completed',assignment_status:'closed'}]:[{exists:1}]})};
   const fn=new Function('getPool','academicActionV3',serviceText+'\nreturn createVersionWithWorkflow;')(async()=>pool,async()=>{delegated=true;return {ok:true}});

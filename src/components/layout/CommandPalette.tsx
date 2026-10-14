@@ -29,12 +29,14 @@ interface CommandItem {
   roles?: string[];
 }
 
+const EMPTY_LIST: never[] = [];
+
 export const CommandPalette: React.FC<CommandPaletteProps> = ({ isOpen, onClose, onNavigate }) => {
   const currentUser = useAuthStore(state => state.currentUser);
   const compatibility = usePortfolio();
   const overviewQuery = useStudentOverviewQuery(currentUser.id, isOpen && currentUser.role === 'student' && Boolean(currentUser.id));
-  const assignments = currentUser.role === 'student' ? (overviewQuery.data?.assignments || []) : compatibility.assignments;
-  const literatureTexts = currentUser.role === 'student' ? (overviewQuery.data?.literatureTexts || []) : compatibility.literatureTexts;
+  const assignments = currentUser.role === 'student' ? (overviewQuery.data?.assignments || EMPTY_LIST) : compatibility.assignments;
+  const literatureTexts = currentUser.role === 'student' ? (overviewQuery.data?.literatureTexts || EMPTY_LIST) : compatibility.literatureTexts;
   const [query, setQuery] = useState('');
   const [selectedIndex, setSelectedIndex] = useState(0);
   const dialogRef = useRef<HTMLDivElement>(null);

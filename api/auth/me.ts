@@ -16,7 +16,8 @@ export default async function handler(req:any,res:any) {
     } catch(error:any) {
       const code=String(error?.message||"PROFILE_UPDATE_ERROR");
       const status=code==="CSRF_ORIGIN_MISMATCH"?403:code==="INVALID_NAME"?400:500;
-      return send(res,status,{code,message:code==="INVALID_NAME"?"Họ tên phải có ít nhất 2 ký tự.":"Không thể cập nhật hồ sơ."});
+      console.error('[auth/me]', { code, status, route: '/api/auth/me' });
+      return send(res,status,{code:status>=500?"PROFILE_UPDATE_ERROR":code,message:code==="INVALID_NAME"?"Họ tên phải có ít nhất 2 ký tự.":"Không thể cập nhật hồ sơ."});
     }
   }
   return send(res,405,{code:"METHOD_NOT_ALLOWED"});

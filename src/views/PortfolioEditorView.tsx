@@ -70,7 +70,7 @@ export const PortfolioEditorView: React.FC<PortfolioEditorViewProps> = ({ assign
   );
   const studentAction = useStudentAcademicAction(currentUser.id, assignmentId);
   const workspace = workspaceQuery.data;
-  const feedbacks = workspace?.feedbacks || [];
+  const feedbacks = useMemo(() => workspace?.feedbacks || [], [workspace?.feedbacks]);
   const reflections = workspace?.reflections || [];
   const rubricSubmissions = workspace?.rubricSubmissions || [];
   const isLoading = workspaceQuery.isLoading;
@@ -244,18 +244,22 @@ export const PortfolioEditorView: React.FC<PortfolioEditorViewProps> = ({ assign
   };
 
   // IndexedDB recovery: every local edit is persisted by the portfolio store.
+  const recoveryPortfolioId = portfolio?.id;
+  const recoveryLastSavedAt = portfolio?.lastAutosavedAt;
   useEffect(() => {
-    if (!assignment || !currentUser.id || !portfolio || !workflowState?.canEdit) return;
+    if (!assignment || !currentUser.id || !recoveryPortfolioId || !workflowState?.canEdit) return;
     let active = true;
     void getDraftRecovery(currentUser.id, assignment.id).then(recovery => {
       if (!active || !recovery?.draft) return;
-      const currentLen = Object.values(portfolio.currentDraft || {}).reduce((sum, axis) => sum + (axis?.analysisText?.length || 0), 0);
+      const currentPortfolio = usePortfolioStore.getState().portfolios[recoveryPortfolioId];
+      if (!currentPortfolio) return;
+      const currentLen = Object.values(currentPortfolio.currentDraft || {}).reduce((sum, axis) => sum + (axis?.analysisText?.length || 0), 0);
       const recoveryLen = Object.values(recovery.draft || {}).reduce((sum, axis) => sum + (axis?.analysisText?.length || 0), 0);
-      const newerThanServer = recovery.updatedAt > new Date(portfolio.lastAutosavedAt || 0).getTime();
+      const newerThanServer = recovery.updatedAt > new Date(currentPortfolio.lastAutosavedAt || 0).getTime();
       if (newerThanServer && recoveryLen >= currentLen) setLocalBackupAvailable(recovery);
     });
     return () => { active = false; };
-  }, [assignment, currentUser.id, portfolio?.id, portfolio?.lastAutosavedAt, workflowState?.canEdit]);
+  }, [assignment, currentUser.id, recoveryPortfolioId, recoveryLastSavedAt, workflowState?.canEdit]);
 
   useEffect(() => {
     const online = () => {

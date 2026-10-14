@@ -1,6 +1,7 @@
 import React, { useMemo } from 'react';
 import { usePortfolio } from '../contexts/PortfolioContext';
 import type { PoeticAxisId } from '../types';
+import { assessmentPercentage, teacherAssessmentsByVersion } from '../utils/assessmentAnalytics';
 import { Button } from '../components/ui';
 import { ArrowLeftIcon } from '@heroicons/react/24/outline';
 
@@ -26,18 +27,14 @@ export const ResearcherJudgeView: React.FC<ResearcherJudgeViewProps> = ({ onNavi
       return [criterion.id, { axisId: criterion.axisId, max }];
     })) : {};
 
-    const submissions = rubricSubmissions
-      .filter(item => item.studentId === portfolio.studentId && item.assignmentId === portfolio.assignmentId && item.evaluatorRole === 'teacher')
-      .sort((a, b) => new Date(a.submittedAt).getTime() - new Date(b.submittedAt).getTime());
-
-    const normalizedOverall = (submission: (typeof submissions)[number] | undefined) =>
-      submission && Number(submission.maxScore) > 0
-        ? (Number(submission.totalScore) / Number(submission.maxScore)) * 100
-        : null;
+    const submissions = teacherAssessmentsByVersion(
+      rubricSubmissions.filter(item => item.studentId === portfolio.studentId && item.assignmentId === portfolio.assignmentId),
+      portfolio.versions
+    );
 
     const pairedEligible = submissions.length >= 2;
-    const pre = pairedEligible ? normalizedOverall(submissions[0]) : null;
-    const post = pairedEligible ? normalizedOverall(submissions.at(-1)) : null;
+    const pre = pairedEligible ? assessmentPercentage(submissions[0]) : null;
+    const post = pairedEligible ? assessmentPercentage(submissions.at(-1)) : null;
     const latest = submissions.at(-1);
     const axes: Partial<Record<PoeticAxisId, number>> = {};
     if (latest && assignmentRubric) {
