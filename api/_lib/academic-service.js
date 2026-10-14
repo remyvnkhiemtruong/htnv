@@ -362,6 +362,10 @@ async function saveReflection(user, input, req) {
 async function submitRubricWithWorkflow(user, input, req) {
   if (user.role === 'admin') throw new Error('FORBIDDEN');
   if (user.role === 'teacher') {
+    const versionId = cleanTrimmed(input.versionId, 80);
+    const studentId = cleanTrimmed(input.studentId, 80);
+    if (!isUuid(versionId)) throw new Error('VERSION_REQUIRED');
+    if (!isUuid(studentId)) throw new Error('STUDENT_REQUIRED');
     const pool = await getPool();
     const check = await pool.query(`
       SELECT 1
@@ -372,7 +376,7 @@ async function submitRubricWithWorkflow(user, input, req) {
       JOIN class_members cm ON cm.class_id=a.class_id AND cm.user_id=$1 AND cm.member_role='teacher'
       WHERE sr.version_id=$2 AND a.public_id=$3 AND p.student_id=$4
       LIMIT 1
-    `, [user.id, cleanTrimmed(input.versionId, 80), cleanTrimmed(input.assignmentId, 200), cleanTrimmed(input.studentId, 80)]);
+    `, [user.id, versionId, cleanTrimmed(input.assignmentId, 200), studentId]);
     if (!check.rows.length) throw new Error('REFLECTION_REQUIRED_BEFORE_OFFICIAL_RUBRIC');
   }
 

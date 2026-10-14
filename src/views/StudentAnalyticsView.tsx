@@ -331,6 +331,35 @@ export const StudentAnalyticsView: React.FC<StudentAnalyticsViewProps> = ({ stud
         </div>
       </div>
 
+      {latest && (
+        <section aria-label="Điểm và nhận xét của giáo viên" className="space-y-4 rounded-lg border border-slate-200 bg-white p-5">
+          <div className="border-b border-slate-100 pb-3">
+            <h2 className="text-base font-bold text-slate-900">Điểm và nhận xét của giáo viên</h2>
+            <p className="mt-1 text-sm text-slate-600">
+              {latest.submission.evaluatorName || 'Giáo viên'} · {learningVersionLabel(latest.submission.versionNumber)} · {latest.submission.totalScore}/{latest.submission.maxScore} điểm
+            </p>
+          </div>
+          {latest.submission.overallFeedback && <p className="whitespace-pre-wrap text-sm leading-relaxed text-slate-700">{latest.submission.overallFeedback}</p>}
+          <div className="divide-y divide-slate-100">
+            {(activeRubric?.criteria || []).map(criterion => {
+              const value = latest.submission.criterionScores[criterion.id];
+              const level = criterion.levels.find(item => item.level === value?.level);
+              const maximum = Math.max(0, ...criterion.levels.map(item => Number(item.score ?? item.level)));
+              return (
+                <div key={criterion.id} className="space-y-1 py-3">
+                  <div className="flex items-start justify-between gap-3 text-sm">
+                    <strong className="font-semibold text-slate-800">{criterion.title}</strong>
+                    <span className="shrink-0 text-slate-600">{value ? `${value.score}/${maximum}${level?.label ? ` · ${level.label}` : ''}` : 'Chưa có điểm'}</span>
+                  </div>
+                  {Number(criterion.weight || 1) !== 1 && <p className="text-xs text-slate-500">Trọng số: {criterion.weight}</p>}
+                  {value?.note && <p className="whitespace-pre-wrap text-sm leading-relaxed text-slate-600">{value.note}</p>}
+                </div>
+              );
+            })}
+          </div>
+        </section>
+      )}
+
       {/* Criteria Trajectory Table */}
       <section className="space-y-3 rounded-lg border border-slate-200 bg-white p-5">
         <div className="flex items-center justify-between border-b border-slate-100 pb-3">

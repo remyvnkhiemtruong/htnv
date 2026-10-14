@@ -131,7 +131,23 @@ export const PortfolioEditorView: React.FC<PortfolioEditorViewProps> = ({ assign
     source?.label?.trim() && /^https:\/\//i.test(source?.url || '')
   );
 
-  const currentAxis = portfolio?.currentDraft?.[activeAxisId];
+  const versions = portfolio?.versions || [];
+  const submittedVersions = versions.filter(item => item.stage !== 'prediction');
+  const workflowState = assignment ? deriveStudentWorkflow({
+    assignment,
+    portfolio,
+    feedbacks,
+    rubricSubmissions,
+    reflectionVersionIds: reflections
+      .filter(item => item.assignmentId === assignment.id && item.studentId === currentUser.id)
+      .map(item => item.versionId)
+  }) : null;
+  // Keep any unsaved local draft for recovery, but show the immutable submission
+  // while the record is locked so it cannot be mistaken for the graded work.
+  const displayedContent = workflowState?.canEdit
+    ? portfolio?.currentDraft
+    : submittedVersions.at(-1)?.responses || versions.at(-1)?.responses || portfolio?.currentDraft;
+  const currentAxis = displayedContent?.[activeAxisId];
   const axisFeedbacks = useMemo(
     () => assignment ? feedbacks.filter(item => item.assignmentId === assignment.id && item.studentId === currentUser.id && item.axisId === activeAxisId) : [],
     [assignment, feedbacks, currentUser.id, activeAxisId]
@@ -142,15 +158,13 @@ export const PortfolioEditorView: React.FC<PortfolioEditorViewProps> = ({ assign
   );
   const wordCount = useMemo(() => {
     if (!portfolio) return 0;
-    return Object.values(portfolio.currentDraft || {}).reduce((sum, response) => {
+    return Object.values(displayedContent || {}).reduce((sum, response) => {
       const words = String(response?.analysisText || '').trim().split(/\s+/).filter(Boolean).length;
       return sum + words;
     }, 0);
-  }, [portfolio]);
+  }, [portfolio, displayedContent]);
 
   const evidenceText = (currentAxis?.evidenceQuotes || []).map(item => typeof item === 'string' ? item : item?.text || '').filter(Boolean).join('\n');
-  const versions = portfolio?.versions || [];
-  const submittedVersions = versions.filter(item => item.stage !== 'prediction');
   const predictionVersion = versions.find(item => item.stage === 'prediction');
   const isInitial = submittedVersions.length === 0;
   const predictionAvailable = !predictionVersion && isInitial && assignment?.workflowConfig?.predictionEnabled !== false;
@@ -163,17 +177,8 @@ export const PortfolioEditorView: React.FC<PortfolioEditorViewProps> = ({ assign
   const latestReflection = latestRevision && assignment
     ? reflections.find(item => item.assignmentId === assignment.id && item.studentId === currentUser.id && item.versionId === latestRevision.id)
     : undefined;
-  const workflowState = assignment ? deriveStudentWorkflow({
-    assignment,
-    portfolio,
-    feedbacks,
-    rubricSubmissions,
-    reflectionVersionIds: reflections
-      .filter(item => item.assignmentId === assignment.id && item.studentId === currentUser.id)
-      .map(item => item.versionId)
-  }) : null;
   const currentAxisMeta = POETIC_AXES.find(axis => axis.id === activeAxisId) || POETIC_AXES[0];
-  const completedAxes = POETIC_AXES.filter(axis => Boolean(portfolio?.currentDraft?.[axis.id]?.analysisText?.trim())).length;
+  const completedAxes = POETIC_AXES.filter(axis => Boolean(displayedContent?.[axis.id]?.analysisText?.trim())).length;
 
   const updateAnalysis = (text: string) => {
     if (!assignment || !workflowState?.canEdit) return;
@@ -322,7 +327,7 @@ export const PortfolioEditorView: React.FC<PortfolioEditorViewProps> = ({ assign
   };
 
   const insertQuoteToEvidence = () => {
-    if (!selectedQuoteSnippet || !assignment) return;
+    if (!selectedQuoteSnippet || !assignment || !workflowState?.canEdit) return;
     const cleanQuote = selectedQuoteSnippet.replace(/\s+/g, ' ');
     const existingQuotes = (currentAxis?.evidenceQuotes || []).map(q => typeof q === 'string' ? q : q?.text || '');
     if (!evidenceText.includes(cleanQuote) && !existingQuotes.includes(cleanQuote)) {
@@ -576,7 +581,7 @@ export const PortfolioEditorView: React.FC<PortfolioEditorViewProps> = ({ assign
 
             <nav className="flex gap-1.5 overflow-x-auto pb-1 lg:flex-col lg:overflow-x-visible lg:pb-0" aria-label="Trục phân tích">
               {POETIC_AXES.map((axis, idx) => {
-                const response = portfolio.currentDraft?.[axis.id];
+                const response = displayedContent?.[axis.id];
                 const done = Boolean(response?.analysisText?.trim());
                 const active = activeAxisId === axis.id;
 
@@ -692,7 +697,7 @@ export const PortfolioEditorView: React.FC<PortfolioEditorViewProps> = ({ assign
             {/* Axis Header & Typography Controls */}
             <div className="flex flex-wrap items-end justify-between gap-3 border-b border-slate-200 pb-3">
               <div className="min-w-0">
-                <span className="text-xs font-bold text-primary-700">Đang viết trục</span>
+                <span className="text-xs font-bold text-primary-700">{workflowState?.canEdit ? 'Đang viết phần' : 'Đang xem phần'}</span>
                 <h1 className="mt-1 text-xl font-bold tracking-tight text-slate-950 sm:text-2xl">{currentAxisMeta.title}</h1>
                 <p className="mt-1 text-xs leading-5 text-slate-500">{currentAxisMeta.description}</p>
               </div>
@@ -722,7 +727,7 @@ export const PortfolioEditorView: React.FC<PortfolioEditorViewProps> = ({ assign
               <div>
                 <label className="mb-1.5 flex items-center justify-between text-xs font-semibold text-slate-700">
                   <span>Nội dung phân tích</span>
-                  <span className="font-normal text-slate-400">Tự động lưu sau khi gõ</span>
+                  <span className="font-normal text-slate-400">{workflowState?.canEdit ? 'Tự động lưu sau khi gõ' : 'Bài đã nộp · chỉ xem'}</span>
                 </label>
                 <textarea
                   ref={analysisTextareaRef}
@@ -946,7 +951,7 @@ export const PortfolioEditorView: React.FC<PortfolioEditorViewProps> = ({ assign
                       {literatureText ? `${literatureText.title} — ${literatureText.author}` : 'Chưa có ngữ liệu.'}
                     </p>
                   </div>
-                  {primaryTextAvailable && <span className="text-xs text-slate-400">Bôi đen chữ để trích dẫn nhanh</span>}
+                  {primaryTextAvailable && workflowState?.canEdit && <span className="text-xs text-slate-400">Bôi đen chữ để trích dẫn nhanh</span>}
                 </div>
                 {predictionAvailable ? (
                   <div className="rounded-lg border border-sky-200 bg-sky-50 p-3 text-xs leading-5 text-sky-900">
@@ -986,7 +991,7 @@ export const PortfolioEditorView: React.FC<PortfolioEditorViewProps> = ({ assign
                       </div>
                     )}
 
-                    {selectedQuoteSnippet && (
+                    {selectedQuoteSnippet && workflowState?.canEdit && (
                       <div className="animate-fade-in sticky bottom-0 z-10 flex flex-col gap-2 rounded-lg border border-primary-300 bg-primary-50 p-3 shadow-md">
                         <div className="line-clamp-2 italic text-xs text-primary-950 font-medium">
                           &ldquo;{selectedQuoteSnippet}&rdquo;
@@ -1025,6 +1030,7 @@ export const PortfolioEditorView: React.FC<PortfolioEditorViewProps> = ({ assign
                 <textarea
                   value={evidenceText}
                   onChange={e => updateEvidence(e.target.value)}
+                  disabled={!workflowState?.canEdit}
                   rows={8}
                   placeholder="Mỗi dòng một trích dẫn ngữ liệu..."
                   className="w-full rounded-lg border border-slate-300 bg-white p-3 text-xs leading-5 text-slate-800 outline-none focus:border-primary-600 focus:ring-2 focus:ring-primary-600/10"

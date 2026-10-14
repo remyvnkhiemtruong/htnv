@@ -73,7 +73,7 @@ export const TeacherReviewView: React.FC<TeacherReviewViewProps> = ({
   const { addToast } = useNotificationStore();
 
   const queue = useMemo(() => {
-    const all = Object.values(portfolios).filter(item => item.versions.length > 0);
+    const all = Object.values(portfolios).filter(item => item.versions.some(version => version.stage !== 'prediction'));
     const scoped = assignmentId ? all.filter(item => item.assignmentId === assignmentId) : all;
     return [...scoped].sort((a, b) => a.studentName.localeCompare(b.studentName, 'vi'));
   }, [portfolios, assignmentId]);
@@ -88,6 +88,7 @@ export const TeacherReviewView: React.FC<TeacherReviewViewProps> = ({
   const [feedbackText, setFeedbackText] = useState('');
   const [overallFeedback, setOverallFeedback] = useState('');
   const [rubricScores, setRubricScores] = useState<Record<string, number>>({});
+  const [criterionNotes, setCriterionNotes] = useState<Record<string, string>>({});
   const [isSubmittingFeedback, setIsSubmittingFeedback] = useState(false);
   const [isSubmittingRubric, setIsSubmittingRubric] = useState(false);
   const [isEditingAiProposal, setIsEditingAiProposal] = useState(false);
@@ -96,19 +97,23 @@ export const TeacherReviewView: React.FC<TeacherReviewViewProps> = ({
   const [activeTab, setActiveTab] = useState<InspectorTab>('comment');
   const [searchQuery, setSearchQuery] = useState('');
   const [filterState, setFilterState] = useState<'all' | 'pending' | 'graded'>('all');
+  const requestedTargetRef = useRef('');
 
   useEffect(() => {
     if (!queue.length) {
       setCurrentIndex(0);
       return;
     }
-    if (studentId) {
-      const requested = queue.findIndex(item => item.studentId === studentId);
-      if (requested >= 0) setCurrentIndex(requested);
+    const requestedKey = JSON.stringify([assignmentId || '', studentId || '']);
+    if (requestedTargetRef.current !== requestedKey) {
+      const requested = studentId ? queue.findIndex(item => item.studentId === studentId) : 0;
+      if (requested < 0) return;
+      requestedTargetRef.current = requestedKey;
+      setCurrentIndex(requested);
       return;
     }
     if (currentIndex >= queue.length) setCurrentIndex(0);
-  }, [queue, studentId, currentIndex]);
+  }, [queue, studentId, assignmentId, currentIndex]);
 
   const currentPortfolioSummary = requestedStudentMissing ? undefined : queue[currentIndex];
   const isTeacher = currentUser.role === 'teacher';
@@ -165,11 +170,25 @@ export const TeacherReviewView: React.FC<TeacherReviewViewProps> = ({
 
   const gradingStudentId = currentPortfolio?.studentId;
   const gradingAssignmentId = assignment?.id;
+  const currentReflection = useMemo(() => {
+    if (!currentPortfolio || !assignment || !selectedSnapshot) return null;
+    return reflections.find(r => r.studentId === currentPortfolio.studentId &&
+      r.assignmentId === assignment.id && r.versionId === selectedSnapshot.id) || null;
+  }, [reflections, currentPortfolio, assignment, selectedSnapshot]);
+  const currentRubricSubmission = useMemo(() => {
+    if (!currentPortfolio || !assignment || !selectedSnapshot) return null;
+    return rubricSubmissions.find(item => item.studentId === currentPortfolio.studentId &&
+      item.assignmentId === assignment.id && item.versionId === selectedSnapshot.id &&
+      item.evaluatorRole === evaluatorRole) || null;
+  }, [rubricSubmissions, currentPortfolio, assignment, selectedSnapshot, evaluatorRole]);
+  const canEditRubric = !isAdminReadOnly && Boolean(selectedSnapshot) && selectedSnapshot?.stage !== 'prediction'
+    && (evaluatorRole === 'peer' || Boolean(currentReflection));
   const existingAssessment = useMemo(() => rubricSubmissions.find(item =>
     item.studentId === gradingStudentId && item.assignmentId === gradingAssignmentId &&
     item.versionNumber === selectedVersion && item.evaluatorRole === evaluatorRole &&
     (isAdminReadOnly || item.evaluatorId === currentUser.id)
   ), [rubricSubmissions, gradingStudentId, gradingAssignmentId, selectedVersion, evaluatorRole, isAdminReadOnly, currentUser.id]);
+  const assessmentForForm = existingAssessment || (!canEditRubric ? currentRubricSubmission : undefined);
   const gradingTargetKey = currentPortfolio && assignment && selectedSnapshot
     ? JSON.stringify([currentPortfolio.id, assignment.id, selectedSnapshot.id, evaluatorRole, currentUser.id])
     : '';
@@ -178,22 +197,34 @@ export const TeacherReviewView: React.FC<TeacherReviewViewProps> = ({
     const reset = Object.fromEntries((activeRubric.criteria || []).map(criterion => [criterion.id, 0]));
     if (!gradingTargetKey) {
       setRubricScores(reset);
+      setCriterionNotes({});
       setOverallFeedback('');
       return;
     }
-    const existing = existingAssessment;
+    const existing = assessmentForForm;
     if (existing) {
       const loaded: Record<string, number> = {};
       for (const [criterionId, value] of Object.entries(existing.criterionScores || {})) {
         loaded[criterionId] = Number(value.level || value.score || 0);
       }
       setRubricScores(loaded);
+      setCriterionNotes(Object.fromEntries(Object.entries(existing.criterionScores || {}).map(([id, value]) => [id, value.note || ''])));
       setOverallFeedback(existing.overallFeedback || '');
     } else {
       setRubricScores(reset);
+      setCriterionNotes({});
       setOverallFeedback('');
     }
-  }, [gradingTargetKey, existingAssessment, activeRubric.id, activeRubric.criteria]);
+  }, [gradingTargetKey, assessmentForForm, activeRubric.id, activeRubric.criteria]);
+
+  const feedbackTargetKey = JSON.stringify([gradingTargetKey, activeAxisId]);
+  const feedbackTargetRef = useRef(feedbackTargetKey);
+  feedbackTargetRef.current = feedbackTargetKey;
+  useEffect(() => {
+    setFeedbackText('');
+    setSelectedText('');
+    setSelectedAnchor(null);
+  }, [feedbackTargetKey]);
 
   const currentFeedbacks = useMemo(() => {
     if (!currentPortfolio || !assignment || !selectedVersion) return [];
@@ -219,25 +250,6 @@ export const TeacherReviewView: React.FC<TeacherReviewViewProps> = ({
     setEditedAiText(pendingAiProposal?.response || '');
     setIsEditingAiProposal(false);
   }, [pendingAiProposal?.id, pendingAiProposal?.response]);
-
-  const currentReflection = useMemo(() => {
-    if (!currentPortfolio || !assignment || !selectedSnapshot) return null;
-    return reflections.find(r =>
-      r.studentId === currentPortfolio.studentId &&
-      r.assignmentId === assignment.id &&
-      r.versionId === selectedSnapshot.id
-    ) || null;
-  }, [reflections, currentPortfolio, assignment, selectedSnapshot]);
-
-  const currentRubricSubmission = useMemo(() => {
-    if (!currentPortfolio || !assignment || !selectedVersion) return null;
-    return rubricSubmissions.find(item =>
-      item.studentId === currentPortfolio.studentId &&
-      item.assignmentId === assignment.id &&
-      item.versionNumber === selectedVersion &&
-      item.evaluatorRole === evaluatorRole
-    ) || null;
-  }, [rubricSubmissions, currentPortfolio, assignment, selectedVersion, evaluatorRole]);
 
   const totalScore = activeRubric.criteria.reduce((sum, criterion) => {
     const selectedLevel = rubricScores[criterion.id] || 0;
@@ -345,8 +357,10 @@ export const TeacherReviewView: React.FC<TeacherReviewViewProps> = ({
         authorRole: evaluatorRole
       });
       if (isTeacher) await teacherWorkspaceQuery.refetch();
-      setFeedbackText('');
-      setSelectedText(''); setSelectedAnchor(null);
+      if (feedbackTargetRef.current === feedbackTargetKey) {
+        setFeedbackText('');
+        setSelectedText(''); setSelectedAnchor(null);
+      }
       addToast({ type: 'success', title: 'Đã lưu phản hồi', message: 'Nhận xét đã được lưu cho đúng phiên bản.' });
     } catch (error: unknown) {
       addToast({ type: 'error', title: 'Lỗi gửi phản hồi', message: error instanceof Error ? error.message : 'Không thể lưu nhận xét.' });
@@ -356,7 +370,7 @@ export const TeacherReviewView: React.FC<TeacherReviewViewProps> = ({
   };
 
   const saveRubric = async () => {
-    if (isAdminReadOnly) return;
+    if (!canEditRubric) return;
     if (!activeRubric.criteria.length) return;
     if (activeRubric.criteria.some(criterion => (rubricScores[criterion.id] || 0) < 1)) {
       addToast({ type: 'warning', title: 'Bảng tiêu chí chấm điểm chưa hoàn tất', message: 'Hãy chọn mức cho tất cả tiêu chí.' });
@@ -366,7 +380,7 @@ export const TeacherReviewView: React.FC<TeacherReviewViewProps> = ({
     try {
       const criterionScores = Object.fromEntries(activeRubric.criteria.map(criterion => {
         const level = rubricScores[criterion.id] || 0;
-        return [criterion.id, { level, score: level, note: '' }];
+        return [criterion.id, { level, score: level, note: criterionNotes[criterion.id] || '' }];
       }));
       const result = await submitRubric({
         assignmentId: assignment.id,
@@ -520,7 +534,7 @@ export const TeacherReviewView: React.FC<TeacherReviewViewProps> = ({
               {filteredQueue.length === 0 ? <p className="p-3 text-center text-xs text-slate-400">Không tìm thấy học sinh phù hợp.</p> : filteredQueue.map(item => {
                 const actualIndex = queue.findIndex(q => q.id === item.id);
                 const active = actualIndex === currentIndex;
-                const isGraded = rubricSubmissions.some(r => r.studentId === item.studentId && r.assignmentId === item.assignmentId && r.evaluatorRole === evaluatorRole);
+                const isGraded = overviewRubricSubmissions.some(r => r.studentId === item.studentId && r.assignmentId === item.assignmentId && r.evaluatorRole === evaluatorRole);
                 return (
                   <button key={item.id} type="button" onClick={() => { setCurrentIndex(actualIndex); setSelectedText(''); setSelectedAnchor(null); }} aria-current={active ? 'true' : undefined} className={`w-full rounded-lg border px-3 py-2 text-left text-xs transition-colors ${active ? 'border-primary-300 bg-primary-50/90 font-semibold text-primary-950' : 'border-transparent text-slate-600 hover:border-slate-200 hover:bg-white hover:text-slate-900'}`}>
                     <div className="flex items-center justify-between gap-1"><span className="truncate">{item.studentName}</span>{isGraded ? <CheckCircleIcon className="h-3.5 w-3.5 shrink-0 text-emerald-600" title="Đã chấm điểm" /> : <ClockIcon className="h-3.5 w-3.5 shrink-0 text-amber-500" title="Chưa chấm" />}</div>
@@ -583,11 +597,67 @@ export const TeacherReviewView: React.FC<TeacherReviewViewProps> = ({
 
           {activeTab === 'comment' && <section className="space-y-3 rounded-lg border border-slate-200 bg-white p-4"><div><h3 className="text-sm font-bold text-slate-900">Nhận xét trực tiếp</h3><p className="mt-0.5 text-xs text-slate-500 leading-relaxed">{isAdminReadOnly ? 'Quản trị viên đang xem bài ở chế độ chỉ đọc.' : 'Bôi đen một đoạn để gắn nhận xét, hoặc nhập nhận xét chung cho trục này.'}</p></div>{selectedText ? <div className="rounded-lg border-l-2 border-primary-400 bg-primary-50/70 p-2.5 text-xs italic leading-relaxed text-slate-700"><div className="flex items-center justify-between font-semibold not-italic text-primary-900 mb-1"><span>Đoạn trích gắn kèm</span><button type="button" onClick={() => { setSelectedText(''); setSelectedAnchor(null); }} className="text-slate-400 hover:text-slate-600">×</button></div>&ldquo;{selectedText}&rdquo;</div> : <div className="rounded-lg border border-dashed border-slate-200 bg-slate-50/50 p-2.5 text-center text-xs text-slate-400">Chưa chọn đoạn trích (nhận xét sẽ gắn vào toàn trục)</div>}<div><textarea rows={5} value={feedbackText} onChange={event => setFeedbackText(event.target.value)} disabled={isAdminReadOnly} placeholder={isAdminReadOnly ? 'Chế độ chỉ đọc' : 'Nhập nhận xét cho học sinh...'} className="w-full rounded-lg border border-slate-300 bg-white p-3 text-sm leading-relaxed outline-none disabled:bg-slate-50 disabled:text-slate-400 focus:border-primary-600 focus:ring-2 focus:ring-primary-600/10" /></div>{!isAdminReadOnly && <Button className="w-full" size="sm" variant="primary" isLoading={isSubmittingFeedback} onClick={createFeedback}>Gửi nhận xét</Button>}</section>}
 
-          {activeTab === 'rubric' && <section className="space-y-4 rounded-lg border border-slate-200 bg-white p-4"><div className="flex items-center justify-between gap-3 border-b border-slate-100 pb-3"><div><h3 className="text-sm font-bold text-slate-900">{activeRubric.title || 'Bảng tiêu chí chấm điểm'}</h3><p className="mt-0.5 text-xs text-slate-500">Chọn đủ mức cho 6 tiêu chí trước khi lưu.</p></div><div className="rounded-lg bg-slate-900 px-3 py-1.5 text-sm font-bold text-white">{totalScore}/{maxScore}đ</div></div>{!activeRubric.criteria.length ? <p className="text-xs text-slate-500">Nhiệm vụ chưa có bảng tiêu chí chấm điểm hợp lệ.</p> : <div className="space-y-3 max-h-[44vh] overflow-y-auto pr-1">{activeRubric.criteria.map((criterion, idx) => { const currentLevel = rubricScores[criterion.id] || 0; return <div key={criterion.id} className="space-y-2 border-b border-slate-100 pb-3 last:border-0"><div className="flex items-center justify-between"><span className="text-xs font-semibold leading-5 text-slate-800">{idx + 1}. {criterion.title}</span>{currentLevel > 0 ? <span className="text-xs font-bold text-primary-700">Mức {currentLevel}</span> : <span className="text-xs text-amber-600 font-medium">Chưa chọn</span>}</div><div className="grid grid-cols-4 gap-1.5">{criterion.levels.map(level => { const isSelected = currentLevel === level.level; return <button key={level.level} type="button" title={`${criterion.title}: mức ${level.level} - ${level.label}`} disabled={isAdminReadOnly} onClick={() => setRubricScores(previous => ({ ...previous, [criterion.id]: level.level }))} className={`flex flex-col items-center justify-center rounded-lg border py-1.5 px-1 text-xs transition ${isSelected ? 'border-primary-700 bg-primary-700 text-white font-bold' : 'border-slate-200 bg-white text-slate-700 hover:border-primary-300 hover:bg-primary-50'}`}><span className="font-bold">M{level.level}</span><span className={`text-xs truncate max-w-full ${isSelected ? 'text-primary-100' : 'text-slate-400'}`}>{level.score}đ</span></button>; })}</div></div>; })}</div>}<div><label className="block text-xs font-semibold text-slate-700 mb-1">Nhận xét tổng kết toàn bài</label><textarea rows={3} value={overallFeedback} onChange={event => setOverallFeedback(event.target.value)} disabled={isAdminReadOnly} placeholder={isAdminReadOnly ? 'Chế độ chỉ đọc' : 'Nhập nhận xét tổng kết...'} className="w-full rounded-lg border border-slate-300 bg-white p-2.5 text-xs leading-relaxed outline-none disabled:bg-slate-50 disabled:text-slate-400 focus:border-primary-600 focus:ring-2 focus:ring-primary-600/10" /></div>{!isAdminReadOnly && <Button className="w-full" size="sm" variant="primary" disabled={!activeRubric.criteria.length} isLoading={isSubmittingRubric} onClick={saveRubric}>Lưu điểm</Button>}</section>}
+          {activeTab === 'rubric' && (
+            <section className="space-y-4 rounded-lg border border-slate-200 bg-white p-4">
+              <div className="flex items-center justify-between gap-3 border-b border-slate-100 pb-3">
+                <div>
+                  <h3 className="text-sm font-bold text-slate-900">{activeRubric.title || 'Bảng tiêu chí chấm điểm'}</h3>
+                  <p className="mt-0.5 text-xs text-slate-500">{canEditRubric ? 'Chọn mức và ghi lý do cho từng tiêu chí.' : 'Xem điểm và nhận xét đã lưu.'}</p>
+                  {assessmentForForm?.evaluatorName && <p className="mt-1 text-xs text-slate-600">Giáo viên: {assessmentForForm.evaluatorName}</p>}
+                </div>
+                <div className="rounded-lg bg-slate-900 px-3 py-1.5 text-sm font-bold text-white">{totalScore}/{maxScore}đ</div>
+              </div>
+              {!canEditRubric && <p className="rounded-md bg-slate-100 p-3 text-xs leading-relaxed text-slate-600">
+                {isAdminReadOnly ? 'Quản trị viên chỉ xem kết quả chấm.' : selectedSnapshot.stage === 'prediction'
+                  ? 'Phần dự đoán không được chấm điểm chính thức.'
+                  : currentRubricSubmission ? 'Điểm chính thức đã được lưu. Hồ sơ này chỉ xem kết quả chấm.'
+                    : 'Học sinh cần nộp phần tự nhìn lại bài làm cho bản đang chọn trước khi giáo viên chấm điểm.'}
+              </p>}
+              {!activeRubric.criteria.length ? <p className="text-xs text-slate-500">Nhiệm vụ chưa có bảng tiêu chí chấm điểm hợp lệ.</p> : (
+                <div className="max-h-[44vh] space-y-3 overflow-y-auto pr-1">
+                  {activeRubric.criteria.map((criterion, idx) => {
+                    const currentLevel = rubricScores[criterion.id] || 0;
+                    return (
+                      <div key={criterion.id} className="space-y-2 border-b border-slate-100 pb-3 last:border-0">
+                        <div className="flex items-center justify-between">
+                          <span className="text-xs font-semibold leading-5 text-slate-800">{idx + 1}. {criterion.title}</span>
+                          {currentLevel > 0 ? <span className="text-xs font-bold text-primary-700">Mức {currentLevel}</span> : <span className="text-xs font-medium text-amber-600">Chưa chọn</span>}
+                        </div>
+                        <div className="grid grid-cols-4 gap-1.5">
+                          {criterion.levels.map(level => {
+                            const isSelected = currentLevel === level.level;
+                            return (
+                              <button key={level.level} type="button" title={`${criterion.title}: ${level.label}`} disabled={!canEditRubric}
+                                onClick={() => setRubricScores(previous => ({ ...previous, [criterion.id]: level.level }))}
+                                className={`flex flex-col items-center justify-center rounded-lg border px-1 py-1.5 text-xs transition ${isSelected ? 'border-primary-700 bg-primary-700 font-bold text-white' : 'border-slate-200 bg-white text-slate-700 hover:border-primary-300 hover:bg-primary-50'}`}>
+                                <span className="font-bold">{level.label}</span>
+                                <span className={`text-xs ${isSelected ? 'text-primary-100' : 'text-slate-400'}`}>{level.score}đ</span>
+                              </button>
+                            );
+                          })}
+                        </div>
+                        <label htmlFor={`criterion-note-${criterion.id}`} className="block text-xs font-medium text-slate-600">Lý do chấm: {criterion.title}</label>
+                        <textarea id={`criterion-note-${criterion.id}`} rows={2} value={criterionNotes[criterion.id] || ''} disabled={!canEditRubric}
+                          onChange={event => setCriterionNotes(previous => ({ ...previous, [criterion.id]: event.target.value }))}
+                          className="w-full rounded-lg border border-slate-300 p-2 text-xs leading-relaxed disabled:bg-slate-50" />
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+              <div>
+                <label htmlFor="overall-feedback" className="mb-1 block text-xs font-semibold text-slate-700">Nhận xét tổng kết toàn bài</label>
+                <textarea id="overall-feedback" rows={3} value={overallFeedback} onChange={event => setOverallFeedback(event.target.value)} disabled={!canEditRubric}
+                  placeholder={canEditRubric ? 'Nhập nhận xét tổng kết...' : 'Chế độ chỉ đọc'}
+                  className="w-full rounded-lg border border-slate-300 bg-white p-2.5 text-xs leading-relaxed outline-none disabled:bg-slate-50 disabled:text-slate-600 focus:border-primary-600 focus:ring-2 focus:ring-primary-600/10" />
+              </div>
+              {canEditRubric && <Button className="w-full" size="sm" variant="primary" disabled={!activeRubric.criteria.length} isLoading={isSubmittingRubric} onClick={saveRubric}>Lưu điểm</Button>}
+            </section>
+          )}
 
           {activeTab === 'ai' && <section className="space-y-3 rounded-lg border border-slate-200 bg-white p-4"><div className="flex items-center justify-between"><h3 className="text-sm font-bold text-slate-900">Góp ý AI</h3>{pendingAiProposal ? <Badge variant="blue">Chờ duyệt</Badge> : <Badge variant="outline">Đã gửi / Không có</Badge>}</div>{pendingAiProposal ? <div className="space-y-3 text-xs"><div className="rounded-lg bg-sky-50 border border-sky-200 p-3 leading-relaxed text-slate-800"><div className="font-semibold text-sky-900 mb-1">Góp ý AI:</div><p className="whitespace-pre-wrap">{pendingAiProposal.response}</p></div>{!isAdminReadOnly && <Button size="sm" variant="primary" className="w-full" onClick={() => handleTeacherAiDecision('approved')}>Đã xem góp ý AI</Button>}</div> : <p className="text-xs text-slate-500 leading-relaxed">Không có góp ý AI nào đang chờ giáo viên xem.</p>}</section>}
 
-          {activeTab === 'reflection' && <section className="space-y-3 rounded-lg border border-slate-200 bg-white p-4"><div className="flex items-center justify-between"><h3 className="text-sm font-bold text-slate-900">Tự nhìn lại bài làm</h3>{currentReflection ? <Badge variant="emerald">Đã nộp phần tự nhìn lại</Badge> : <Badge variant="amber">Chưa tự nhìn lại bài làm</Badge>}</div>{currentReflection ? <div className="space-y-3 text-xs leading-relaxed max-h-[50vh] overflow-y-auto pr-1"><div className="rounded-lg border border-slate-100 bg-slate-50 p-3 space-y-1"><span className="font-semibold text-slate-800 block">1. Nhận thức thay đổi thế nào sau bài làm đầu tiên:</span><p className="text-slate-600">{currentReflection.reflection.changedUnderstanding || '—'}</p></div><div className="rounded-lg border border-slate-100 bg-slate-50 p-3 space-y-1"><span className="font-semibold text-slate-800 block">2. Góp ý hữu ích nhất:</span><p className="text-slate-600">{currentReflection.reflection.mostUsefulFeedback || '—'}</p></div><div className="rounded-lg border border-slate-100 bg-slate-50 p-3 space-y-1"><span className="font-semibold text-slate-800 block">3. Điểm chưa đạt ở bài làm đầu tiên:</span><p className="text-slate-600">{currentReflection.reflection.incompleteInV1 || '—'}</p></div><div className="rounded-lg border border-slate-100 bg-slate-50 p-3 space-y-1"><span className="font-semibold text-slate-800 block">4. Điểm tiến bộ ở bài chỉnh sửa:</span><p className="text-slate-600">{currentReflection.reflection.improvedInV2 || '—'}</p></div><div className="rounded-lg border border-slate-100 bg-slate-50 p-3 space-y-1"><span className="font-semibold text-slate-800 block">5. Vận dụng cho bài đọc sau:</span><p className="text-slate-600">{currentReflection.reflection.transferToNextReading || '—'}</p></div></div> : <p className="text-xs text-slate-500 leading-relaxed">Học sinh chưa hoàn thành phiếu tự nhìn lại bài làm cho phiên bản đang chấm. Học sinh cần nộp phiếu tự nhìn lại bài làm sau bài chỉnh sửa trước khi giáo viên chấm.</p>}</section>}
+          {activeTab === 'reflection' && <section className="space-y-3 rounded-lg border border-slate-200 bg-white p-4"><div className="flex items-center justify-between"><h3 className="text-sm font-bold text-slate-900">Tự nhìn lại bài làm</h3>{currentReflection ? <Badge variant="emerald">Đã nộp phần tự nhìn lại</Badge> : <Badge variant="amber">Chưa tự nhìn lại bài làm</Badge>}</div>{currentReflection ? <div className="space-y-3 text-xs leading-relaxed max-h-[50vh] overflow-y-auto pr-1"><div className="rounded-lg border border-slate-100 bg-slate-50 p-3 space-y-1"><span className="font-semibold text-slate-800 block">1. Nhận thức thay đổi thế nào sau bài làm đầu tiên:</span><p className="text-slate-600">{currentReflection.reflection.changedUnderstanding || '—'}</p></div><div className="rounded-lg border border-slate-100 bg-slate-50 p-3 space-y-1"><span className="font-semibold text-slate-800 block">2. Góp ý hữu ích nhất:</span><p className="text-slate-600">{currentReflection.reflection.mostUsefulFeedback || '—'}</p></div><div className="rounded-lg border border-slate-100 bg-slate-50 p-3 space-y-1"><span className="font-semibold text-slate-800 block">3. Điểm chưa đạt ở bài làm đầu tiên:</span><p className="text-slate-600">{currentReflection.reflection.incompleteInV1 || '—'}</p></div><div className="rounded-lg border border-slate-100 bg-slate-50 p-3 space-y-1"><span className="font-semibold text-slate-800 block">4. Điểm tiến bộ ở bài chỉnh sửa:</span><p className="text-slate-600">{currentReflection.reflection.improvedInV2 || '—'}</p></div><div className="rounded-lg border border-slate-100 bg-slate-50 p-3 space-y-1"><span className="font-semibold text-slate-800 block">5. Vận dụng cho bài đọc sau:</span><p className="text-slate-600">{currentReflection.reflection.transferToNextReading || '—'}</p></div></div> : <p className="text-xs text-slate-500 leading-relaxed">{currentPortfolio.status === 'completed' ? 'Hồ sơ đã kết thúc. Không có phần tự nhìn lại được nộp cho bản này.' : 'Học sinh chưa nộp phần tự nhìn lại cho bản đang chọn. Giáo viên chỉ chấm khi phần này đã được nộp.'}</p>}</section>}
 
           {literatureText && <div className="border-t border-slate-200 pt-3 text-xs leading-5 text-slate-500">Ngữ liệu: <strong className="font-semibold text-slate-700">{literatureText.title}</strong> · {literatureText.author}</div>}
         </aside>

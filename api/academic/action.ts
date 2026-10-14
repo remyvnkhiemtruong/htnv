@@ -59,6 +59,7 @@ const clientMessage = (code: string) => {
     ASSIGNMENT_CLOSED: "Nhiệm vụ này đã đóng. Bạn không thể lưu hoặc nộp thêm.",
     VERSION_NOT_FOUND: "Không tìm thấy phiên bản phù hợp.",
     VERSION_REQUIRED: "Cần chọn đúng phiên bản đã nộp.",
+    STUDENT_REQUIRED: "Cần chọn đúng học sinh có bài đã nộp.",
     SUBMISSION_KEY_REQUIRED: "Khóa nộp bài không hợp lệ. Vui lòng thử lại.",
     SCHEMA_MIGRATION_REQUIRED: "Hệ thống đang nâng cấp dữ liệu ngữ liệu. Vui lòng thử lại sau.",
     CSRF_ORIGIN_MISMATCH: "Yêu cầu không hợp lệ.",

@@ -35,3 +35,20 @@ for(const html of [render(false),render(true,[{id:'prediction',stage:'prediction
  assert(!/>Nộp dự đoán<\/button>/.test(html));
 }
 console.log('PASS actual editor rendering: required prediction, optional prediction, completed prediction; desktop and mobile');
+
+render(false);
+const draft = Object.fromEntries(POETIC_AXES.map(axis => [axis.id, { axisId: axis.id, analysisText: axis.id === 'plot_situation' ? 'Bản nháp chưa nộp khác với bài chấm.' : '', evidenceQuotes: [] }]));
+const submitted = structuredClone(draft);
+submitted.plot_situation.analysisText = 'Nội dung chính xác của bài đã nộp.';
+workspace.portfolio = { ...workspace.portfolio, status: 'completed', currentDraft: draft, versions: [{ id: 'submitted', stage: 'initial', versionNumber: 'V1', responses: submitted, createdAt: new Date().toISOString() }] };
+const closedHtml = renderToStaticMarkup(React.createElement(Editor, { assignmentId: 'test', onNavigate() {} }));
+assert(closedHtml.includes(submitted.plot_situation.analysisText));
+assert(!closedHtml.includes(draft.plot_situation.analysisText), 'A locked editor must show the immutable submission, not an unsubmitted draft');
+assert.deepEqual(workspace.portfolio.currentDraft, draft, 'Displaying a submitted version must preserve the local recovery draft');
+assert(closedHtml.includes('Đang xem phần') && closedHtml.includes('Bài đã nộp · chỉ xem'));
+assert(!closedHtml.includes('Tự động lưu sau khi gõ'));
+const evidenceDeps = { ...deps, useState: initial => React.useState(initial === 'prompt' ? 'evidence' : initial) };
+const EvidenceEditor = new Function(...Object.keys(evidenceDeps), compiled + '\nreturn PortfolioEditorView;')(...Object.values(evidenceDeps));
+const evidenceHtml = renderToStaticMarkup(React.createElement(EvidenceEditor, { assignmentId: 'test', onNavigate() {} }));
+assert.match(evidenceHtml, /<textarea[^>]*disabled=""[^>]*placeholder="Mỗi dòng một trích dẫn ngữ liệu/);
+console.log('PASS closed editor displays immutable submitted work and preserves the different local draft');

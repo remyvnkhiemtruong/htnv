@@ -43,6 +43,7 @@ export function deriveStudentWorkflow(input: {
   const hasFeedback = Boolean(portfolio && feedbacks.some(item => item.assignmentId === assignment.id && item.studentId === portfolio.studentId));
   const hasReflection = Boolean(revision && reflectionVersionIds.includes(revision.id));
   const hasTeacherRubric = Boolean(portfolio && rubricSubmissions.some(item => item.assignmentId === assignment.id && item.studentId === portfolio.studentId && item.evaluatorRole === 'teacher'));
+  const isComplete = hasTeacherRubric || portfolio?.status === 'completed';
   // Older stages may be retained outside the visible academic record. Do not
   // mark an unseen V0/V1 as unfinished (or imply it is an official submission).
   const historicalStagesVisible = !portfolio || portfolio.status !== 'completed'
@@ -56,14 +57,18 @@ export function deriveStudentWorkflow(input: {
   if (reflectionRequired) base.push({ id: 'reflection', label: 'Tự nhìn lại bài làm', shortLabel: 'Tự nhìn lại', done: hasReflection });
   if (rubricRequired) base.push({ id: 'rubric', label: 'Giáo viên chấm điểm', shortLabel: 'Chấm điểm', done: hasTeacherRubric });
   const activeIndex = base.findIndex(step => !step.done);
-  const steps = base.map((step, index) => ({ ...step, active: activeIndex === index }));
+  // A teacher can close an existing record without requiring another submission.
+  // Show the steps actually recorded, rather than asking the student to resume
+  // an unfinished revision or implying those waived steps were submitted.
+  const steps = base.filter(step => !isComplete || step.done)
+    .map(step => ({ ...step, active: !isComplete && base.indexOf(step) === activeIndex }));
   const progress = base.length ? Math.round((base.filter(step => step.done).length / base.length) * 100) : 0;
 
   const make = (statusLabel: string, nextActionLabel: string, nextActionHint: string, tone: WorkflowTone, canEdit: boolean, isComplete = false): StudentWorkflowState => ({
     statusLabel, nextActionLabel, nextActionHint, tone, canEdit, isComplete, progress: isComplete ? 100 : progress, steps
   });
 
-  if (hasTeacherRubric || portfolio?.status === 'completed') return make('Hoàn thành', 'Xem hồ sơ hoàn chỉnh', 'Giáo viên đã chấm bài. Em có thể xem điểm và nhận xét.', 'emerald', false, true);
+  if (isComplete) return make('Hoàn thành', 'Xem hồ sơ hoàn chỉnh', 'Giáo viên đã chấm bài. Em có thể xem điểm và nhận xét.', 'emerald', false, true);
   if (!portfolio) return predictionRequired
     ? make('Cần ghi dự đoán', 'Ghi dự đoán trước khi đọc', 'Ghi dự đoán trước khi đọc, sau đó viết và nộp bài đầu tiên.', 'blue', true)
     : make('Đang viết bài đầu tiên', 'Bắt đầu làm bài', 'Mở bài và hoàn thiện bản đầu tiên.', 'blue', true);
